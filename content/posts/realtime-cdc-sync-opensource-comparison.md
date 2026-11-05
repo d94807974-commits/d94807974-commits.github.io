@@ -1,9 +1,10 @@
 ---
 title: "开源实时 CDC 同步选型：带 Web 配置、MySQL/SQL Server→Kafka/Doris/ClickHouse、全量+增量（2026-11 核实）"
 date: 2026-11-05T13:52:00+08:00
+lastmod: 2026-11-05T14:45:00+08:00
 draft: false
-tags: ["CDC", "数据同步", "SeaTunnel", "Flink CDC", "InLong", "Doris", "ClickHouse", "Kafka", "开源选型", "数据集成"]
-summary: "按「Web 可配 + MySQL/SQL Server 源 + Kafka/Doris/ClickHouse 目标 + 全量+增量 + star>1k + 开源」条件，用 GitHub API 与官方文档逐一核实候选，对比 SeaTunnel(+Web)、InLong、Flink CDC(+Dinky/StreamPark)、TIS 等，给出场景选型、检查清单与未入选原因。数据核实日期：2026-11-05（Asia/Singapore）。"
+tags: ["CDC", "数据同步", "SeaTunnel", "Flink CDC", "InLong", "Doris", "ClickHouse", "Kafka", "DBSyncer", "开源选型", "数据集成"]
+summary: "按「Web 可配 + MySQL/SQL Server 源 + Kafka/Doris/ClickHouse 目标 + 全量+增量 + star>1k + 开源」条件核实候选；对比 SeaTunnel(+Web)、InLong、Flink CDC(+Dinky/StreamPark)、TIS，并特别源码走读 DBSyncer 2.1.6（star 954，功能匹配但未过 1k 门槛）及衍生仓 Zhh9126/DBSYNC。数据核实：2026-11-05（Asia/Singapore）。"
 ShowToc: true
 ---
 
@@ -135,17 +136,17 @@ Browser ──► SeaTunnel Web (8801)
 
 ## 三、横向对比（工程维度）
 
-| 维度 | SeaTunnel+Web | InLong | Flink CDC+Dinky/StreamPark | TIS |
-|------|---------------|--------|----------------------------|-----|
-| Web 配置成熟度 | 可用，但 Web 仓活跃偏弱 | Dashboard 一等公民 | 取决于 Dinky/StreamPark | Console 强，偏零代码 |
-| 源：MySQL / SQL Server | 双 CDC 文档齐全 | Extract 节点表齐全 | Pipeline 3.7 双源 | Flink-CDC + DataX |
-| 目标三件套 | 三 sink 均有官方页 | 三 Load 均列出 | Kafka+Doris 原生；CH ⚠️ | 三端均在端类型表 |
-| 全量→增量 | `startup.mode=initial` | 同步场景支持 | Snapshot + binlog/CDC | DataX 全量 + Flink 增量 |
-| DDL / Schema | `schema-changes.enabled`（有限） | 视 Sort/连接器 | Pipeline 演进中，需查版本文档 | 依赖底层 Flink-CDC/ChunJun |
-| 部署依赖 | Zeta 或 Flink + Web + DB | 多组件或轻量 Sort | Flink 集群 + 平台 | TIS + Flink(+DataX) |
-| 许可证 | Apache-2.0 | Apache-2.0 | Apache-2.0 | Apache-2.0 |
-| 中文/繁中资料 | 官网中英；iT 邦帮忙等有 CDC 概念文 | 中英文档 | 中文社区很强（Dinky） | 中文文档/视频丰富 |
-| 典型坑 | Web/引擎版本锁；插件路径 | 组件多、运维重 | CH sink 非 pipeline；版本矩阵 | 插件版本与 Flink 对齐 |
+| 维度 | SeaTunnel+Web | InLong | Flink CDC+Dinky/StreamPark | TIS | DBSyncer 2.1.6（★954，未过 1k） |
+|------|---------------|--------|----------------------------|-----|--------------------------------|
+| Web 配置成熟度 | 可用，但 Web 仓活跃偏弱 | Dashboard 一等公民 | 取决于 Dinky/StreamPark | Console 强，偏零代码 | ✅ 内置 Thymeleaf 控制台 |
+| 源：MySQL / SQL Server | 双 CDC 文档齐全 | Extract 节点表齐全 | Pipeline 3.7 双源 | Flink-CDC + DataX | ✅ binlog / ✅ CDC(LSN) |
+| 目标三件套 | 三 sink 均有官方页 | 三 Load 均列出 | Kafka+Doris 原生；CH ⚠️ | 三端均在端类型表 | ✅ Kafka；✅ Doris Stream Load；✅ CH 写（源=游标） |
+| 全量→增量 | `startup.mode=initial` | 同步场景支持 | Snapshot + binlog/CDC | DataX 全量 + Flink 增量 | ✅ FullIncrementPuller 钉位点 |
+| DDL / Schema | `schema-changes.enabled`（有限） | 视 Sort/连接器 | Pipeline 演进中，需查版本文档 | 依赖底层 Flink-CDC/ChunJun | MySQL ALTER 事件有代码；e2e 未测 |
+| 部署依赖 | Zeta 或 Flink + Web + DB | 多组件或轻量 Sort | Flink 集群 + 平台 | TIS + Flink(+DataX) | 单进程 + H2/MySQL；集群需验证 |
+| 许可证 | Apache-2.0 | Apache-2.0 | Apache-2.0 | Apache-2.0 | Apache-2.0 |
+| 中文/繁中资料 | 官网中英；iT 邦帮忙等有 CDC 概念文 | 中英文档 | 中文社区很强（Dinky） | 中文文档/视频丰富 | 中文官网/社区友好 |
+| 典型坑 | Web/引擎版本锁；插件路径 | 组件多、运维重 | CH sink 非 pipeline；版本矩阵 | 插件版本与 Flink 对齐 | 默认 admin/admin；Boot 2.5/Kafka 0.11；无 GH Actions |
 
 **繁体资料**：台湾 iT 邦帮忙有多篇 CDC 概念文（如 [变更资料撷取 CDC](https://ithelp.ithome.com.tw/articles/10362458)、[Change Data Capture](https://ithelp.ithome.com.tw/articles/10275451)），偏原理而非上述具体产品对比；产品级繁中文档仍以各项目官网中英为主。
 
@@ -160,11 +161,104 @@ Browser ──► SeaTunnel Web (8801)
 | [DTStack/chunjun](https://github.com/DTStack/chunjun) | 4106 / Apache-2.0 | 连接器能力强，但**本身不是完整 Web 配置平台**（常被 TIS 等托管） |
 | [airbytehq/airbyte](https://github.com/airbytehq/airbyte) | 22317 / **ELv2 (NOASSERTION)** | **非 OSI 传统开源**（Elastic License 2.0）；Doris destination 社区状态需单独核（有 ARCHIVED 记录），不作为本清单首选 |
 | [tapdata/tapdata](https://github.com/tapdata/tapdata) | **662** / Apache-2.0 | **star < 1k** |
-| [86dbs/dbsyncer](https://github.com/86dbs/dbsyncer) | **954** / Apache-2.0 | **star < 1k**（有 Web、含 SqlServer/Kafka，差在 star 门槛） |
+| [86dbs/dbsyncer](https://github.com/86dbs/dbsyncer)（DBSyncer **v2.1.6**） | **954** / Apache-2.0 | **star < 1k**（门槛未过）；功能上 Web + MySQL binlog / SQL Server CDC → Kafka/Doris/ClickHouse + 全量+增量均有源码依据，见下文「特别分析」；勿与 [Zhh9126/DBSYNC](https://github.com/Zhh9126/DBSYNC)（2.1.4 重命名衍生）混淆 |
 | [apache/hop](https://github.com/apache/hop) | 1519 / Apache-2.0 | ETL/可视化强，**CDC 通常外挂 Debezium**，非本条件「内建订阅三目标」主线 |
 | CloudCanal（ClouGence） | 官方定位见 [cloudcanal-issue](https://github.com/ClouGence/cloudcanal-issue) | **社区版可免费使用但非开源**；明确剔除 |
 | [lensesio/kafka-connect-ui](https://github.com/lensesio/kafka-connect-ui) | 519 | **star < 1k**，且只是 Connect 管理 UI，不是端到端 CDC 平台 |
 | seatunnel-web **单独** | 888 | 不单独过 1k；仅作为引擎配套计入 |
+
+## 四附、特别分析：DBSyncer 2.1.6（功能匹配，star 未过 1k）
+
+> **口径**：仍列在「未入选」——本文硬门槛是 GitHub **stars > 1000**；2026-11-05 核实 [86dbs/dbsyncer](https://github.com/86dbs/dbsyncer) 为 **954★ / 156 forks / Apache-2.0**，最新 tag **`v2.1.6`**（annotated tag → commit `d0aa992e`，提交说明 `!621 pg增量调整`，UTC 2026-11-03 11:04；换算 Asia/Singapore = 2026-11-03 19:04）。`master` 在 tag 之后仍有若干「插件增加删除」提交（分析以 **v2.1.6** 检出为准）。GitHub **Releases 列表为空**（发版靠 tag）；**无 `.github/workflows` CI**。贡献者 API 前列：`86dbs`(2210)、`Pengnd`(519)、`lifejwang11`(66) 等。官网 [dbsyncer.cn](https://dbsyncer.cn)。
+
+### 为何单独写一节
+
+在「Web + MySQL/SQL Server → Kafka/Doris/ClickHouse + 全量+增量」这条链路上，DBSyncer **源码能力与本文入选条件高度重合**，仅差 star 门槛；中小团队「单机开箱」场景经常会搜到它。下面结论均来自对 `v2.1.6` 树的只读走读与一次 Linux `mvn -DskipTests package` 尝试（不对上游仓库做任何写操作）。
+
+### 架构（ASCII）
+
+```
+Browser ──► dbsyncer-web (Thymeleaf, 默认 :18686, README: admin/admin)
+                │
+                v
+           dbsyncer-biz / parser / plugin
+                │
+                v
+           dbsyncer-manager
+        FullPuller | IncrementPuller | FullIncrementPuller
+        (先 capture 位点 → 全量 → 增量；Meta snapshot 断点)
+                │
+                v
+           dbsyncer-connector (SPI)
+   MySQL(binlog/shyiko)  SqlServer(CDC/LSN)
+   Kafka(writer)  Doris(Stream Load|JDBC)  ClickHouse(源=PK游标轮询 / 目标=写)
+                │
+                v
+           dbsyncer-storage
+        默认 H2 文件库；生产建议 MySQL
+        集群开关 dbsyncer.cluster.enabled（须 storage=mysql）
+```
+
+### 核心同步链路（文件路径）
+
+| 环节 | 路径 / 行为（v2.1.6） |
+|------|----------------------|
+| 全量+增量编排 | `dbsyncer-manager/.../FullIncrementPuller.java`：注释写明「先捕获位点 → 全量 → 从位点启动增量」；`prepareFullPhase` → `incrementPuller.captureAndSaveOffset` |
+| MySQL 增量 | `dbsyncer-connector-mysql/.../cdc/MySQLListener.java`：`BinaryLogClient` + binlog filename/position；`QueryEvent` → `DDLChangedEvent`（含 `parseAlter`） |
+| SQL Server 增量 | `.../sqlserver/cdc/SqlServerListener.java`：`sys.fn_cdc_get_max_lsn` / `fn_cdc_get_all_changes_*`，位点键 `position` |
+| → Kafka | `.../kafka/KafkaConnector.java`：`writer` 逐条 `producer.send` + `flush`；`reader` 抛「Kafka暂不支持全量读取」 |
+| → Doris | `.../doris/DorisConnector.java` + `load/DorisStreamLoadWriter.java`：配置为 Stream Load 模式且事件匹配时走 Stream Load，否则 JDBC；`buildUpsertSql` 退化为普通 INSERT（Unique/PK 覆盖语义，代码注释写明） |
+| ClickHouse | 源：`.../clickhouse/cdc/ClickHouseListener.java` **单数值主键游标轮询**（非 binlog/CDC）；目标：JDBC 写 / 按 PK 批删等。README 连接器表：源✔ 目标✔ |
+| Web / 端口 | `dbsyncer-web/.../application.properties`：`server.port=18686`；README 明确 **admin/admin** |
+| 元数据 | `dbsyncer.storage.type=h2`（默认）或 `mysql`；示例 `dbsyncer.storage.mysql.password=123` |
+
+### 一致性与可靠性（代码观感）
+
+- **Kafka**：无事务 producer / 未见默认幂等强制；偏 **at-least-once**，需目标或业务幂等。客户端依赖锁定为 **`kafka.version=0.11.0.0`**（与现代 Broker 的兼容与安全补丁均偏旧）。
+- **Doris**：依赖 Unique/Primary Key 模型下 INSERT 覆盖；Stream Load 与 JDBC 双路径，配置错误时行为不同。
+- **全量切增量**：经典「先钉位点再灌历史」；全量窗口内变更靠增量回放——需压测与对账。
+- **DDL**：MySQL 侧有 ALTER 解析与事件下发；对 Kafka/Doris/CH 目标的端到端 DDL 同步**未在本环境做 e2e**（标未能核实）。
+- **HA**：存在 `ClusterService` SPI、`ClusterController`、以及 `application-node*.properties`（`dbsyncer.cluster.enabled=true`）；开源树内默认实现为 `StandaloneService`（`@ConditionalOnMissingBean` + SPI）。**多节点调度完整行为依赖 MySQL 存储与 SPI 实现，本分析未拉起多节点集群验证。** `MetaLockUtil` 仅为进程内 `String.intern` 锁。
+
+### 安全与依赖
+
+- 默认账号：**admin / admin**（README；`UserConfigServiceImpl.DEFAULT_PASSWORD` = SHA1(`admin`) 的 Base64：`0DPiKuNIrrVmD8IUCuw1hQxNqZc=`，已本地复核）。
+- SSL keystore 密码默认 **`dbsyncer`**（`application.properties`）。
+- 栈：Java 8、**Spring Boot 2.5.14**（社区 EOL）、log4j2 **2.17.1**、mysql-binlog-connector **0.30.1**；`mysql.version=8.0.21`（偏旧）。无 NOTICE 文件，有 Apache-2.0 `LICENSE`。
+- 测试：约 **15** 个 `src/test` Java 文件 vs 约 **1073** 个 main；**无 GitHub Actions**。
+
+### 构建结果（本机 Linux，Asia/Singapore 时段）
+
+在隔离环境安装 Temurin 11 + Maven 3.9.9，于 `/tmp/dbsyncer-up`（`git checkout v2.1.6`）执行 `mvn -DskipTests package`：**成功**，产出 `dbsyncer-web/target/dbsyncer-2.1.6.jar`（约 1.2MB 模块 jar；完整可运行包以项目 `build.sh`/assembly 为准）。模块名与目录均为小写 `dbsyncer-connector-*`，**不存在** Zhh9126/DBSYNC 那种 `DBDataSync-*` / `dbdatasync-*` 大小写错配。
+
+### 优劣与适用场景
+
+**优势**：真正「下载解压 + Web」；MySQL binlog 与 SQL Server CDC 同产品内；Kafka/Doris/CH 目标代码齐全；全量+增量编排清晰；中文社区与 [dbsyncer.cn](https://dbsyncer.cn) 文档友好；相对 Flink/InLong 运维面小。
+
+**劣势**：star < 1k、无 GitHub Releases/Actions；Boot 2.5 / Kafka 0.11 技术债；默认口令与示例库密码；ClickHouse「增量源」实为游标轮询；一致性语义弱于 Flink CDC exactly-once 体系；开源集群能力需自行验证。
+
+**适合**：中小团队、单机/小集群、要快速打通 MySQL 或 SQL Server → Kafka/Doris（及 CH 目标写入）、可接受自行加固安全与依赖升级。  
+**更适合改用入选方案的情况**：要强 exactly-once、大规模多租户、或必须 star/ASF 生态背书 → SeaTunnel / InLong / Flink CDC+Dinky / TIS。
+
+### 生产补强清单（若采用 2.1.6）
+
+1. 立即改掉 admin 密码；关闭或保护 `reset-pwd`；改掉示例 MySQL storage 密码与 keystore 口令。  
+2. 生产元数据改 **MySQL**；按需评估 `cluster.enabled` 并做故障切换演练。  
+3. 升级路径评估：Boot / Kafka client / JDBC 驱动；补依赖 CVE 扫描与 CI。  
+4. 明确 Kafka acks/幂等与 Doris 模型；全量切增量与失败重试做对账。  
+5. ClickHouse 若作**源**，不要按真正 CDC 预期排期。  
+6. **优先跟踪官方 [86dbs/dbsyncer](https://github.com/86dbs/dbsyncer)**，勿默认采用第三方重命名仓（见下）。
+
+### 衍生仓警示：Zhh9126/DBSYNC（2.1.4 重命名）
+
+同日只读分析 [Zhh9126/DBSYNC](https://github.com/Zhh9126/DBSYNC)（26★，Apache-2.0，创建于 2026-10-19）：GitHub `fork=false`，但唯一提交自述「原 dbsyncer 重命名升级」，包名 `dbsyncer`→`dbdatasync`，版本停在 **2.1.4**，并多出 `dbdatasync-engine` 模块；**缺少**上游已有的 `gaussdb` 等连接器。关键问题：
+
+- `dbdatasync-connector/pom.xml` 模块写成 `DBDataSync-connector-*`，磁盘目录为 `dbdatasync-connector-*` → **Linux 下 Maven 直接失败**（与其 issue #1 一致）；本环境复现。  
+- **无** `.github` CI、**无** Release；贡献者仅上传者 1 人。  
+- 同样默认 **admin/admin**，keystore 密码改为 `DBDataSync`，示例 `mysql.password=123`。  
+- 无 NOTICE；署名弱于对上游 AE86/86dbs 的常见归因实践。
+
+**结论**：若看中 DBSyncer 能力，请用 **86dbs/dbsyncer @ v2.1.6+**；DBSYNC 仅适合对照源码，**不建议生产**。
 
 ## 五、场景选型建议
 
@@ -186,6 +280,9 @@ Browser ──► SeaTunnel Web (8801)
 6. **仅 MySQL、要极简**  
    → Canal / Bifrost 等仍可用，但**不符合本文 SQL Server 门槛**，勿混用结论。
 
+7. **要极简 Web 单机、功能链完整，可接受 star < 1k 与自行加固**  
+   → **DBSyncer 2.1.6（86dbs/dbsyncer）**；详见「特别分析」。**不要**用 Zhh9126/DBSYNC 替代上游。
+
 ## 六、上线前检查清单
 
 - [ ] 源库：MySQL `binlog_format=ROW`、`binlog_row_image=FULL`；SQL Server 已启用 CDC 且清理作业正常  
@@ -204,7 +301,9 @@ Browser ──► SeaTunnel Web (8801)
 - Airbyte 各 destination 的当前维护状态（含 Doris）变化快，本文以 ELv2 + 历史 ARCHIVED 线索作风险提示，**未逐一跑通连接器 e2e**。  
 - SeaTunnel / Flink CDC 对 **每一种 DDL 子类型**（改主键、改分区等）的支持矩阵未逐条回归，只引用文档中已写明的选项。  
 - StreamPark / Dinky 与 Flink CDC 3.7 的**组合兼容性**未在本机拉起集群验证，选型需按各自 release note 锁版本。  
-- 未评测各方案在「新加坡→墨西哥」链路上的实测延迟，跨地域仅为架构建议。
+- 未评测各方案在「新加坡→墨西哥」链路上的实测延迟，跨地域仅为架构建议。  
+- DBSyncer：**多节点集群**（`cluster.enabled=true` + MySQL storage）与 **DDL→Doris/Kafka/CH** 端到端未在本环境拉起验证；Kafka `acks`/幂等以业务配置为准，仓库测试样例可见 `acks=1`、`enable.idempotence=false`。  
+- DBSyncer `master` 相对 `v2.1.6` 的后续提交未逐条回归。
 
 ## 参考资料
 
@@ -216,8 +315,10 @@ Browser ──► SeaTunnel Web (8801)
 6. [TIS 文档与端类型表](https://tis.pub/docs/) · [datavane/tis](https://github.com/datavane/tis)  
 7. [Dinky](https://github.com/DataLinkDC/dinky) · [StreamPark](https://github.com/apache/streampark)  
 8. [Airbyte LICENSE (ELv2)](https://github.com/airbytehq/airbyte/blob/master/LICENSE) · [ClouGence/cloudcanal-issue](https://github.com/ClouGence/cloudcanal-issue)  
-9. 繁中 CDC 概念：[iT邦幫忙 - 变更资料撷取](https://ithelp.ithome.com.tw/articles/10362458)
+9. 繁中 CDC 概念：[iT邦幫忙 - 变更资料撷取](https://ithelp.ithome.com.tw/articles/10362458)  
+10. [86dbs/dbsyncer](https://github.com/86dbs/dbsyncer) · tag [v2.1.6](https://github.com/86dbs/dbsyncer/releases/tag/v2.1.6) · [dbsyncer.cn](https://dbsyncer.cn) · [LICENSE (Apache-2.0)](https://github.com/86dbs/dbsyncer/blob/master/LICENSE)  
+11. 衍生仓对照（不推荐生产）：[Zhh9126/DBSYNC](https://github.com/Zhh9126/DBSYNC) · [issue #1 Linux 编译大小写](https://github.com/Zhh9126/DBSYNC/issues/1)
 
 ---
 
-*发布说明：配图均来自 Apache 项目官方资源（Apache-2.0），压缩后 <300KB，托管于本站静态目录。核实日期：2026-11-05（Asia/Singapore）。*
+*发布说明：配图均来自 Apache 项目官方资源（Apache-2.0），压缩后 <300KB，托管于本站静态目录。初版核实 2026-11-05；同日增补 DBSyncer 2.1.6 源码特别分析（Asia/Singapore）。*
