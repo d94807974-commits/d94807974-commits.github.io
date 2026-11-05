@@ -1,6 +1,7 @@
 ---
 title: "《混合信号》×《驱动力》整合读书笔记：激励是一种信号"
 date: 2026-11-04T16:22:59+08:00
+lastmod: 2026-11-05T13:25:00+08:00
 draft: false
 tags: ["读书笔记", "混合信号", "驱动力", "Uri Gneezy", "Daniel Pink", "激励", "行为经济学", "技术管理"]
 summary: "把尤里·格尼茨的《混合信号》（Mixed Signals）和丹尼尔·平克的《驱动力》（Drive）放在一起读：平克说胡萝卜加大棒在创造性工作上会挤出内在动机，格尼茨用「激励即信号」解释它什么时候、为什么会失效。内容包括托儿所罚款、「要么给够要么别给」、Deci 1971、蜡烛问题等原始研究的核对，Cameron & Pierce 与 Deci 学派的元分析之争，台湾繁体版《誘因設計》《動機，單純的力量》的译名与书评对照，并附上一个整合框架、一套工程团队落地方法、两本书各自的局限和一份检查清单。"
@@ -8,6 +9,12 @@ ShowToc: true
 ---
 
 > 素材说明：两本书的全文我都没有读完。这篇笔记依据的材料有：两本书的出版社页面和中英文目录（耶鲁大学出版社、中信出版社、浙江人民出版社/湛庐、台湾天下文化、大块文化），平克的官网和他在 TED 的演讲（英文原稿，以及 TED 官方的繁体、简体中文字幕），格尼茨在 Adam Grant 播客《ReThinking》里的访谈文字稿，几篇原始论文（格尼茨本人主页上的 PDF、PubMed 和期刊摘要），还有天下文化与台湾读书博主的书评。凡是加引号的句子，都能在下文「参考资料」里找到出处；书里的原话我只引用出版社或可靠二手来源公开刊出的部分，没有凭印象"复原"任何一句。
+
+
+<figure>
+<img src="/images/mixed-signals-drive-incentives-reading-notes/traffic-light.jpg" alt="交通信号灯" loading="lazy" width="700">
+<figcaption>图片：Raizkgh / <a href="https://commons.wikimedia.org/wiki/File:Traffic_light.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>。激励像信号灯：颜色清楚时有效，互相矛盾时事故就来了。</figcaption>
+</figure>
 
 ## 一、两本书的基本信息
 

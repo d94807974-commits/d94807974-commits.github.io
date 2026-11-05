@@ -1,11 +1,18 @@
 ---
 title: "从一张 Hash 表到一万台服务器：读李智慧，理解后端技术的第一性原理"
 date: 2026-11-04T14:26:02+08:00
+lastmod: 2026-11-05T13:25:00+08:00
 draft: false
 tags: ["李智慧", "架构", "高并发", "大数据", "软件设计", "第一性原理", "技术成长"]
 summary: "通读李智慧的《大型网站技术架构》、《从0开始学大数据》、《后端技术面试38讲》和《高并发架构实战课》，我发现他反复讲的其实是同一件事：技术不是一堆孤立的知识点，而是少数几条原理在不同尺度上的反复出现。本文用这条主线串起软件设计、网站架构、大数据和技术人成长，配上可运行的 Go 代码，也谈谈这些观点在今天的局限。"
 ShowToc: true
 ---
+
+
+<figure>
+<img src="/images/li-zhihui-first-principles-architecture/servers.jpg" alt="机架服务器" loading="lazy" width="700">
+<figcaption>图片：VPSExpertYuri / <a href="https://commons.wikimedia.org/wiki/File:Servers.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>。从一张 Hash 表到一排机架，变的是尺度，不变的是原理。</figcaption>
+</figure>
 
 ## 写在前面
 

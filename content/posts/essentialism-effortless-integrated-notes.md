@@ -1,7 +1,7 @@
 ---
 title: "《精要主义》×《轻松主义》整合读书笔记：先做对的事，再把对的事做轻松"
 date: 2026-11-04T14:51:09+08:00
-lastmod: 2026-11-04T15:35:26+08:00
+lastmod: 2026-11-05T13:25:00+08:00
 draft: false
 tags: ["读书笔记", "精要主义", "轻松主义", "Greg McKeown", "效率", "技术管理"]
 summary: "把 Greg McKeown 的《精要主义》（探索、排除、执行）与《轻松主义》（轻松状态、轻松行动、轻松成果）合成一个框架：前者回答做什么，后者回答怎么做。结合台湾天下文化繁体版《少，但是更好》《努力，但不費力》的书摘、编辑导读与书评，对照两岸译名（专准主义、精．简．准），附章节映射表、工程落地方法、不足反思和可执行清单。"
@@ -17,6 +17,12 @@ ShowToc: true
 > - 其余章节层面的内容，我只根据目录和作者公开的说法来概括，不对没读到的段落做推测。
 >
 > 本文首发后，又补充了繁体中文资料并重写。
+
+
+<figure>
+<img src="/images/essentialism-effortless-integrated-notes/white-room.jpg" alt="极简白色房间" loading="lazy" width="800">
+<figcaption>图片：Richard Schatzberger / <a href="https://commons.wikimedia.org/wiki/File:A_White_Room_-_Flickr_-_schatz.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>。少，但是更好——空间本身就是取舍。</figcaption>
+</figure>
 
 ## 一、两本书的基本信息：一套框架，三个中文版本
 

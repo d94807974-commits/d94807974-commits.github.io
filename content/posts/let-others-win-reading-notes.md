@@ -1,7 +1,7 @@
 ---
 title: "《让别人赢》读书笔记：重新定义“赢”，以及它在工程团队里的边界"
 date: 2026-11-04T14:42:09+08:00
-lastmod: 2026-11-04T15:35:26+08:00
+lastmod: 2026-11-05T13:25:00+08:00
 draft: false
 tags: ["读书笔记", "让别人赢", "黄冠华", "管理", "领导力", "团队协作"]
 summary: "黄冠华《讓別人贏》（商业周刊出版 2022 / 广东人民出版社 2024）读书笔记：结合繁体书摘、作者商周专栏、《经理人》《商业周刊》《理财周刊》报道与台湾 Podcast，梳理旭荣的经营现场、“赢”与“赢得”、布袋戏、高铁与火车、五步骤、Backseat Driver、两清、ATOS、让客户赢等观点，以及在工程团队里的应用与局限。"
@@ -30,6 +30,12 @@ ShowToc: true
 > - 其他章节只看得到标题，我不推测内容。
 >
 > 所以这是一篇基于全书主要观点的读书笔记。本文首发后，补充了繁体中文资料并重写。
+
+
+<figure>
+<img src="/images/let-others-win-reading-notes/handshake.jpg" alt="握手" loading="lazy" width="800">
+<figcaption>图片：USMC photo by Cpl. Paula M. Fitzgerald / <a href="https://commons.wikimedia.org/wiki/File:Handshake.jpg">Wikimedia Commons</a>，公有领域。本地托管。</figcaption>
+</figure>
 
 ## 一、书籍信息：一本书，两个版本
 

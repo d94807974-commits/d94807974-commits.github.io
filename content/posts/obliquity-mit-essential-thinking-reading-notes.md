@@ -1,6 +1,7 @@
 ---
 title: "《间接思考的艺术》×《麻省理工深度思考法》整合读书笔记：先画出系统，再绕着走"
 date: 2026-11-04T19:02:51+08:00
+lastmod: 2026-11-05T13:25:00+08:00
 draft: false
 tags: ["读书笔记", "间接思考的艺术", "麻省理工深度思考法", "John Kay", "平井孝志", "系统动力学", "复杂系统", "问题解决", "技术管理"]
 summary: "把约翰·凯的《间接思考的艺术》（Obliquity）和平井孝志的《麻省理工深度思考法》（本質思考）放在一起读。平井教你用系统动力学画出现象背后的模型和动力机制，找到杠杆点；凯提醒你模型永远不完整，复杂目标只能迂回、渐进地逼近。笔记里有两本书的简体、繁体、原版信息与译名对照，凯 2004 年《金融时报》原文里黄石林火、ICI、波音等案例的核对，书评里的批评，还有一个「画图—找杠杆—迂回试探」的整合框架、工程师的落地用法、两本书各自的局限和一份检查清单。"
@@ -8,6 +9,17 @@ ShowToc: true
 ---
 
 > 素材说明：两本书的全文我都没有读完。这篇笔记依据的材料有：两本书的出版社页面和中、日、英文目录（中信出版社、中国华侨出版社/后浪、东洋经济新报社、Profile Books、台湾商周出版、天下文化），豆瓣条目里的简介和读者摘录，约翰·凯 2004 年发表在《金融时报》上的长文 *Forget how the crow flies*（这本书的前身），《独立报》《新科学家》《泰晤士高等教育》的书评，一位英文读者整理的章节摘录，日本书摘服务 flier 的公开部分，以及 Donella Meadows、MIT Sloan 系统动力学组的公开资料。加引号的句子都能在「参考资料」里找到出处；书中原话只引用出版社或可靠二手来源公开刊出的部分，转引的会注明是转引。
+
+
+<figure>
+<img src="/images/obliquity-mit-essential-thinking-reading-notes/winding-road.jpg" alt="蜿蜒道路" loading="lazy" width="800">
+<figcaption>图片：J Doll / <a href="https://commons.wikimedia.org/wiki/File:The_Winding_Road_(140435981).jpeg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>。复杂目标常常要绕着走。</figcaption>
+</figure>
+
+<figure>
+<img src="/images/obliquity-mit-essential-thinking-reading-notes/labyrinth.jpg" alt="迷宫俯瞰" loading="lazy" width="640">
+<figcaption>图片：Wiewanderlust / <a href="https://commons.wikimedia.org/wiki/File:Labyrinth.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>。先看见结构，再谈捷径。</figcaption>
+</figure>
 
 ## 一、两本书的基本信息
 

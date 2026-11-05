@@ -1,6 +1,7 @@
 ---
 title: "技术人的底层修养：从左耳朵耗子的文章里读出的工程哲学"
 date: 2026-11-04T14:20:00+08:00
+lastmod: 2026-11-05T13:25:00+08:00
 draft: false
 tags: ["左耳朵耗子", "工程哲学", "架构", "程序员成长", "CoolShell"]
 summary: "重读陈皓（左耳朵耗子）在 CoolShell 与《左耳听风》里留下的文字，把散落的观点串成一套框架：学习观、编程观、架构观与职业观。核心只有一句话——把精力花在本质上，把控制交给系统。"
@@ -9,6 +10,12 @@ ShowToc: true
 
 > 芝兰生于空谷，不以无人而不芳。
 > —— 陈皓的 GitHub 个人简介
+
+
+<figure>
+<img src="/images/engineering-philosophy-from-coolshell/bookcase.jpg" alt="公共书柜" loading="lazy" width="700">
+<figcaption>图片：Sir James / <a href="https://commons.wikimedia.org/wiki/File:Public_bookcase_germany_bonn_poppelsdorf_2008_08_10a.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>。技术文章像开放书柜：精华在于被反复取用的那几本。</figcaption>
+</figure>
 
 ## 引子：为什么今天还要读 CoolShell
 

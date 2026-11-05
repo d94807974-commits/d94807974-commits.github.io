@@ -1,7 +1,7 @@
 ---
 title: "让每一笔钱都可证明：金融交易系统安全设计模式全景"
 date: 2026-11-04T14:36:21+08:00
-lastmod: 2026-11-04T15:39:05+08:00
+lastmod: 2026-11-05T13:25:00+08:00
 draft: false
 tags: ["安全架构", "金融科技", "设计模式", "支付", "交易系统", "Go"]
 summary: "从孟加拉国央行、Knight Capital、Capital One，以及台湾第一银行 ATM 盗领与远东商银 SWIFT 遭骇五起事故出发，提出资金动作的六个不变量，并整理 SCA、所见即所签、签名防重放、幂等记账、复式账本、Maker-Checker、HSM/信封加密、事前风控与熔断等 13 个安全设计模式，并对照台湾金管会、银行公会、证交所与香港金管局、证监会的繁体中文监管文件，附可编译 Go 示例与落地清单。"
@@ -11,6 +11,12 @@ ShowToc: true
 > 本文讨论的是金融交易类软件（支付、转账、证券/期货下单、清结算、账务核心）的**安全设计模式**。文中的事实、数字与法规条款均来自文末列出的公开资料；代码为可编译的 Go 示意实现（`go vet` 通过），用于说明思路而非直接上线。
 >
 > 本文首发后，补充了繁体中文资料并重写：台湾金管会新闻稿与裁罚公告、银行公会《金融機構辦理電子銀行業務安全控管作業基準》、台湾证交所《建立證券商資通安全檢查機制》、香港金管局与证监会的公告和指引，以及中央社、iThome 对两起台湾事故的报道。繁体原文保留繁体字。
+
+
+<figure>
+<img src="/images/financial-trading-security-design-patterns/padlock.jpg" alt="挂锁" loading="lazy" width="450">
+<figcaption>图片：Alyson Hurt / <a href="https://commons.wikimedia.org/wiki/File:Padlock.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by/2.0/">CC BY 2.0</a>。金融安全不只是一把锁，而是可证明的闭环。</figcaption>
+</figure>
 
 ## 引子：五起事故，五种"正确的失败"
 
