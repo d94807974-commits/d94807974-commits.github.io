@@ -10,6 +10,8 @@ summary: "私有化 Doris 的 fe.audit.log 要去中文，可日誌配置是 FE 
 ShowToc: true
 ---
 
+> 📊 **圖解版**：[設定生成流程、補丁驗證順序與三種模式](/visual/doris-audit-log-strip-chinese-with-ai.html)（單頁 HTML，由 answer-me-with-html 產生）
+
 > **一句話結論**：審計日誌的 log4j2 配置是 `org.apache.doris.common.Log4jConfig` 在 FE 啟動時拼出來的，所以要「抗重啟」，就得改這個生成器本身。整個補丁只替換 `doris-fe.jar` 裡的 **一個 class**；不全量編譯 Doris，而是用官方二進位制包的 `lib/*` 做 classpath，單獨編譯這一個類。
 >
 > 本文所有數字都來自這次的真實操作記錄。伺服器地址、主機名、叢集 ID、真實安裝路徑都已脫敏，命令裡統一用 `${DORIS_HOME}`、`./work`、`./src`、`$JAVA_HOME` 這類佔位符。

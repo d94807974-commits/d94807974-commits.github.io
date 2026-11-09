@@ -10,6 +10,8 @@ summary: "多個 MySQL → Kafka 行級 CDC 的落地筆記：場景與選型、
 ShowToc: true
 ---
 
+> 📊 **圖解版**：[架構圖、事件流、部署形態對比與工程問題清單](/visual/debezium-mysql-multi-source-kafka.html)（單頁 HTML，由 answer-me-with-html 產生）
+
 > **一句話結論**：要把多個 MySQL 的每一行變更推到 Kafka，並且希望「寫的程式碼越少越好、接手的人好維護」，優先考慮 **Kafka Connect（分散式模式）+ Debezium MySQL Connector**：純設定、按 GTID 記位點、多源統一管理。真正的難點不在部署，而在**消費端冪等、保序、快照和 binlog 保留**這些工程問題。
 >
 > 文中的主機、密碼、庫表一律是佔位符或通用範例（`<mysql1-host>`、`<kafka>:9092`、`<內網IP>`、`<強密碼>`、`shop.orders`），版本號請按實際情況調整。設定項名稱以 Debezium 2.x/3.x 官方文件為準。
@@ -90,7 +92,7 @@ Debezium 的 MySQL Connector 有兩種常見跑法：
 
 **多源的場景推薦 Kafka Connect**：源越多，統一的 REST 管理和集中存放的位點就越省心，接手的人也只需要掌握一套操作。下面的部署流程以它為主，Debezium Server 的單源設定放在附錄。
 
-整體架構：
+整體架構（圖形版見[圖解版](/visual/debezium-mysql-multi-source-kafka.html)的「整體架構」面板）：
 
 ```text
   +-----------+    +-----------+    +-----------+

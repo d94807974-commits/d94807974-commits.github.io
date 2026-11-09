@@ -8,6 +8,8 @@ summary: "按「Web 可配 + MySQL/SQL Server 源 + Kafka/Doris/ClickHouse 目�
 ShowToc: true
 ---
 
+> 📊 **圖解版**：[目標鏈路、全量切增量流程與橫向對比](/visual/realtime-cdc-sync-opensource-comparison.html)（單頁 HTML，由 answer-me-with-html 產生）
+
 > **調研邊界（請先讀）**：本文只討論同時滿足下列條件的開源專案——① 有 Web 頁面可配置任務；② 源端至少覆蓋 **MySQL 與 SQL Server**；③ 目標端覆蓋 **Kafka、Apache Doris、ClickHouse**（或可明確組合達成）；④ 支援 **全量 + 增量**（CDC / binlog / CDC 日誌類，而非僅定時 JDBC 批抽）；⑤ GitHub **stargazers_count > 1000**；⑥ OSI/ASF 友好開源許可（Apache-2.0 等）。Star、license、最近 push 一律以 `gh api repos/<owner>/<repo>` 在 **2026-11-05** 拉取為準；功能以官方文件頁面為準，**不憑記憶斷言**。未能開啟或無法交叉驗證的點，會在文末「未能核實」列出。
 
 <figure>
@@ -169,7 +171,7 @@ Browser ──► SeaTunnel Web (8801)
 
 ## 四附、特別分析：DBSyncer 2.1.6（功能匹配，star 未過 1k）
 
-> **口徑**：仍列在「未入選」——本文硬門檻是 GitHub **stars > 1000**；2026-11-05 核實 [86dbs/dbsyncer](https://github.com/86dbs/dbsyncer) 為 **954★ / 156 forks / Apache-2.0**，最新 tag **`v2.1.6`**（annotated tag → commit `d0aa992e`，提交說明 `!621 pg增量调整`，UTC 2026-11-03 11:04；換算 Asia/Singapore = 2026-11-03 19:04）。`master` 在 tag 之後仍有若干「外掛增加刪除」提交（分析以 **v2.1.6** 檢出為準）。GitHub **Releases 列表為空**（發版靠 tag）；**無 `.github/workflows` CI**。貢獻者 API 前列：`86dbs`(2210)、`Pengnd`(519)、`lifejwang11`(66) 等。官網 [dbsyncer.cn](https://dbsyncer.cn)。
+> **口徑**：仍列在「未入選」——本文硬門檻是 GitHub **stars > 1000**；2026-11-05 核實 [86dbs/dbsyncer](https://github.com/86dbs/dbsyncer) 為 **954★ / 156 forks / Apache-2.0**，最新 tag **`v2.1.6`**（annotated tag → commit `d0aa992e`，提交說明 `!621 pg增量调整`，UTC 2026-11-03 11:04；換算 Asia/Singapore = 2026-11-03 19:04）。`master` 在 tag 之後仍有數個「外掛增加刪除」提交（分析以 **v2.1.6** 檢出為準）。GitHub **Releases 列表為空**（發版靠 tag）；**無 `.github/workflows` CI**。貢獻者 API 前列：`86dbs`(2210)、`Pengnd`(519)、`lifejwang11`(66) 等。官網 [dbsyncer.cn](https://dbsyncer.cn)。
 
 ### 為何單獨寫一節
 
@@ -237,7 +239,7 @@ Browser ──► dbsyncer-web (Thymeleaf, 預設 :18686, README: admin/admin)
 
 **劣勢**：star < 1k、無 GitHub Releases/Actions；Boot 2.5 / Kafka 0.11 技術債；預設口令與範例庫密碼；ClickHouse「增量源」實為游標輪詢；一致性語義弱於 Flink CDC exactly-once 體系；開源叢集能力需自行驗證。
 
-**適合**：中小團隊、單機/小叢集、要快速打通 MySQL 或 SQL Server → Kafka/Doris（及 CH 目標寫入）、可接受自行加固安全與依賴升級。  
+**適合**：中小團隊、單機/小叢集、要快速建立 MySQL 或 SQL Server → Kafka/Doris（及 CH 目標寫入）、可接受自行加固安全與依賴升級。  
 **更適合改用入選方案的情況**：要強 exactly-once、大規模多租戶、或必須 star/ASF 生態背書 → SeaTunnel / InLong / Flink CDC+Dinky / TIS。
 
 ### 生產補強清單（若採用 2.1.6）
@@ -262,7 +264,7 @@ Browser ──► dbsyncer-web (Thymeleaf, 預設 :18686, README: admin/admin)
 
 ## 五、場景選型建議
 
-1. **要一條鏈路打通 MySQL+SQL Server → Kafka/Doris/ClickHouse，且希望少疊平臺**  
+1. **要用一條鏈路串起 MySQL+SQL Server → Kafka/Doris/ClickHouse，且希望少疊平臺**  
    → 優先 **SeaTunnel + SeaTunnel Web**；上線前做 Web↔引擎版本相容矩陣與一次全量切增量演練。
 
 2. **已有 Flink 平臺，要強流處理/複雜 SQL**  
