@@ -1,0 +1,29 @@
+{{- $posts := where (where site.RegularPages "Section" "posts") "Draft" false -}}
+# {{ site.Title }}
+
+> {{ site.Params.description }} 全站繁體中文（臺灣用語）；程式碼與註解為英文。
+
+本站每一頁都有 Markdown 版：把文章網址結尾的 `/` 換成 `/index.md` 即可（例如 `{{ site.BaseURL }}posts/<slug>/index.md`）。Markdown 版保留原始 front matter（標題、日期、摘要、標籤、原文網址）與正文；每篇正文開頭的 `> [!VIEWPOINT] 核心觀點` 區塊是本文立場。
+
+- 全部文章全文（單一檔案）：{{ "llms-full.txt" | absURL }}
+- RSS（全文）：{{ "index.xml" | absURL }}
+- JSON Feed（全文）：{{ "feed.json" | absURL }}
+- Sitemap：{{ "sitemap.xml" | absURL }}
+
+## 文章
+
+{{ range $posts.ByDate.Reverse -}}
+- [{{ .Title }}]({{ with .OutputFormats.Get "markdown" }}{{ .Permalink }}{{ end }}): {{ .Params.summary | default .Description | default .Summary | plainify | truncate 160 | htmlUnescape }}
+{{ end }}
+## 站務
+
+{{ range where site.RegularPages "Section" "" -}}
+- [{{ .Title }}]({{ with .OutputFormats.Get "markdown" }}{{ .Permalink }}{{ end }}): {{ .Params.description | default .Summary | plainify | truncate 120 | htmlUnescape }}
+{{ end }}
+## Optional
+
+{{ range os.ReadDir "static/visual" -}}
+{{ if strings.HasSuffix .Name ".html" -}}
+- [圖解版：{{ strings.TrimSuffix ".html" .Name }}]({{ printf "visual/%s" .Name | absURL }}): 對應文章的單頁 HTML 圖解（由 answer-me-with-html 產生）
+{{ end -}}
+{{ end -}}

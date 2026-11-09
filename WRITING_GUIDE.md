@@ -12,7 +12,7 @@
 
 1. 以**工程師視角**寫作：先場景，再方案，最後工程問題。
 2. 每個工程問題按「**現象 / 原因 / 做法**」三段寫。
-3. **結論先行**：文章開頭用一兩句話給出結論，正文提供證據。
+3. **結論先行，開頭點明核心觀點**：每篇正文最開頭（有圖解版時放在圖解版連結之後）放一個「核心觀點」區塊，用一兩句話點明本文立場或結論；寫法固定為 `> [!VIEWPOINT] 核心觀點`，下一行接 `> 觀點句`。只提煉正文已有的內容，不新增事實。正文負責提供證據。
 4. 先寫取捨與邊界，再寫優點；不寫沒有邊界的推薦。
 
 ## 三、事實與來源
@@ -56,5 +56,12 @@
 - [ ] 去識別化：grep 檢查 IP、主機名、電子郵件、真實路徑與帳號。
 - [ ] 建置：`hugo --minify` 無錯誤，文章出現在輸出中（注意 date 不可晚於現在）。
 - [ ] 圖解版：`am render` 無 STE 與程式碼警告，頁面無外部請求。
-- [ ] 連結：部署後文章、圖解版與參考連結回應 200。
+- [ ] 核心觀點：正文開頭有 `> [!VIEWPOINT] 核心觀點` 區塊，一兩句話，與正文一致。
+- [ ] AI 友善輸出：建置後 `public/posts/<slug>/index.md` 存在且含 front matter；`public/llms.txt` 列出新文章、`public/llms-full.txt` 含其全文、`public/feed.json` 可被 JSON 解析。這些檔案由 Hugo 範本自動產生，不手寫。
+- [ ] 連結：部署後文章、圖解版、`index.md`、`llms.txt`、`llms-full.txt`、`feed.json` 與參考連結回應 200。
 - [ ] 提交：一般 commit 推送 main，不用 force push。
+
+## 九、版面與 AI 友善存取
+
+1. 樣式只改 `assets/css/extended/custom.css`，不改 PaperMod 主題檔案。表格直接用 Markdown 表格，桌面自動換行，窄螢幕才允許橫向捲動。
+2. 每頁自動輸出 Markdown 版（`<文章網址>index.md`），並由範本產生 `/llms.txt`、`/llms-full.txt`、全文 RSS（`/index.xml`）、JSON Feed（`/feed.json`）、`/sitemap.xml` 與 `/robots.txt`。說明見 `content/about.md`（網站 /about/）。

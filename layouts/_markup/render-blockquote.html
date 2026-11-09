@@ -1,0 +1,15 @@
+{{- if and (eq .Type "alert") (eq .AlertType "viewpoint") -}}
+<div class="viewpoint" role="note">
+  <p class="viewpoint-title">{{ with .AlertTitle }}{{ . }}{{ else }}核心觀點{{ end }}</p>
+  {{ .Text }}
+</div>
+{{- else if eq .Type "alert" -}}
+<blockquote class="alert alert-{{ .AlertType }}">
+  <p><strong>{{ with .AlertTitle }}{{ . }}{{ else }}{{ .AlertType | strings.FirstUpper }}{{ end }}</strong></p>
+  {{ .Text }}
+</blockquote>
+{{- else -}}
+<blockquote{{ with .Attributes.class }} class="{{ . }}"{{ end }}>
+  {{ .Text }}
+</blockquote>
+{{- end -}}

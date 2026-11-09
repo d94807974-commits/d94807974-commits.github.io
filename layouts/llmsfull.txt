@@ -1,0 +1,16 @@
+{{- $posts := where (where site.RegularPages "Section" "posts") "Draft" false -}}
+# {{ site.Title }} — 全文
+
+> {{ site.Params.description }} 本檔依日期新到舊收錄全部文章的 Markdown 原文，另附「關於」與「寫作規範」。文章索引見 {{ "llms.txt" | absURL }}。
+{{ range $posts.ByDate.Reverse }}
+
+<!-- ===== {{ .Permalink }} ===== -->
+
+{{ partial "md-doc.md" . }}
+{{ end }}
+{{- range where site.RegularPages "Section" "" }}
+
+<!-- ===== {{ .Permalink }} ===== -->
+
+{{ partial "md-doc.md" . }}
+{{ end -}}

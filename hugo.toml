@@ -3,6 +3,7 @@ title = "Donald's Blog"
 locale = "zh-TW"
 defaultContentLanguage = "zh-tw"
 hasCJKLanguage = true
+enableRobotsTXT = true
 theme = "PaperMod"
 [[menu.main]]
 name = "文章"
@@ -21,6 +22,11 @@ weight = 3
 unsafe = true
 
 [params]
+env = "production"
+author = "Donald"
+description = "工程師視角的技術筆記與讀書筆記：資料同步、系統設計、資安、技術管理。"
+ShowFullTextinRSS = true
+ShowReadingTime = true
 
 [params.homeInfoParams]
 Title = "Donald's Blog"
@@ -28,8 +34,45 @@ Content = """
 工程師視角的技術筆記與讀書筆記。本站寫作自我要求（完整版見 [寫作規範](/writing-standards/)）：
 
 - **繁體中文**寫作；程式碼、命令與註解用英文。
-- **結論先行**；先場景，再方案，再工程問題（現象 / 原因 / 做法）。
+- **結論先行**：每篇開頭用「核心觀點」區塊一兩句話點明立場；先場景，再方案，再工程問題（現象 / 原因 / 做法）。
 - **事實有來源**：區分實測與文件依據，不捏造資料。
 - **去識別化**：不寫公司、個人、IP、主機名與真實目錄，一律用 placeholder。
 - 每篇技術文附 **圖解版** 單頁 HTML；分析他人文章註明出處，不大段抄錄。
+- **AI 友善**：每頁有 Markdown 版，另有 [llms.txt](/llms.txt)、[llms-full.txt](/llms-full.txt)、[全文 RSS](/index.xml)、[JSON Feed](/feed.json)。
 """
+
+# ---- AI-friendly outputs: Markdown copy per page, llms.txt, llms-full.txt, JSON Feed ----
+[mediaTypes."application/feed+json"]
+suffixes = ["json"]
+
+[outputFormats.markdown]
+mediaType = "text/markdown"
+baseName = "index"
+isPlainText = true
+rel = "alternate"
+permalinkable = false
+
+[outputFormats.llms]
+mediaType = "text/plain"
+baseName = "llms"
+isPlainText = true
+rel = "alternate"
+
+[outputFormats.llmsfull]
+mediaType = "text/plain"
+baseName = "llms-full"
+isPlainText = true
+rel = "alternate"
+
+[outputFormats.jsonfeed]
+mediaType = "application/feed+json"
+baseName = "feed"
+isPlainText = true
+rel = "alternate"
+
+[outputs]
+home = ["html", "rss", "llms", "llmsfull", "jsonfeed"]
+section = ["html", "rss"]
+page = ["html", "markdown"]
+taxonomy = ["html"]
+term = ["html", "rss"]

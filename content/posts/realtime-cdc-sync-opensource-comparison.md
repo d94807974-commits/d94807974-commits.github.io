@@ -10,6 +10,9 @@ ShowToc: true
 
 > 📊 **圖解版**：[目標鏈路、全量切增量流程與橫向對比](/visual/realtime-cdc-sync-opensource-comparison.html)（單頁 HTML，由 answer-me-with-html 產生）
 
+> [!VIEWPOINT] 核心觀點
+> 要用一條帶 Web 設定的鏈路把 MySQL 與 SQL Server 全量加增量同步到 Kafka、Doris、ClickHouse，優先選 SeaTunnel 加 SeaTunnel Web；已有 Flink 平臺就選 Flink CDC 搭配 Dinky 或 StreamPark。DBSyncer 功能吻合但 star 未過 1k，只適合能接受自行加固的單機場景。
+
 > **調研邊界（請先讀）**：本文只討論同時滿足下列條件的開源專案——① 有 Web 頁面可配置任務；② 源端至少覆蓋 **MySQL 與 SQL Server**；③ 目標端覆蓋 **Kafka、Apache Doris、ClickHouse**（或可明確組合達成）；④ 支援 **全量 + 增量**（CDC / binlog / CDC 日誌類，而非僅定時 JDBC 批抽）；⑤ GitHub **stargazers_count > 1000**；⑥ OSI/ASF 友好開源許可（Apache-2.0 等）。Star、license、最近 push 一律以 `gh api repos/<owner>/<repo>` 在 **2026-11-05** 拉取為準；功能以官方文件頁面為準，**不憑記憶斷言**。未能開啟或無法交叉驗證的點，會在文末「未能核實」列出。
 
 <figure>

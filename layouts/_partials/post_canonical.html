@@ -1,0 +1,11 @@
+{{ if and (.Params.canonicalURL) (.Params.ShowCanonicalLink ) -}}
+{{ $url := urls.Parse .Params.canonicalURL }}
+
+{{- if or .Params.author site.Params.author (.Param "ShowReadingTime") (not .Date.IsZero) .IsTranslated (or .Params.editPost.URL site.Params.editPost.URL) }}&nbsp;|&nbsp;{{- end -}}
+<span>
+    {{- (site.Params.CanonicalLinkText | default .Params.CanonicalLinkText) | default "Originally published at" -}}
+    &nbsp;<a href="{{ trim .Params.canonicalURL " " }}" title="{{ trim .Params.canonicalURL " " }}" target="_blank" rel="noopener noreferrer">{{ $url.Host }}</a>
+</span>
+{{- end }}
+{{- /* Site addition: link to the Markdown copy of this page (AI-friendly access) */ -}}
+{{- with .OutputFormats.Get "markdown" }}&nbsp;·&nbsp;<span class="md-alt"><a href="{{ .RelPermalink }}" type="text/markdown" title="本頁的 Markdown 原文">Markdown 版</a></span>{{- end }}

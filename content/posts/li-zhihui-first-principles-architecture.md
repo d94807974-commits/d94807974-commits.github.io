@@ -8,6 +8,8 @@ summary: "通讀李智慧的《大型網站技術架構》、《從0開始學大
 ShowToc: true
 ---
 
+> [!VIEWPOINT] 核心觀點
+> 技術世界裡真正需要掌握的原理並不多，它們只是在不同尺度上一遍遍出現。架構師的本事，是在新問題裡認出老原理。
 
 <figure>
 <img src="/images/li-zhihui-first-principles-architecture/servers.jpg" alt="機架伺服器" loading="lazy" width="700">

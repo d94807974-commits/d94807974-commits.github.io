@@ -12,8 +12,9 @@ ShowToc: true
 
 > 📊 **圖解版**：[架構圖、事件流、部署形態對比與工程問題清單](/visual/debezium-mysql-multi-source-kafka.html)（單頁 HTML，由 answer-me-with-html 產生）
 
-> **一句話結論**：要把多個 MySQL 的每一行變更推到 Kafka，並且希望「寫的程式碼越少越好、接手的人好維護」，優先考慮 **Kafka Connect（分散式模式）+ Debezium MySQL Connector**：純設定、按 GTID 記位點、多源統一管理。真正的難點不在部署，而在**消費端冪等、保序、快照和 binlog 保留**這些工程問題。
->
+> [!VIEWPOINT] 核心觀點
+> 把多個 MySQL 的行級變更推到 Kafka，優先選 Kafka Connect（分散式模式）加 Debezium：純設定、按 GTID 記位點、多源統一管理。真正的難點不在部署，而在消費端冪等、保序、快照與 binlog 保留。
+
 > 文中的主機、密碼、庫表一律是佔位符或通用範例（`<mysql1-host>`、`<kafka>:9092`、`<內網IP>`、`<強密碼>`、`shop.orders`），版本號請按實際情況調整。設定項名稱以 Debezium 2.x/3.x 官方文件為準。
 
 ## 一、場景：為什麼需要行級 CDC
