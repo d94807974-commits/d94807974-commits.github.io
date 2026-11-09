@@ -49,13 +49,25 @@ ShowToc: true
 
 下表 star / license / 最近 push 均為 **2026-11-05** 經 GitHub REST API 核實（UTC 時間已換算備註）。
 
-| 方案 | 倉庫 | Stars | License | 最近 push (UTC) | Web | MySQL | SQL Server | Kafka | Doris | ClickHouse | 全量+增量 |
-|------|------|------:|---------|-----------------|-----|-------|------------|-------|-------|------------|-----------|
-| SeaTunnel + SeaTunnel Web | [apache/seatunnel](https://github.com/apache/seatunnel) + [apache/seatunnel-web](https://github.com/apache/seatunnel-web) | **9788** / **888** | Apache-2.0 | 2026-11-04 / 2026-01-22 | ✅ Web（獨立倉） | ✅ MySQL-CDC | ✅ SqlServer-CDC | ✅ | ✅ | ✅ | ✅ `startup.mode=initial` |
-| Apache InLong | [apache/inlong](https://github.com/apache/inlong) | **1507** | Apache-2.0 | 2026-09-16 | ✅ Dashboard | ✅ Extract | ✅ Extract | ✅ Load | ✅ Load | ✅ Load | ✅ 同步場景 |
-| Flink CDC + Dinky | [apache/flink-cdc](https://github.com/apache/flink-cdc) + [DataLinkDC/dinky](https://github.com/DataLinkDC/dinky) | **6492** / **3779** | Apache-2.0 | 2026-11-05 / 2026-10-22 | ⚠️ CDC 本身無 Web；Dinky 提供 | ✅ | ✅ Pipeline 3.7 | ✅ Pipeline sink | ✅ Pipeline sink | ⚠️ Pipeline 無官方 CH sink，需 Flink SQL/其他 | ✅ |
-| Flink CDC + StreamPark | 同上 + [apache/streampark](https://github.com/apache/streampark) | **6492** / **4346** | Apache-2.0 | 同上 / 2026-10-31 | ⚠️ 同上，StreamPark 管 Flink 作業 | ✅ | ✅ | ✅ | ✅ | ⚠️ 同上 | ✅ |
-| TIS | [datavane/tis](https://github.com/datavane/tis) | **1440** | Apache-2.0 | 2026-11-04 | ✅ Console | ✅ Flink-CDC + DataX | ✅ Flink-CDC + DataX | ✅ | ✅ | ✅ | ✅ 批次 DataX + 即時 Flink-CDC |
+**表 1｜專案概況：倉庫、star、授權、活躍度與 Web 介面**
+
+| 方案 | 倉庫 | Stars | License | 最近 push (UTC) | Web |
+| ------ | ------ | ------: | --------- | ----------------- | ----- |
+| SeaTunnel + SeaTunnel Web | [apache/seatunnel](https://github.com/apache/seatunnel) + [apache/seatunnel-web](https://github.com/apache/seatunnel-web) | **9788** / **888** | Apache-2.0 | 2026-11-04 / 2026-01-22 | ✅ Web（獨立倉） |
+| Apache InLong | [apache/inlong](https://github.com/apache/inlong) | **1507** | Apache-2.0 | 2026-09-16 | ✅ Dashboard |
+| Flink CDC + Dinky | [apache/flink-cdc](https://github.com/apache/flink-cdc) + [DataLinkDC/dinky](https://github.com/DataLinkDC/dinky) | **6492** / **3779** | Apache-2.0 | 2026-11-05 / 2026-10-22 | ⚠️ CDC 本身無 Web；Dinky 提供 |
+| Flink CDC + StreamPark | 同上 + [apache/streampark](https://github.com/apache/streampark) | **6492** / **4346** | Apache-2.0 | 同上 / 2026-10-31 | ⚠️ 同上，StreamPark 管 Flink 作業 |
+| TIS | [datavane/tis](https://github.com/datavane/tis) | **1440** | Apache-2.0 | 2026-11-04 | ✅ Console |
+
+**表 2｜能力對比：來源端、目標端與全量+增量支援**
+
+| 方案 | MySQL | SQL Server | Kafka | Doris | ClickHouse | 全量+增量 |
+| ------ | ------- | ------------ | ------- | ------- | ------------ | ----------- |
+| SeaTunnel + SeaTunnel Web | ✅ MySQL-CDC | ✅ SqlServer-CDC | ✅ | ✅ | ✅ | ✅ `startup.mode=initial` |
+| Apache InLong | ✅ Extract | ✅ Extract | ✅ Load | ✅ Load | ✅ Load | ✅ 同步場景 |
+| Flink CDC + Dinky | ✅ | ✅ Pipeline 3.7 | ✅ Pipeline sink | ✅ Pipeline sink | ⚠️ Pipeline 無官方 CH sink，需 Flink SQL/其他 | ✅ |
+| Flink CDC + StreamPark | ✅ | ✅ | ✅ | ✅ | ⚠️ 同上 | ✅ |
+| TIS | ✅ Flink-CDC + DataX | ✅ Flink-CDC + DataX | ✅ | ✅ | ✅ | ✅ 批次 DataX + 即時 Flink-CDC |
 
 > **關於 SeaTunnel Web 888★**：單獨未過 1k，但它是 ASF 官方 Web 控制台，與引擎同屬 SeaTunnel 生態；本文按「引擎 star>1k + 官方 Web」入選，並在對比裡標明 Web 倉活躍度（最近 push 停在 2026-01，需關注版本繫結）。
 
