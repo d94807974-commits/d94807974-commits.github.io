@@ -92,7 +92,7 @@ ShowToc: true
 
 ### 《精要主義》：做"對的事"
 
-出版社的定位一句話說清了這本書："Essentialism isn't about getting more done in less time. It's about getting only the right things done."（精要主義不是在更少的時間裡做更多事，而是隻做對的事。）
+出版社的定位一句話說清了這本書："Essentialism isn't about getting more done in less time. It's about getting only the right things done."（精要主義不是在更少的時間裡做更多事，而是只做對的事。）
 
 天下文化刊出的前言書摘裡，作者講了一段親身經歷：女兒剛出生幾個小時，同事寫信說那天下午的客戶會需要他出席，他去了。事後他承認那場會「毫無成果可言」，自己「在想讓每個人都開心的情況下，我犧牲了最要緊的事」。他從中得到的教訓是：
 

@@ -40,7 +40,7 @@ ShowToc: true
 4. **全量切增量是否平滑**：`startup.mode=initial`、checkpoint、exactly-once、DDL。
 5. **許可證與 star**：商業分發、二次開發、社群活躍度。
 
-跨地域補充一句：若同步鏈路兩端跨大洲（例如控制面/作業在新加坡、Doris 在墨西哥），RTT 與跨洋頻寬會放大 checkpoint 與 Stream Load 延遲；選型時優先選**可把 sink 寫路徑貼近目標叢集**、或**中間以同區域 Kafka 解耦**的架構，而不是隻看功能 checklist。
+跨地域補充一句：若同步鏈路兩端跨大洲（例如控制面/作業在新加坡、Doris 在墨西哥），RTT 與跨洋頻寬會放大 checkpoint 與 Stream Load 延遲；選型時優先選**可把 sink 寫路徑貼近目標叢集**、或**中間以同區域 Kafka 解耦**的架構，而不是只看功能 checklist。
 
 ## 二、入選專案（滿足或「組合滿足」）
 
