@@ -338,4 +338,4 @@ Browser ──► dbsyncer-web (Thymeleaf, 預設 :18686, README: admin/admin)
 
 ---
 
-*釋出說明：配圖均來自 Apache 專案官方資源（Apache-2.0），壓縮後 <300KB，託管於本站靜態目錄。初版核實 2026-11-05；同日增補 DBSyncer 2.1.6 原始碼特別分析（Asia/Singapore）。*
+*發布說明：配圖均來自 Apache 專案官方資源（Apache-2.0），壓縮後 <300KB，託管於本站靜態目錄。初版核實 2026-11-05；同日增補 DBSyncer 2.1.6 原始碼特別分析（Asia/Singapore）。*
