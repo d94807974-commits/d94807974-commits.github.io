@@ -1,6 +1,6 @@
 baseURL = "https://d94807974-commits.github.io/"
 title = "Donald's Blog"
-languageCode = "zh-TW"
+locale = "zh-TW"
 defaultContentLanguage = "zh-tw"
 hasCJKLanguage = true
 theme = "PaperMod"
@@ -9,9 +9,27 @@ name = "文章"
 url = "/posts/"
 weight = 1
 [[menu.main]]
+name = "寫作規範"
+url = "/writing-standards/"
+weight = 2
+[[menu.main]]
 name = "關於"
 url = "/about/"
-weight = 2
+weight = 3
 
 [markup.goldmark.renderer]
 unsafe = true
+
+[params]
+
+[params.homeInfoParams]
+Title = "Donald's Blog"
+Content = """
+工程師視角的技術筆記與讀書筆記。本站寫作自我要求（完整版見 [寫作規範](/writing-standards/)）：
+
+- **繁體中文**寫作；程式碼、命令與註解用英文。
+- **結論先行**；先場景，再方案，再工程問題（現象 / 原因 / 做法）。
+- **事實有來源**：區分實測與文件依據，不捏造資料。
+- **去識別化**：不寫公司、個人、IP、主機名與真實目錄，一律用 placeholder。
+- 每篇技術文附 **圖解版** 單頁 HTML；分析他人文章註明出處，不大段抄錄。
+"""
