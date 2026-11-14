@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Windmill on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/windmill/</link><description>Recent content in Windmill on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Thu, 12 Nov 2026 11:58:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/windmill/index.xml" rel="self" type="application/rss+xml"/><item><title>從 crontab 到 AI 驅動的任務平臺：Python 定時任務的開源選型與工程實踐（Dagu / Windmill / Kestra）</title><link>https://d94807974-commits.github.io/posts/python-scheduler-dagu-windmill-kestra-selection/</link><pubDate>Thu, 12 Nov 2026 11:58:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/python-scheduler-dagu-windmill-kestra-selection/</guid><description>把 Python 報表、監控和補數指令碼從 crontab 遷到任務平臺時，如何比較 Dagu、Windmill 和 Kestra：先分清 AI 建立任務與任務執行呼叫 AI，再定義執行契約、業務時間視窗、冪等重試、重疊策略，最後按現有資產選型。依據官方文件整理，不含部署實測或效能排名。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/python-scheduler-dagu-windmill-kestra-selection.html">三個平臺的定位、執行契約與遷移步驟</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>讓 AI 幫你建立定時任務不難，Dagu、Windmill、Kestra 都有路徑；難的是讓每次執行都可重跑、可追蹤、可恢復。先定義執行契約、固定業務時間視窗、設計冪等和重疊策略，再按現有指令碼資產選平臺：指令碼多選 Dagu，要網頁開發和參數頁面選 Windmill，跨系統流程多選 Kestra。</p>
+</div><blockquote>
+  <p><strong>適用對象與邊界</strong>：面向已有 Python 報表、資料庫監控、ETL 和補數指令碼的資料工程團隊。平臺能力依據官方文件整理，查核日期 2026-11-12（Asia/Singapore）。選型結論屬於工程判斷，本文沒有平臺部署實測，也沒有效能或可靠性排名。</p>
+
+</blockquote><p>很多資料工程團隊的任務系統，最初只有幾行 crontab：每十分鐘檢查資料延遲，每小時生成業務報表，凌晨執行資料回溯。指令碼越來越多之後，真正耗時間的事變成了查日誌、補任務、處理環境差異，以及確認失敗重試會不會重複寫入。</p>
+<p>於是出現一個自然的需求：能不能對 AI 說一句「建立一個每十分鐘執行的 Python 監控任務」，讓它完成設定，再在網頁裡檢視執行狀態？</p>
+<p>可以。Dagu、Windmill 和 Kestra 都提供了相關路徑。但把自然語言轉成設定，只解決了任務管理的一部分。生產環境裡更難的是：每次執行都有明確的資料範圍，結果可追蹤，失敗後可恢復。</p>
+<h2 id="一先分清ai-建立任務與任務執行呼叫-ai">一、先分清：AI 建立任務，與任務執行呼叫 AI</h2>
+<p>「AI 任務平臺」常常混合了三種能力。</p>
+<table>
+	<thead>
+			<tr>
+					<th>能力</th>
+					<th>具體行為</th>
+					<th>每次執行都需要模型嗎</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>AI 輔助開發</td>
+					<td>生成 Python、SQL 或工作流設定，由人部署</td>
+					<td>不需要</td>
+			</tr>
+			<tr>
+					<td>AI 操作平臺</td>
+					<td>透過 API、CLI 或 MCP 建立排程、執行任務、讀取日誌</td>
+					<td>取決於是否繼續讓 AI 操作</td>
+			</tr>
+			<tr>
+					<td>工作流內呼叫 AI</td>
+					<td>每次執行時讓模型分類、總結或決定下一步</td>
+					<td>通常需要</td>
+			</tr>
+	</tbody>
+</table>
+<p>一般 Python 報表和監控，優先選前兩種。AI 生成設定，設定經驗證後交給排程器執行。這樣即使模型介面暫時不可用，已部署的一般任務也不必停止。</p>
+<p>MCP 可以理解為 AI 使用平臺工具的標準介面。它不會自動賦予平臺沒有實現的能力：有的 MCP 服務只能查詢文件，有的可以修改任務。接入之前，先確認它實際暴露了哪些工具。</p>
+<h2 id="二三個平臺三條不同路徑">二、三個平臺，三條不同路徑</h2>
+<table>
+	<thead>
+			<tr>
+					<th>維度</th>
+					<th>Dagu</th>
+					<th>Windmill</th>
+					<th>Kestra</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>核心定位</td>
+					<td>在現有命令和指令碼外增加工作流管理</td>
+					<td>將程式碼組織成指令碼、流程、API 和內部應用</td>
+					<td>用宣告式流程編排資料與系統任務</td>
+			</tr>
+			<tr>
+					<td>AI 建立入口</td>
+					<td>外部 AI 透過內建 MCP 操作服務</td>
+					<td>網頁 AI 會話、排程提示詞，也有 MCP</td>
+					<td>網頁 Copilot，或外部編碼助手配合 CLI</td>
+			</tr>
+			<tr>
+					<td>Python 遷移方式</td>
+					<td>保留原指令碼，透過命令執行</td>
+					<td>按平臺指令碼方式接入，或選擇其他執行方式</td>
+					<td>透過 Python 任務和執行器組織執行</td>
+			</tr>
+			<tr>
+					<td>主要優勢</td>
+					<td>既有指令碼改動少，基礎部署輕</td>
+					<td>開發和操作集中在網頁，易做參數頁面</td>
+					<td>多步驟依賴和跨系統流程表達清晰</td>
+			</tr>
+			<tr>
+					<td>重點核查</td>
+					<td>執行節點環境、狀態備份、所需管理功能版本</td>
+					<td>依賴解析、Worker 環境、AI 與企業功能邊界</td>
+					<td>外掛與執行器版本、模型提供商與版本限制</td>
+			</tr>
+	</tbody>
+</table>
+<p>這張表比較的是定位，不是吞吐量或可靠性測試結果。三者都有開源、自部署路徑，但不能據此推斷所有網頁功能都包含在免費版本中。[1][7][11]</p>
+<h3 id="dagu給已有指令碼增加一層管理">Dagu：給已有指令碼增加一層管理</h3>
+<p>Dagu 的官方定位，是用 YAML 描述現有命令和工具，再增加排程、重試、日誌與 Web 介面。基礎形態是單一二進位檔，狀態儲存在本地檔案，不要求外部資料庫。[1]</p>
+<p>這很適合已有大量指令碼的環境。原來的執行命令可能是：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>/opt/conda/envs/py312/bin/python /opt/jobs/report.py --once
+</span></span></code></pre></div><p>遷移時先保留業務程式碼，只把執行頻率、依賴和失敗處理交給平臺。不要在第一步就重寫全部報表。</p>
+<p>AI 方面，Dagu 官方提供兩條路徑：[2]</p>
+<ul>
+<li>工作流裡呼叫模型，或讓模型決定下一個步驟。</li>
+<li>外部 AI 透過 Dagu 服務自帶的 MCP 端點檢視和操作工作流。</li>
+</ul>
+<p>MCP 快速入門列出三個核心工具：<code>dagu_read</code>、<code>dagu_change</code>、<code>dagu_execute</code>。修改工作流時，先用預覽模式，再套用。API Key 的角色也分級：viewer 唯讀，operator 可以執行和停止工作流，developer 可以建立和編輯工作流。[3]</p>
+<p>所以給 AI 的權限要按需求設定：只想讓它查日誌，用 viewer 就夠了。</p>
+<p>Dagu 適合「我已經有指令碼，想讓 AI 幫我管理指令碼」。注意：本機直譯器路徑只在實際執行節點上存在才有效。Dagu 如果執行在容器裡，也不會自然擁有宿主機的 Conda 環境。</p>
+<h3 id="windmill讓-python-指令碼成為可操作的內部工具">Windmill：讓 Python 指令碼成為可操作的內部工具</h3>
+<p>Windmill 更強調圍繞程式碼組織完整的開發和使用流程。官方 AI 會話可以建立、編輯指令碼和流程，並把變更儲存為草稿，由人審閱差異後再部署。排程頁面支援 cron、簡化設定和 AI 提示詞。[4][5]</p>
+<p>它適合另一種需求：除了定時執行，還希望業務人員開啟網頁，選擇日期、渠道和業務線，手動生成報告。</p>
+<p>Python 依賴管理是 Windmill 的特點。它解析指令碼頂層的 import，生成依賴鎖定檔，並提供顯式依賴宣告和 Python 版本設定方式。[6]</p>
+<p>便利也有邊界：</p>
+<ul>
+<li>import 名稱不一定等於安裝包名稱。</li>
+<li>函式內部的動態匯入可能無法被自動發現。</li>
+<li>內部公共模組、系統動態庫和私有包源，仍要顯式處理。</li>
+</ul>
+<p>對生產任務來說，自動解析依賴提高開發效率，固定並驗證依賴版本才提高可重現性。</p>
+<p>如果你想在平臺裡完成「AI 寫指令碼、測試、設定參數、定時執行」，Windmill 值得優先驗證。它的社群版與企業版有功能劃分，上線前應對照自己的功能清單逐項確認。[7]</p>
+<h3 id="kestra把多個任務組織成可維護的流程">Kestra：把多個任務組織成可維護的流程</h3>
+<p>Kestra 的重點是宣告式工作流：把 Python、資料庫、HTTP 和其他操作組織為任務，再加上依賴、條件、重試和觸發器。官方提供 Python 指令碼和相關執行方式。[8]</p>
+<p>例如，一個小時報表流程可以拆成五步：</p>
+<ol>
+<li>檢查資料同步是否達到新鮮度要求。</li>
+<li>確定本次統計的時間視窗。</li>
+<li>執行 Python 查詢和計算。</li>
+<li>發布結果。</li>
+<li>傳送訊息並記錄狀態。</li>
+</ol>
+<p>拆分後，失敗節點更容易定位。但跨步驟的資料交接、執行器環境和發布冪等，也要一併設計。</p>
+<p>Kestra 的 AI 路徑要分清兩條：[9][10]</p>
+<ul>
+<li>內建 Copilot 可以生成和修改流程。</li>
+<li>外部編碼助手可以用文件 MCP 獲取即時模式資訊，再透過 kestractl 驗證和部署。文件 MCP 是公開的唯讀服務，由 Kestra 託管，不會連線你的實例。</li>
+</ul>
+<p>截至核查日期，官方文件寫明：開源版內建 Copilot 支援 Google Gemini；Amazon Bedrock、Anthropic、Azure OpenAI、DeepSeek、Mistral、OpenAI、OpenRouter 和 Ollama 等提供商列在企業版的支援範圍。[11] 這個限制針對內建 Copilot 的提供商設定，不能直接外推到工作流內的模型呼叫，也不能外推到外部助手的用法。</p>
+<h2 id="三python-任務遷移先定義執行契約">三、Python 任務遷移：先定義執行契約</h2>
+<p>選型之前，先回答一個問題：這個指令碼怎樣才算成功？</p>
+<p>以下狀態並不等價：行程正常結束、SQL 執行成功、結果透過驗證、最終表發布成功、訊息傳送成功。</p>
+<p>如果指令碼捕獲所有異常後只印出日誌，最後回傳結束碼 0，平臺看到的就是假成功。更合理的做法是定義執行契約：</p>
+<table>
+	<thead>
+			<tr>
+					<th>項目</th>
+					<th>建議約定</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>輸入</td>
+					<td>顯式接收時間視窗、業務線和執行模式</td>
+			</tr>
+			<tr>
+					<td>環境</td>
+					<td>固定直譯器或容器映像，明確工作目錄與時區</td>
+			</tr>
+			<tr>
+					<td>成功</td>
+					<td>必要的計算、驗證和發布步驟全部完成</td>
+			</tr>
+			<tr>
+					<td>失敗</td>
+					<td>輸出上下文，並以非零結束碼結束</td>
+			</tr>
+			<tr>
+					<td>結果</td>
+					<td>回傳行數、耗時、發布狀態等結構化資訊</td>
+			</tr>
+			<tr>
+					<td>重試</td>
+					<td>重新處理相同業務視窗，避免重複副作用</td>
+			</tr>
+	</tbody>
+</table>
+<p>執行命令使用完整路徑。如果環境依賴啟用指令碼設定的變數或動態庫路徑，要顯式保留這些初始化步驟。直接指定 Python 路徑，不能保證完全替代 Conda 啟用後的全部環境。</p>
+<h2 id="四時間視窗決定任務能否正確重跑">四、時間視窗決定任務能否正確重跑</h2>
+<p>對資料任務來說，「什麼時候執行」與「統計哪段資料」是兩個問題。</p>
+<p>假設任務應在 11:00 處理 10:00 到 11:00 的資料，卻因為排隊到 11:07 才啟動。如果指令碼直接計算「當前時刻減一小時」，處理的就是 10:07 到 11:07，業務視窗已經漂移。</p>
+<p>更容易重現的方式，是給任務傳入固定視窗：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>/opt/conda/envs/py312/bin/python /opt/jobs/report.py <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  --window-start <span style="color:#ae81ff">1767225600</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  --window-end <span style="color:#ae81ff">1767229200</span> <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  --timezone UTC
+</span></span></code></pre></div><p>這兩個整數只用來演示參數形式，表示相差一小時的 Unix 秒級時間戳。實際值應來自排程邏輯或明確的補數請求。</p>
+<p>資料庫過濾統一使用左閉右開區間：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">WHERE</span> create_time <span style="color:#f92672">&gt;=</span> :window_start
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">AND</span> create_time <span style="color:#f92672">&lt;</span> :window_end
+</span></span></code></pre></div><p>這是參數契約示意，具名佔位符不是可直接提交給資料庫的完整 SQL，實際繫結方式由資料庫驅動決定。左閉右開可以避免相鄰視窗在邊界上重複計數，但不能單獨解決遲到資料、源端修正和任務重跑造成的重複處理。</p>
+<p>多時區業務要把四個設定分別寫清楚：排程時區、業務日期時區、資料庫會話時區，以及源欄位的時間單位（秒或毫秒）。Unix 時間戳表示絕對時刻，業務日邊界仍然依賴時區。</p>
+<p>Dagu 文件專門指出：排程表示式裡的 <code>CRON_TZ</code> 只作用於該排程，不會自動設定任務步驟裡的 <code>TZ</code>。[12] 這說明「定時設定正確」不等於指令碼裡的日期計算一定正確。</p>
+<h2 id="五失敗重試之前先設計冪等">五、失敗重試之前，先設計冪等</h2>
+<p>平臺支援重試，不等於業務可以安全重試。</p>
+<p>考慮一個報表任務：資料庫已經寫入成功，但行程在確認結果前斷開連線。排程器只知道任務失敗，再次執行可能重複插入。類似地，訊息傳送成功後，如果成功狀態沒有持久化，重試可能再發一次訊息。</p>
+<p>建議同時記錄兩類標識：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>business_key = job_name + scope + window_start + window_end
+</span></span><span style="display:flex;"><span>attempt_id   = unique_execution_identifier
+</span></span></code></pre></div><p><code>business_key</code> 標識同一個業務計算單元，<code>attempt_id</code> 標識某一次嘗試。需要讓不同口徑的版本並存時，再把版本加進業務鍵。需要覆蓋同一份對外結果時，要明確不同版本怎樣替換，不能只靠增加鍵欄位來避開衝突。</p>
+<p>不同副作用採用不同策略：</p>
+<table>
+	<thead>
+			<tr>
+					<th>操作</th>
+					<th>可考慮的冪等方式</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>發布統計結果</td>
+					<td>按穩定業務鍵覆蓋或更新，結合目標儲存的鍵模型</td>
+			</tr>
+			<tr>
+					<td>發布批次資料</td>
+					<td>中間結果驗證後，透過目標系統支援的發布機制切換</td>
+			</tr>
+			<tr>
+					<td>呼叫外部 API</td>
+					<td>對方支援時傳入冪等鍵</td>
+			</tr>
+			<tr>
+					<td>傳送訊息</td>
+					<td>獨立記錄傳送狀態；必要時採用交易式 outbox</td>
+			</tr>
+	</tbody>
+</table>
+<p>傳送狀態表也不能憑空保證訊息恰好一次：外部服務如果不支援冪等，傳送與本地確認之間始終有不確定的視窗。工程上要明確選擇「允許重複」還是「可能漏發」，並提供核對或補償機制。</p>
+<p>還要區分失敗類型：</p>
+<ul>
+<li>連線逾時：有限重試。</li>
+<li>SQL 語法錯誤：修復後再跑。</li>
+<li>資料尚未就緒：等待。</li>
+<li>結果嚴重偏離預期：停止發布。</li>
+</ul>
+<p>無限重試只會讓錯誤持續佔用資源。</p>
+<h2 id="六重疊執行補跑和常駐行程要分開考慮">六、重疊執行、補跑和常駐行程要分開考慮</h2>
+<p>一個每十分鐘觸發的任務，如果每次要跑十五分鐘，必須先決定下一次觸發怎麼處理。</p>
+<table>
+	<thead>
+			<tr>
+					<th>策略</th>
+					<th>合適的任務</th>
+					<th>代價</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>跳過</td>
+					<td>只關心最新狀態的監控</td>
+					<td>某些觸發不會執行</td>
+			</tr>
+			<tr>
+					<td>排隊</td>
+					<td>每個業務視窗都要處理的報表</td>
+					<td>可能持續積壓</td>
+			</tr>
+			<tr>
+					<td>並行</td>
+					<td>相互獨立、資源可承受的分片</td>
+					<td>需要控制資源與寫入衝突</td>
+			</tr>
+	</tbody>
+</table>
+<p>重疊策略要在選定的平臺和版本上實際驗證，分別測試正常觸發、補跑、人工執行和自動重試四種路徑。不要只看設定欄位的名稱，就推斷它覆蓋了所有啟動路徑。Dagu 的排程文件也單獨說明了補跑（catchup）視窗與重疊處理。[12]</p>
+<p>常駐 Kafka 消費者和週期性報表要區別對待。持續消費、維護位點的行程，通常繼續由 Supervisor、systemd 或容器平臺管理；排程器負責週期檢查、一次性計算和受控補數。已有指令碼如果使用 <code>while True</code>，可以先抽出一個 <code>--once</code> 模式，再讓排程器控制頻率。</p>
+<h2 id="七把-ai-請求寫成可驗收的任務說明">七、把 AI 請求寫成可驗收的任務說明</h2>
+<p>「幫我建個每小時任務」缺少太多資訊。更有效的請求要寫清楚執行環境、業務視窗和失敗語義。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>為現有 Python 指令碼建立工作流，先生成並驗證設定草稿。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>任務：hourly_report
+</span></span><span style="display:flex;"><span>執行節點：已安裝指定 Conda 環境的 Linux 主機
+</span></span><span style="display:flex;"><span>直譯器：/opt/conda/envs/py312/bin/python
+</span></span><span style="display:flex;"><span>指令碼：/opt/jobs/hourly_report.py
+</span></span><span style="display:flex;"><span>工作目錄：/opt/jobs
+</span></span><span style="display:flex;"><span>排程：UTC 每小時第 5 分鐘
+</span></span><span style="display:flex;"><span>資料視窗：本次排程觸發時刻所在整點之前的完整一小時
+</span></span><span style="display:flex;"><span>參數：window_start、window_end、timezone
+</span></span><span style="display:flex;"><span>逾時：10 分鐘
+</span></span><span style="display:flex;"><span>重疊：相同業務視窗不得併發發布
+</span></span><span style="display:flex;"><span>重試：網路暫時故障最多重試 2 次，參數保持不變
+</span></span><span style="display:flex;"><span>日誌：包含 business_key、attempt_id、行數、耗時和發布狀態
+</span></span><span style="display:flex;"><span>金鑰：從部署環境的憑據機制引用，不寫入設定正文
+</span></span><span style="display:flex;"><span>輸出：設定、驗證結果、需要人工確認的環境依賴
+</span></span></code></pre></div><p>「相同參數重試」和「相同視窗不得併發發布」是驗收要求，不能假定任何平臺會根據這段文字自動提供完整保證。AI 生成結果後，要逐條檢查它是否真的實現了這些要求。</p>
+<p>自部署平臺也不等於模型處理鏈路完全在本地。如果使用外部模型，提示詞、附加的程式碼或失敗日誌可能發往提供商，具體傳送範圍要檢查平臺實作和設定。內部指令碼可以先去掉金鑰、連線詳情和無關資料，再作為上下文提供。</p>
+<h2 id="八從現有指令碼遷移小步可回滾">八、從現有指令碼遷移：小步，可回滾</h2>
+<ol>
+<li><strong>選試點</strong>：選一個業務邏輯清晰、執行時間短的唯讀監控任務，固定環境和視窗參數。</li>
+<li><strong>對照執行</strong>：讓新平臺與原系統並行執行。寫入和訊息傳送只保留一個主路徑，另一路用 dry-run 或獨立目標，避免驗證本身造成重複結果。</li>
+<li><strong>演練失敗恢復</strong>：至少覆蓋行程異常結束、資料庫逾時、執行逾時、排程器重啟，以及「寫入成功但用戶端沒有收到確認」。</li>
+<li><strong>切換</strong>：確認環境可重建、結果可核對、失敗可追蹤後，停用舊排程，再逐步遷移同類型任務。</li>
+</ol>
+<p>單機展示跑通，不能證明已經具備生產可用性：</p>
+<ul>
+<li>Dagu 的本地狀態需要備份和恢復方案。</li>
+<li>Windmill 的平臺資料庫和 Worker 環境需要維護。</li>
+<li>Kestra 的持久化設定和執行器環境也要納入維運。</li>
+</ul>
+<p>輕量部署減少的是元件數量，不會消除恢復責任。</p>
+<p>試點驗收清單，而不是隻看網頁是否出現「成功」：</p>
+<ul>
+<li><input disabled="" type="checkbox"> 直譯器、依賴和工作目錄是否固定。</li>
+<li><input disabled="" type="checkbox"> 晚點啟動和補跑是否仍使用正確的業務視窗。</li>
+<li><input disabled="" type="checkbox"> 失敗能否透過結束碼與結構化日誌被識別。</li>
+<li><input disabled="" type="checkbox"> 重試是否保持參數，並避免重複發布。</li>
+<li><input disabled="" type="checkbox"> 排程器重啟後，能否識別遺漏和執行中的任務。</li>
+<li><input disabled="" type="checkbox"> 是否能定位到對應的程式碼版本、設定版本和執行記錄。</li>
+<li><input disabled="" type="checkbox"> 憑據是否透過引用注入，日誌中是否避免輸出敏感值。</li>
+</ul>
+<h2 id="九如何選擇看現有資產不只看-ai-演示">九、如何選擇：看現有資產，不只看 AI 演示</h2>
+<table>
+	<thead>
+			<tr>
+					<th>你的現狀</th>
+					<th>優先驗證</th>
+					<th>理由</th>
+					<th>先查什麼</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>伺服器上有大量 Python 指令碼、Conda 環境和 crontab</td>
+					<td>Dagu</td>
+					<td>少改程式碼，先把執行記錄、失敗處理和 AI 操作串起來</td>
+					<td>執行節點環境、狀態備份、MCP 權限角色</td>
+			</tr>
+			<tr>
+					<td>希望在網頁裡開發指令碼，業務人員用參數頁面執行工具</td>
+					<td>Windmill</td>
+					<td>開發與操作集中在網頁</td>
+					<td>依賴解析、Worker 環境、社群版與企業版功能清單</td>
+			</tr>
+			<tr>
+					<td>流程跨多個系統，有前置條件、分支、補數和發布步驟</td>
+					<td>Kestra</td>
+					<td>工作流表達能力比少寫幾行設定更重要</td>
+					<td>外掛與執行器版本、Copilot 的模型提供商限制</td>
+			</tr>
+	</tbody>
+</table>
+<p>開源許可證、免費功能和 AI 模型支援是三個獨立問題。確定版本後，分別核對許可證檔案、社群版功能清單和模型提供商設定，不能用「專案開源」替代這三項檢查。</p>
+<p>AI 的價值，在於降低定義、修改和排查任務的成本。任務執行是否可靠，仍取決於固定的輸入視窗、明確的失敗狀態、受控的併發和可恢復的業務副作用。把這些執行契約建立起來，AI 才能成為日常維運助手，平臺也才真正超越一份帶網頁的 crontab。</p>
+<h2 id="十本文邊界與未驗證項">十、本文邊界與未驗證項</h2>
+<ol>
+<li>平臺能力來自官方文件，沒有部署實測；文件會隨版本更新，落地時應固定版本再核對。</li>
+<li>沒有測試各平臺的吞吐量、資源佔用或穩定性，不做效能排名。</li>
+<li>重疊策略、補跑和重試在三個平臺上的具體行為，沒有逐項驗證，上線前需要在選定版本上演練。</li>
+<li>第三節到第八節的工程做法（執行契約、視窗、冪等、遷移步驟）是工程判斷，不是任何平臺的官方建議。</li>
+</ol>
+<h2 id="參考資料">參考資料</h2>
+<p>以下均為官方資料，查閱日期 2026-11-12，當日連結均可開啟（HTTP 200）。功能可能隨版本調整。</p>
+<ol>
+<li><a href="https://docs.dagu.sh/">Dagu：平臺定位與執行方式</a></li>
+<li><a href="https://docs.dagu.sh/ai/">Dagu：AI 與工作流建立</a></li>
+<li><a href="https://docs.dagu.sh/mcp/quickstart">Dagu：MCP 快速入門</a></li>
+<li><a href="https://www.windmill.dev/docs/core_concepts/ai_sessions">Windmill：AI Sessions</a></li>
+<li><a href="https://www.windmill.dev/docs/core_concepts/scheduling">Windmill：Schedules</a></li>
+<li><a href="https://www.windmill.dev/docs/advanced/dependencies_in_python">Windmill：Python 依賴管理</a></li>
+<li><a href="https://www.windmill.dev/product/self-host/">Windmill：自部署與版本差異</a></li>
+<li><a href="https://kestra.io/docs/how-to-guides/python">Kestra：執行 Python</a></li>
+<li><a href="https://kestra.io/docs/develop-with-ai">Kestra：AI 開發路徑</a></li>
+<li><a href="https://kestra.io/docs/develop-with-ai/kestra-mcp-resources">Kestra：文件 MCP 的能力邊界</a></li>
+<li><a href="https://kestra.io/docs/develop-with-ai/ai-copilot">Kestra：AI Copilot 與模型提供商</a></li>
+<li><a href="https://docs.dagu.sh/writing-workflows/scheduling">Dagu：排程、時區與補跑</a></li>
+</ol>
+]]></content:encoded></item></channel></rss>

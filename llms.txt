@@ -1,0 +1,58 @@
+# Donald's Blog
+
+> 工程師視角的技術筆記與讀書筆記：資料同步、系統設計、資安、技術管理。 全站繁體中文（臺灣用語）；程式碼與註解為英文。
+
+本站每一頁都有 Markdown 版：把文章網址結尾的 `/` 換成 `/index.md` 即可（例如 `https://d94807974-commits.github.io/posts/<slug>/index.md`）。Markdown 版保留原始 front matter（標題、日期、摘要、標籤、原文網址）與正文；每篇正文開頭的 `> [!VIEWPOINT] 核心觀點` 區塊是本文立場。
+
+- 全部文章全文（單一檔案）：https://d94807974-commits.github.io/llms-full.txt
+- RSS（全文）：https://d94807974-commits.github.io/index.xml
+- JSON Feed（全文）：https://d94807974-commits.github.io/feed.json
+- Sitemap：https://d94807974-commits.github.io/sitemap.xml
+
+## 文章
+
+- [小額信貸自動化風控的反詐欺監控：從環節攔截、Flink CEP 到 PSI 告警的工程實踐](https://d94807974-commits.github.io/posts/microlending-antifraud-monitoring-engineering/index.md): 反詐欺不是裝一套元件，而是把『環節攔截』和『持續監控』兩條線做成可驗證的工程資產：事件流、特徵、決策、標籤回流。本文附實跑的 Flink CEP / SQL 範例、PSI 程式與 promtool 驗證過的告警規則，以及元件授權查核表。資料核查：2026-11-13（Asia/Singapore）。
+- [方案設計的前瞻與滯後：從《超級專案管理》談哪些要先想、哪些可以後決定](https://d94807974-commits.github.io/posts/solution-design-foresight-lag-how-big-things-get-done/index.md): 前瞻與滯後不是兩種能力，而是同一件事的兩面：設計用過去的資訊決定未來的樣子。書中的答案不是「多預測」，而是把便宜的規劃和昂貴的交付分開，在規劃期盡早犯錯，交付期縮短暴露在變化中的時間。軟體裡對應的做法是：不可逆的決定多想、可逆的決定晚做、用模組縮小每次決定、用自動檢查發現滯後。
+- [如何用提示詞引導 AI 做出優秀的軟體設計：把提示詞寫成一份小型設計任務書](https://d94807974-commits.github.io/posts/prompts-guide-ai-software-design-brief/index.md): 風格詞無法讓 AI 做出好的軟體設計。把提示詞寫成設計任務書，補上狀態表、副作用審查和可執行的驗收表，設計判斷才能被檢查。本文附可複用的提示詞模板、監控台案例和 12 條來源。這是協作方法，不保證模型輸出品質。資料核查：2026-11-12（Asia/Singapore）。
+- [「學生思維」的五個慣性：從解題到面對真實問題，哪些要換、哪些要留](https://d94807974-commits.github.io/posts/student-mindset-five-patterns-school-to-work/index.md): 「學生思維」不是學生的錯，而是解題環境訓練出的合理策略：題目定義清楚、條件給足、有標準答案、評分公開。現實通常四項都不成立。原文的方向對，但「規矩是紙老虎」「幹就完了」說過頭了。本文把五個模式各拆成「學校為何合理、現實為何失效、可操作的替代做法」，並標出哪些東西應該留下。
+- [從 crontab 到 AI 驅動的任務平臺：Python 定時任務的開源選型與工程實踐（Dagu / Windmill / Kestra）](https://d94807974-commits.github.io/posts/python-scheduler-dagu-windmill-kestra-selection/index.md): AI 能幫你生成任務設定，但任務能否可靠重跑，取決於執行契約、固定的時間視窗、冪等寫入和併發策略。本文依官方文件比較 Dagu、Windmill、Kestra 三條路徑，並給出遷移步驟、AI 請求模板和試點驗收清單。資料核查：2026-11-12（Asia/Singapore）。
+- [工程師視角讀劉潤〈如何成為一個大乙方〉：專業價值不是服從，也不是一律拒絕](https://d94807974-commits.github.io/posts/liu-run-big-vendor-professional-value-engineer-review/index.md): 劉潤說「小乙方靠服從，大乙方靠專業」。方向對：把問題當成需求照單全收，是交付失敗的常見起點。但原文少講了兩件事：說不的底氣部分來自議價力與合約，以及原則和偏好要分開。本文把它轉成工程師可以直接用的回覆格式、說不的判斷表與檢查清單。
+- [給企業高管的 AI 風險清單：資安之外，還有十件不能拖的事](https://d94807974-commits.github.io/posts/ai-enterprise-risks-executive-agenda/index.md): AI 風險已經從「員工把資料貼進聊天機器人」擴大到「AI 代理拿著權限自己做事」。高管要先做三件事：盤點所有 AI 使用與 AI 代理、讓每個 AI 系統有具名負責人、把大額轉帳與對外承諾從「看到就信」改成「流程驗證」。其餘問題按 90 天、180 天排程處理。
+- [工程師視角讀《向上管理的本質》：預防、迭代、溝通，哪些成立、哪些要打折](https://d94807974-commits.github.io/posts/managing-up-essay-engineer-review/index.md): 一篇「讓領導喜歡你」的公眾號文章，三個故事各有一半是對的：預防勝於救火（但預防需要被看見）、小單元快速反饋（但日航不是只靠阿米巴）、先共情再說理（觸龍其實講了很多道理）。本文核對來源，並給出工程師可以直接用的做法。
+- [用 Debezium 把多個 MySQL 的行級變更同步到 Kafka：場景、部署與工程問題](https://d94807974-commits.github.io/posts/debezium-mysql-multi-source-kafka/index.md): 多個 MySQL → Kafka 行級 CDC 的落地筆記：場景與選型、Kafka Connect + Debezium 的部署流程（含多源、表級路由、密碼檔案化），以及至少一次投遞、保序、快照、binlog 保留、新增表、型別精度、主從切換等工程問題的現象、原因與做法。
+- [用 AI 給私有化 Doris 打補丁：重新編譯 FE 讓審計日誌去中文（2.1.6 / 2.1.2 實戰）](https://d94807974-commits.github.io/posts/doris-audit-log-strip-chinese-with-ai/index.md): 私有化 Doris 的 fe.audit.log 要去中文，可日誌配置是 FE 每次啟動程式碼生成的。記錄如何與 AI 協作：讀原始碼定位 Log4jConfig、最小改動加 %replace / RegexFilter、只編譯一個類並逐位元組自證、jar uf 替換，兩個版本 …
+- [開源即時 CDC 同步選型：帶 Web 設定、MySQL/SQL Server→Kafka/Doris/ClickHouse、全量+增量（2026-11 核實）](https://d94807974-commits.github.io/posts/realtime-cdc-sync-opensource-comparison/index.md): 按「Web 可配 + MySQL/SQL Server 源 + Kafka/Doris/ClickHouse 目標 + 全量+增量 + star>1k + 開源」條件核實候選；對比 SeaTunnel(+Web)、InLong、Flink CDC(+Dinky/StreamPark)、TIS，並特別原始碼走讀 …
+- [工程師讀書筆記方案：從閱讀前哨站到可複用的工程知識](https://d94807974-commits.github.io/posts/engineer-reading-notes-system/index.md): 參考臺灣《閱讀前哨站》瓦基關於「節錄評論法」「一問一答」「HQ&A」「卡片盒筆記」與「化輸入為輸出」的公開文章，結合 Tiago Forte 的漸進式總結，設計一套面向工程師與技術主管的讀書筆記方案：選書→摘錄→轉述→連線工程實踐→侷限→清單→復盤，並提供 Hugo archetype、品質標準與開源配圖規範。
+- [《間接思考的藝術》×《麻省理工深度思考法》整合讀書筆記：先畫出系統，再繞著走](https://d94807974-commits.github.io/posts/obliquity-mit-essential-thinking-reading-notes/index.md): 把約翰·凱的《間接思考的藝術》（Obliquity）和平井孝志的《麻省理工深度思考法》（本質思考）放在一起讀。平井教你用系統動力學畫出現象背後的模型和動力機制，找到槓桿點；凱提醒你模型永遠不完整，複雜目標只能迂迴、漸進地逼近。筆記裡有兩本書的簡體、繁體、原版資訊與譯名對照，凱 2004 年《金融時報》原文裡黃石林火 …
+- [《混合訊號》×《驅動力》整合讀書筆記：激勵是一種訊號](https://d94807974-commits.github.io/posts/mixed-signals-drive-incentives-reading-notes/index.md): 把尤里·格尼茨的《混合訊號》（Mixed Signals）和丹尼爾·平克的《驅動力》（Drive）放在一起讀：平克說胡蘿蔔加大棒在創造性工作上會擠出內在動機，格尼茨用「激勵即訊號」解釋它什麼時候、為什麼會失效。內容包括托兒所罰款、「要麼給夠要麼別給」、Deci 1971、蠟燭問題等原始研究的核對，Cameron & …
+- [《精要主義》×《輕鬆主義》整合讀書筆記：先做對的事，再把對的事做輕鬆](https://d94807974-commits.github.io/posts/essentialism-effortless-integrated-notes/index.md): 把 Greg McKeown 的《精要主義》（探索、排除、執行）與《輕鬆主義》（輕鬆狀態、輕鬆行動、輕鬆成果）合成一個框架：前者回答做什麼，後者回答怎麼做。結合臺灣天下文化繁體版《少，但是更好》《努力，但不費力》的書摘、編輯導讀與書評，對照兩岸譯名（專準主義、精．簡．準），附章節對映表、工程落地方法、不足反思和可執行清 …
+- [《讓別人贏》讀書筆記：重新定義「贏」，以及它在工程團隊裡的邊界](https://d94807974-commits.github.io/posts/let-others-win-reading-notes/index.md): 黃冠華《讓別人贏》（商業週刊出版 2022 / 廣東人民出版社 2024）讀書筆記：結合繁體書摘、作者商周專欄、《經理人》《商業週刊》《理財週刊》報道與臺灣 Podcast，梳理旭榮的經營現場、「贏」與「贏得」、布袋戲、高鐵與火車、五步驟、Backseat Driver、兩清、ATOS、讓客戶贏等觀點，以及在工程團隊裡 …
+- [讓每一筆錢都可證明：金融交易系統安全設計模式全景](https://d94807974-commits.github.io/posts/financial-trading-security-design-patterns/index.md): 從孟加拉國央行、Knight Capital、Capital One，以及臺灣第一銀行 ATM 盜領與遠東商銀 SWIFT 遭駭五起事故出發，提出資金動作的六個不變數，並整理 SCA、所見即所簽、簽名防重放、冪等記帳、複式帳本、Maker-Checker、HSM/信封加密、事前風控與熔斷等 13 個安全設計模式，並對照 …
+- [從一張 Hash 表到一萬臺伺服器：讀李智慧，理解後端技術的第一性原理](https://d94807974-commits.github.io/posts/li-zhihui-first-principles-architecture/index.md): 通讀李智慧的《大型網站技術架構》、《從0開始學大數據》、《後端技術面試38講》和《高併發架構實戰課》，我發現他反覆講的其實是同一件事：技術不是一堆孤立的知識點，而是少數幾條原理在不同尺度上的反覆出現。本文用這條主線串起軟體設計、網站架構、大數據和技術人成長，配上可執行的 Go 程式碼，也談談這些觀點在今天的侷限。
+- [技術人的底層修養：從左耳朵耗子的文章裡讀出的工程哲學](https://d94807974-commits.github.io/posts/engineering-philosophy-from-coolshell/index.md): 重讀陳皓（左耳朵耗子）在 CoolShell 與《左耳聽風》裡留下的文字，把散落的觀點串成一套框架：學習觀、程式設計觀、架構觀與職業觀。核心只有一句話——把精力花在本質上，把控制交給系統。
+- [你好，世界](https://d94807974-commits.github.io/posts/hello-world/index.md):  核心觀點
+這是本站的第一篇文章：這裡會記錄技術筆記和生活感悟。
+歡迎來到我的部落格！這是第一篇文章，以後我會在這裡記錄技術筆記和生活感悟。
+
+
+## 站務
+
+- [寫作規範](https://d94807974-commits.github.io/writing-standards/index.md): 本站每一篇文章遵守的寫作自我要求：語言、結構、核心觀點、來源、去識別化、圖解版、AI 友善存取與發布前檢查。
+- [關於](https://d94807974-commits.github.io/about/index.md): 你好，我是 Donald。這是我的個人部落格，基於 Hugo 和 GitHub Pages 搭建。
+AI 友善存取方式 本站的內容也提供給程式與 AI 工具直接讀取。以下入口都由 Hugo 在建置時自動產生，內容與網頁版同步：
+
+
+## Optional
+
+- [圖解版：ai-enterprise-risks-executive-agenda](https://d94807974-commits.github.io/visual/ai-enterprise-risks-executive-agenda.html): 對應文章的單頁 HTML 圖解（由 answer-me-with-html 產生）
+- [圖解版：debezium-mysql-multi-source-kafka](https://d94807974-commits.github.io/visual/debezium-mysql-multi-source-kafka.html): 對應文章的單頁 HTML 圖解（由 answer-me-with-html 產生）
+- [圖解版：doris-audit-log-strip-chinese-with-ai](https://d94807974-commits.github.io/visual/doris-audit-log-strip-chinese-with-ai.html): 對應文章的單頁 HTML 圖解（由 answer-me-with-html 產生）
+- [圖解版：financial-trading-security-design-patterns](https://d94807974-commits.github.io/visual/financial-trading-security-design-patterns.html): 對應文章的單頁 HTML 圖解（由 answer-me-with-html 產生）
+- [圖解版：liu-run-big-vendor-professional-value-engineer-review](https://d94807974-commits.github.io/visual/liu-run-big-vendor-professional-value-engineer-review.html): 對應文章的單頁 HTML 圖解（由 answer-me-with-html 產生）
+- [圖解版：managing-up-essay-engineer-review](https://d94807974-commits.github.io/visual/managing-up-essay-engineer-review.html): 對應文章的單頁 HTML 圖解（由 answer-me-with-html 產生）
+- [圖解版：microlending-antifraud-monitoring-engineering](https://d94807974-commits.github.io/visual/microlending-antifraud-monitoring-engineering.html): 對應文章的單頁 HTML 圖解（由 answer-me-with-html 產生）
+- [圖解版：prompts-guide-ai-software-design-brief](https://d94807974-commits.github.io/visual/prompts-guide-ai-software-design-brief.html): 對應文章的單頁 HTML 圖解（由 answer-me-with-html 產生）
+- [圖解版：python-scheduler-dagu-windmill-kestra-selection](https://d94807974-commits.github.io/visual/python-scheduler-dagu-windmill-kestra-selection.html): 對應文章的單頁 HTML 圖解（由 answer-me-with-html 產生）
+- [圖解版：realtime-cdc-sync-opensource-comparison](https://d94807974-commits.github.io/visual/realtime-cdc-sync-opensource-comparison.html): 對應文章的單頁 HTML 圖解（由 answer-me-with-html 產生）
+- [圖解版：solution-design-foresight-lag-how-big-things-get-done](https://d94807974-commits.github.io/visual/solution-design-foresight-lag-how-big-things-get-done.html): 對應文章的單頁 HTML 圖解（由 answer-me-with-html 產生）
+- [圖解版：student-mindset-five-patterns-school-to-work](https://d94807974-commits.github.io/visual/student-mindset-five-patterns-school-to-work.html): 對應文章的單頁 HTML 圖解（由 answer-me-with-html 產生）

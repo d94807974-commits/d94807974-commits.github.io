@@ -1,0 +1,526 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>無障礙 on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/%E7%84%A1%E9%9A%9C%E7%A4%99/</link><description>Recent content in 無障礙 on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Thu, 12 Nov 2026 14:16:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/%E7%84%A1%E9%9A%9C%E7%A4%99/index.xml" rel="self" type="application/rss+xml"/><item><title>如何用提示詞引導 AI 做出優秀的軟體設計：把提示詞寫成一份小型設計任務書</title><link>https://d94807974-commits.github.io/posts/prompts-guide-ai-software-design-brief/</link><pubDate>Thu, 12 Nov 2026 14:16:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/prompts-guide-ai-software-design-brief/</guid><description>只寫「現代、簡潔、有高級感」，AI 往往只能交出好看卻不經用的介面。本文提出把提示詞寫成設計任務書：使用情境、核心任務、約束、取捨規則、交付物和驗收方式，並要求覆蓋載入、失敗、舊結果、重複提交與逾時等狀態。依據 Nielsen 啟發式、WCAG、HTTP 規範等公開資料整理，屬於工程判斷，沒有模型對照實驗。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/prompts-guide-ai-software-design-brief.html">提示詞即設計任務書：六個部分、五種狀態、四個驗收問題</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>「做得高階一點」這類風格詞，無法讓 AI 做出好的軟體設計。把提示詞寫成一份小型設計任務書：寫清使用情境、核心任務、約束、取捨規則、交付物和驗收方式，並要求覆蓋失敗、逾時、重複提交等正常流程之外的狀態。這樣設計判斷才能被檢查。這是一種協作方法，不能保證模型輸出品質。</p>
+</div><blockquote>
+  <p><strong>適用物件與邊界</strong>：面向用 AI 設計頁面、內部工具和資料看板的工程師與產品人員。本文的方法和提示詞模板是工程判斷，沒有做過不同模型的對照實驗。涉及的通用規範和技術事實附有來源，查核日期 2026-11-12（Asia/Singapore）。文中的監控台案例是虛構場景。</p>
+
+</blockquote><p>我們讓 AI 設計軟體時，經常寫下這樣的要求：</p>
+<p>「請做一個現代、簡潔、專業、有高級感的頁面。」</p>
+<p>生成的結果常有大標題、漸層、卡片、圓角和漂亮的圖表。第一眼不錯，真正使用時才暴露問題：</p>
+<ul>
+<li>最重要的異常藏在摺疊區。</li>
+<li>重新整理後篩選條件丟失。</li>
+<li>查詢失敗顯示成零。</li>
+<li>連續點選按鈕，建立了兩個任務。</li>
+</ul>
+<p>這些問題不需要更複雜的視覺技術，需要更明確的設計判斷。</p>
+<p>本文提出一套可操作的方法：把提示詞寫成一份小型設計任務書，說明誰要完成什麼任務、哪些約束不能違反、哪些狀態必須處理，以及如何檢驗結果。這與提示詞工程的一般建議一致：指令越具體，結果越好，因為模型缺少你的背景和習慣。[12]</p>
+<h2 id="一為什麼高級感無法直接轉換成好設計">一、為什麼「高級感」無法直接轉換成好設計</h2>
+<p>「高級」描述的是感受，沒有指定如何取捨。</p>
+<p>品牌展示頁可能需要大圖和留白。值班人員使用的監控台，更需要資訊密度、異常定位和穩定的佈局。同一種視覺手法，在不同任務裡效果不同。</p>
+<p>只給風格詞時，AI 仍然要決定頁面結構、重點和行為。需求沒有給出判斷依據，這些決定就容易落入常見模板。這是對失敗模式的推測，不是實測結論。</p>
+<p>可以把風格要求轉換成可觀察的結果：</p>
+<table>
+	<thead>
+			<tr>
+					<th>模糊要求</th>
+					<th>更具體的設計要求</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>簡潔</td>
+					<td>首屏突出當前最需要處理的問題，低頻設定收進次級區域</td>
+			</tr>
+			<tr>
+					<td>專業</td>
+					<td>說明資料口徑、單位、時間範圍和更新時間</td>
+			</tr>
+			<tr>
+					<td>現代</td>
+					<td>排版和元件保持一致，操作回饋及時，窄螢幕下可完成主要任務</td>
+			</tr>
+			<tr>
+					<td>高級</td>
+					<td>字型、顏色和間距有明確層級，裝飾不干擾閱讀</td>
+			</tr>
+			<tr>
+					<td>好用</td>
+					<td>使用者能完成關鍵流程，失敗後知道當前狀態和恢復方法</td>
+			</tr>
+	</tbody>
+</table>
+<p>這樣轉換不是消滅審美，而是讓審美有服務對象。</p>
+<p>一個頁面可以很漂亮，同時不適合它的使用者。設計評審要同時回答兩個問題：看起來如何，用起來會發生什麼。</p>
+<h2 id="二設計能力體現在取捨而不是功能數量">二、設計能力體現在取捨，而不是功能數量</h2>
+<p>以一個 ETL 監控頁面為例。需求可能包含任務狀態、延遲、執行記錄、資料量、負責人、告警規則和 SQL 明細。</p>
+<p>把它們平均分成八張卡片，形式上很完整，卻沒有回答值班人員最關心的問題：</p>
+<p><strong>現在是否有異常，影響了什麼，下一步應該檢查哪裡？</strong></p>
+<p>圍繞這個問題組織頁面，結構可以是：</p>
+<ol>
+<li>頂部展示需要處理的異常及影響範圍。</li>
+<li>主列表展示任務狀態、延遲和最近成功時間。</li>
+<li>選擇任務後，檢視執行歷史、失敗明細和恢復操作。</li>
+<li>告警規則、負責人等低頻設定放在獨立入口。</li>
+</ol>
+<p>這是一種任務優先順序判斷，不是唯一正確答案。如果使用者的主要工作是批次設定規則，頁面結構就要調整。</p>
+<p>所以提示詞要先交代使用情境：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>請設計一個 ETL 監控頁面。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>主要使用者是值班資料工程師。他們通常在收到告警後開啟頁面，
+</span></span><span style="display:flex;"><span>需要盡快確認異常是否仍在發生、哪些任務受影響、接下來檢視哪裡。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>優先支援這三項任務：
+</span></span><span style="display:flex;"><span>1. 找到當前需要處理的異常。
+</span></span><span style="display:flex;"><span>2. 檢視異常任務最近一次成功和失敗的記錄。
+</span></span><span style="display:flex;"><span>3. 判斷是否需要重試，並了解重試可能產生的影響。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>請按任務的重要性安排頁面，不要求所有功能都出現在首屏。
+</span></span><span style="display:flex;"><span>說明關鍵內容為什麼放在當前位置，並給出可實作的介面方案。
+</span></span></code></pre></div><p>好的上下文不一定很長，但要包含會改變方案選擇的資訊。</p>
+<h2 id="三把提示詞組織成一份設計任務書">三、把提示詞組織成一份設計任務書</h2>
+<p>一份實用的設計提示詞，可以包含六個部分。</p>
+<table>
+	<thead>
+			<tr>
+					<th>部分</th>
+					<th>要回答的問題</th>
+					<th>寫得不好的例子</th>
+					<th>寫得好的例子</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>使用情境</td>
+					<td>誰在什麼情況下使用</td>
+					<td>後台管理系統</td>
+					<td>值班工程師，收到告警後開啟，時間緊</td>
+			</tr>
+			<tr>
+					<td>核心任務</td>
+					<td>使用者最終要完成什麼</td>
+					<td>展示任務資訊</td>
+					<td>判斷昨晚批處理是否按時完成</td>
+			</tr>
+			<tr>
+					<td>約束</td>
+					<td>哪些邊界不能突破</td>
+					<td>盡量少改</td>
+					<td>沿用現有元件庫，不改後端介面</td>
+			</tr>
+			<tr>
+					<td>取捨規則</td>
+					<td>衝突時優先什麼</td>
+					<td>各方面都做到最好</td>
+					<td>修改資料的操作，優先保證結果可確認</td>
+			</tr>
+			<tr>
+					<td>交付物</td>
+					<td>希望拿到什麼</td>
+					<td>給個方案</td>
+					<td>狀態表加可執行原型</td>
+			</tr>
+			<tr>
+					<td>驗收方式</td>
+					<td>怎樣確認成立</td>
+					<td>體驗流暢</td>
+					<td>查詢失敗後不顯示零值，篩選條件保留</td>
+			</tr>
+	</tbody>
+</table>
+<h3 id="1-使用情境">1. 使用情境</h3>
+<p>「後台管理系統」仍然太寬泛。每天使用八小時的工作台，和每月只開啟一次的設定頁，適合不同的資訊密度和引導方式。</p>
+<p>只寫與當前設計有關的條件：使用者熟悉程度、使用頻率、裝置和時間壓力。</p>
+<h3 id="2-核心任務">2. 核心任務</h3>
+<p>「展示任務資訊」是功能描述。「判斷昨晚批處理是否按時完成」才是使用者任務。</p>
+<p>任務越清楚，越容易判斷哪些元件必要，哪些資訊要突出。</p>
+<h3 id="3-約束">3. 約束</h3>
+<p>例如沿用現有元件庫、不修改後端介面、保持指標口徑、支援現有權限模型。</p>
+<p>約束要具體。不能一邊要求最小改動，一邊預設允許重構整個產品。</p>
+<h3 id="4-取捨規則">4. 取捨規則</h3>
+<p>資訊完整與首屏簡潔、操作速度與誤操作防護、即時性與系統成本，都可能衝突。</p>
+<p>「所有方面都做到最好」無法執行。更明確的寫法是：</p>
+<blockquote>
+  <p>高頻檢視優先減少閱讀負擔；涉及資料修改的操作，優先保證結果可確認、失敗可恢復。</p>
+
+</blockquote><h3 id="5-交付物">5. 交付物</h3>
+<p>方案評審、線框結構、互動說明和可執行程式碼是不同的交付物。沒有指定時，AI 可能交付一份原則說明，而你需要的是可以操作的頁面。</p>
+<h3 id="6-驗收方式">6. 驗收方式</h3>
+<p>「體驗流暢」很難驗證。「查詢失敗後不顯示零值，並保留使用者的篩選條件」可以直接檢查。</p>
+<p>角色設定可以補充專業視角，但無法代替以上資訊。「你是頂級設計師」之後，仍然需要具體任務、約束和驗收標準。</p>
+<h2 id="四優秀的軟體設計必須覆蓋正常流程之外的狀態">四、優秀的軟體設計必須覆蓋正常流程之外的狀態</h2>
+<p>設計稿常展示資料充足、網路正常、操作成功的頁面。這有助於討論佈局，卻不代表完整的軟體行為。</p>
+<p>Nielsen 的可用性啟發式第一條是「系統狀態可見」：設計應透過適當的回饋，隨時讓使用者知道發生了什麼。[1] 下面用查詢按鈕來說明這一條在實作中的含義。</p>
+<h3 id="現象查詢按鈕背後有一串問題">現象：查詢按鈕背後有一串問題</h3>
+<ul>
+<li>發起查詢後，使用者如何知道請求正在執行？</li>
+<li>執行期間能否修改篩選條件？</li>
+<li>前一個請求晚於後一個請求回傳時，展示哪個結果？</li>
+<li>查詢失敗後，是否保留上一次成功的結果？</li>
+<li>保留舊結果時，如何說明它不屬於當前查詢？</li>
+</ul>
+<h3 id="原因舊請求可能覆蓋新結果">原因：舊請求可能覆蓋新結果</h3>
+<p>React 官方文件把這種情況稱為競態條件（race condition）：兩個請求的回傳順序與發出順序不同，較晚回傳的舊回應覆蓋了新結果。文件給出的做法是，在清理函式裡忽略過期的回應。[7] 瀏覽器的 <code>AbortController</code> 可以取消仍在進行的網路請求。[8]</p>
+<p>這兩種做法解決的是「介面展示哪個結果」。它們不改變伺服器端是否已經處理了請求。對讀取類查詢，這通常夠用。對寫入類操作，見下一節。</p>
+<p>最後一個問題也容易遺漏。保留舊資料能避免頁面突然清空，但也可能讓使用者誤以為重新整理已經成功。所以「保留舊資料」不是孤立的最佳化，要和狀態說明一起設計。</p>
+<h3 id="做法用狀態表把要求落實">做法：用狀態表把要求落實</h3>
+<table>
+	<thead>
+			<tr>
+					<th>狀態</th>
+					<th>頁面應表達什麼</th>
+					<th>使用者可以做什麼</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>首次載入</td>
+					<td>正在獲取資料</td>
+					<td>等待；支援時可取消</td>
+			</tr>
+			<tr>
+					<td>有效結果為空</td>
+					<td>查詢成功，當前條件沒有匹配記錄</td>
+					<td>調整或重置篩選</td>
+			</tr>
+			<tr>
+					<td>查詢失敗</td>
+					<td>本次結果未獲取成功</td>
+					<td>檢視原因並重試</td>
+			</tr>
+			<tr>
+					<td>顯示舊結果</td>
+					<td>當前展示的是此前成功查詢的資料</td>
+					<td>檢視結果時間並重新查詢</td>
+			</tr>
+			<tr>
+					<td>權限不足</td>
+					<td>當前帳號無法存取對應資源</td>
+					<td>按產品支援的方式申請權限</td>
+			</tr>
+	</tbody>
+</table>
+<p>空結果、錯誤和沒有權限，不能都用一句「暫無資料」。它們對應不同的事實，也對應不同的下一步。NN/g 討論空狀態時指出，空狀態可以傳達系統狀態，並給出完成關鍵任務的路徑。[2] 錯誤提示則應使用平實的語言，準確指出問題，並給出建設性的解決辦法。[1]</p>
+<p>狀態變化也要能被輔助科技感知。WCAG 2.2 的成功準則 4.1.3 要求，不獲得焦點的狀態訊息（例如「載入完成」「查詢失敗」），可以透過程式被輔助科技讀到。[6]</p>
+<p>提示詞可以這樣寫：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>請補全主要流程之外的狀態設計。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>區分首次載入、查詢成功但為空、查詢失敗、顯示舊結果和權限不足。
+</span></span><span style="display:flex;"><span>為每種狀態說明：頁面文案、保留的內容、可用操作和恢復路徑。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>對可能同時發起的請求，說明如何避免舊請求覆蓋新結果。
+</span></span><span style="display:flex;"><span>不要讓失敗狀態被呈現為有效的零值或空結果。
+</span></span></code></pre></div><h2 id="五從軟體副作用理解更深一層的設計">五、從軟體副作用理解更深一層的設計</h2>
+<p>在程式設計中，副作用通常指執行過程對外部或共享狀態產生的影響，例如寫資料庫、傳送訊息或修改檔案。</p>
+<p>在產品設計討論中，可以把視角擴展到操作的連帶影響：重試是否重複執行、刪除後誰受影響、重新整理是否打斷閱讀、通知是否造成重複打擾。</p>
+<p>兩種討論有關聯，但不是同一個技術概念。產品側提出風險，仍要由工程側明確狀態、協議和一致性保證。</p>
+<h3 id="一個重新執行按鈕為什麼不簡單">一個「重新執行」按鈕為什麼不簡單</h3>
+<p>設想頁面上有一個失敗任務，使用者點選「重新執行」：</p>
+<ol>
+<li>伺服器端已經建立新任務，但回應在回傳途中逾時。</li>
+<li>頁面顯示請求失敗。</li>
+<li>使用者再次點選。</li>
+<li>如果系統沒有去重機制，就可能建立第二個任務。</li>
+</ol>
+<p>此時，「點選後按鈕置灰」只能減少當前介面的重複點選。重新整理頁面、多個瀏覽器視窗、網路重試和其他客戶端呼叫帶來的重複請求，它都擋不住。</p>
+<p>HTTP 規範對此有明確的區分。如果一個方法的多次相同請求與單次請求對伺服器端的預期效果相同，它就是冪等的；規範中的冪等方法是 PUT、DELETE 和安全方法，POST 不在其中。客戶端不應自動重試非冪等的請求，除非它能確認請求語意實際上是冪等的，或者能偵測到原請求從未生效。[9]</p>
+<p>所以「重新執行」這類通常用 POST 實作的操作，需要額外設計去重。常見做法是冪等鍵（idempotency key）。以 Stripe 的公開 API 文件為例：</p>
+<ul>
+<li>它儲存帶某個冪等鍵的首次請求的狀態碼和回應，同鍵的重試會回傳已儲存的回應。</li>
+<li>如果同一個鍵對應的參數與原請求不同，會報錯，防止誤用。</li>
+<li>在 API v1 中，鍵至少儲存 24 小時後才可能被清理。[10]</li>
+</ul>
+<p>這只是一個產品的做法。IETF 有一份 <code>Idempotency-Key</code> 請求標頭的草案，但仍是進行中的工作，尚未成為標準。[11] 採用哪種機制，取決於你的系統。</p>
+<p>完整設計要明確：</p>
+<ul>
+<li>這次操作如何被唯一識別。</li>
+<li>同一次操作重複請求時，是否回傳同一個執行結果。</li>
+<li>同一任務是否允許同時執行多個實例。</li>
+<li>逾時後如何查詢當前狀態。</li>
+<li>失敗後允許重試的是原操作，還是一次新的業務執行。</li>
+</ul>
+<p>冪等鍵、唯一約束或執行互斥都可能參與解決問題。只寫下術語，不等於實作了保證。</p>
+<p>尤其要區分：<strong>同一個請求的重複傳送，與使用者確實希望再次執行任務，是兩種不同的意圖。</strong> 一個可行的約定是：同一次使用者意圖的重試，複用同一個鍵；使用者明確再次發起，生成新的鍵。鍵的有效期也要圍繞業務意圖來定。</p>
+<h3 id="把副作用變成可審查的設計內容">把副作用變成可審查的設計內容</h3>
+<table>
+	<thead>
+			<tr>
+					<th>操作</th>
+					<th>可能的連帶影響</th>
+					<th>需要明確的設計</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>重新執行任務</td>
+					<td>重複寫入、資源競爭</td>
+					<td>冪等範圍、併發策略、執行狀態查詢</td>
+			</tr>
+			<tr>
+					<td>刪除告警規則</td>
+					<td>後續異常不再通知</td>
+					<td>影響範圍、恢復方式、相關權限</td>
+			</tr>
+			<tr>
+					<td>自動重新整理列表</td>
+					<td>閱讀位置或選擇狀態變化</td>
+					<td>重新整理時機、排序穩定性、狀態保留</td>
+			</tr>
+			<tr>
+					<td>匯出資料</td>
+					<td>結果與當前頁面範圍不一致</td>
+					<td>匯出條件、時間點、完成回饋</td>
+			</tr>
+			<tr>
+					<td>修改統計時區</td>
+					<td>日期邊界和對比視窗變化</td>
+					<td>生效範圍、條件展示、結果解釋</td>
+			</tr>
+	</tbody>
+</table>
+<p>不是每個問題都需要確認彈窗。</p>
+<ul>
+<li>低風險操作可以直接完成。</li>
+<li>可逆操作可以提供撤銷。</li>
+<li>影響範圍大的操作才需要更明確的確認。</li>
+</ul>
+<p>這與 Nielsen 的「錯誤預防」一致：要麼消除容易出錯的條件，要麼在使用者提交前提供確認。[1] NN/g 同時提醒，確認框不能濫用，也要寫清後果；更好的做法是讓使用者能夠撤銷。[3] Aza Raskin 的文章對此有更早的論述：能撤銷，就不要彈警告。[4]</p>
+<p>確認框要帶資訊。「確定繼續嗎」無法幫助使用者判斷。「將停用這條規則，之後該範圍內的異常將不再傳送通知」才說明了後果。</p>
+<p>可直接使用的提示詞是：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>請審查這個功能的副作用：[功能描述]。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>檢查重複提交、網路逾時、部分失敗、併發操作、取消和重試。
+</span></span><span style="display:flex;"><span>對每個重要場景說明：
+</span></span><span style="display:flex;"><span>觸發條件、可能改變的狀態、使用者可見結果、恢復方式。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>區分介面可以緩解的問題和必須由伺服器端保證的問題。
+</span></span><span style="display:flex;"><span>對重複請求明確冪等範圍；對重試明確是否會發起新的業務執行。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>按影響程度和出現可能性排序。
+</span></span><span style="display:flex;"><span>優先處理資料正確性和難以恢復的問題，避免為低影響問題增加大量互動。
+</span></span></code></pre></div><h2 id="六資料看板案例從數字展示到判斷支援">六、資料看板案例：從數字展示到判斷支援</h2>
+<p>下面用一個假設場景，把以上原則連起來。</p>
+<p>需求是為資料工程師設計即時業務監控台，展示今日交易筆數、昨日對比、最近完整小時資料、渠道分佈和 ETL 延遲。</p>
+<p>如果直接要求「設計一個精美的資料大螢幕」，很容易得到多張數字卡片和幾張趨勢圖。這些內容是否支援判斷，還取決於口徑和狀態是否清楚。</p>
+<h3 id="第一步定義使用者要做的判斷">第一步：定義使用者要做的判斷</h3>
+<p>使用者先要判斷：業務數值是否值得信任，是否存在需要處理的異常。</p>
+<p>所以資料新鮮度不能埋在頁面底部。上游明顯延遲時，業務指標下降可能只是資料還沒到，不能直接解釋成業務變化。</p>
+<p>頁面可以繼續展示最近可用的結果，但要清楚標註更新時間和延遲狀態。是否禁用某些操作，要看後果，不能預設把整個頁面鎖住。</p>
+<h3 id="第二步明確可比性">第二步：明確可比性</h3>
+<p>「今日與昨日對比」至少有兩種含義：</p>
+<ul>
+<li>今日截至當前時間，對比昨日同期。</li>
+<li>今日截至當前時間，對比昨日全天。</li>
+</ul>
+<p>兩種口徑都有用途，但必須寫清楚。今日上午的資料與昨日全天相比，卻只顯示一個下降箭頭，使用者很容易判斷錯誤。</p>
+<p>「最近一小時」也要區分：滾動 60 分鐘，還是最近一個完整自然小時。時區不同，日期和小時邊界也不同。</p>
+<p>這些不是圖表的附註，而是決定圖表含義的條件。</p>
+<h3 id="第三步讓異常帶著上下文出現">第三步：讓異常帶著上下文出現</h3>
+<p>某渠道交易筆數從 2 筆降到 1 筆，降幅 50%。另一個渠道從 2000 筆降到 1200 筆，降幅 40%。百分比本身不足以決定優先順序。</p>
+<p>頁面可以同時展示當前值、對比值、絕對差和相對差。是否告警，要沿用明確的業務規則。樣本很小時，展示樣本量，通常比製造強烈的視覺警報更有解釋力。</p>
+<p>不要讓 AI 為了讓頁面「完整」而擅自發明生產閾值。</p>
+<h3 id="第四步把設計轉成可以檢查的要求">第四步：把設計轉成可以檢查的要求</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>設計一個即時業務監控台，使用者是值班資料工程師。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>核心任務：先判斷資料是否可信，再定位業務異常，最後檢視渠道明細。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>要求：
+</span></span><span style="display:flex;"><span>1. 明確展示業務時區、資料更新時間和當前查詢條件。
+</span></span><span style="display:flex;"><span>2. 今日對比採用截至當前時間的昨日同期；若介面不支援，說明限制。
+</span></span><span style="display:flex;"><span>3. 最近一小時採用最近一個完整自然小時，並顯示起止時間。
+</span></span><span style="display:flex;"><span>4. 數值為零、查詢失敗和資料延遲使用不同狀態。
+</span></span><span style="display:flex;"><span>5. 變化同時展示絕對差和相對差；分母為零時不偽造百分比。
+</span></span><span style="display:flex;"><span>6. 不改變已有指標口徑，不自行設定生產告警閾值。
+</span></span><span style="display:flex;"><span>7. 重新整理保留篩選條件；舊請求不得覆蓋新條件下的結果。
+</span></span><span style="display:flex;"><span>8. 示範資料明確標註，不暗示已接入真實業務。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>交付頁面結構、關鍵互動、狀態表和可執行原型。
+</span></span><span style="display:flex;"><span>對依賴後端實作的保證單獨註明。
+</span></span></code></pre></div><p>這份提示詞的價值在於，它同時約束了佈局、解釋方式和行為，而不只是指定一種視覺風格。</p>
+<h2 id="七視覺提示詞應該描述系統而不只是裝飾">七、視覺提示詞應該描述系統，而不只是裝飾</h2>
+<p>視覺品質依然重要。層級不清、對齊混亂、密度失衡，都會增加理解成本。</p>
+<p>但「不要用漸層」「不要用圓角」不是通用的設計法則。某種手法是否合適，由內容和場景決定。</p>
+<p>比起限制裝飾清單，更值得明確這幾點：</p>
+<ul>
+<li>字級層級如何區分標題、主要數值和輔助資訊。</li>
+<li>顏色分別表示狀態、分類還是強調，語義是否一致。</li>
+<li>哪些內容可以緊湊展示，哪些位置需要留白。</li>
+<li>長名稱、大數值、空值和錯誤文案是否破壞佈局。</li>
+<li>顏色之外，是否還有文字、符號等識別方式。</li>
+</ul>
+<p>最後一條有規範依據：WCAG 2.2 的成功準則 1.4.1 要求，不能只靠顏色來傳達資訊、指示操作、提示回應或區分視覺元素。[5]</p>
+<p>例如，監控台可以用緊湊的表格承載任務明細，同時為關鍵異常保留更明顯的空間。不必把每個數字都包裝成同樣大小的卡片。</p>
+<p>提示詞可以寫成：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>為這個頁面建立一致的視覺規則。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>根據使用場景確定資訊密度，定義字型層級、間距、對齊和狀態顏色。
+</span></span><span style="display:flex;"><span>解釋主要視覺規則如何幫助使用者識別重點。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>使用長名稱、大數值、空值和錯誤文案檢查佈局。
+</span></span><span style="display:flex;"><span>關鍵狀態不能只依賴顏色區分。
+</span></span><span style="display:flex;"><span>不為裝飾增加無實際資訊的圖表或元件。
+</span></span></code></pre></div><h2 id="八自我審查有價值但不能替代驗證">八、自我審查有價值，但不能替代驗證</h2>
+<p>讓 AI 完成後「找出三個問題並修改」，可以作為第二輪檢查，但數量本身不重要。為了湊滿三個問題而製造無關緊要的修改，同樣會降低效率。</p>
+<p>更有效的審查要明確視角和證據：</p>
+<ul>
+<li>產品視角：使用者能否完成任務。</li>
+<li>互動視角：回饋和恢復是否清楚。</li>
+<li>工程視角：狀態變化與併發是否安全。</li>
+<li>視覺視角：層級與一致性是否成立。</li>
+</ul>
+<p>這些視角可以由同一個 AI 依次執行。「多角色」不等於必須使用多個模型或多個代理。</p>
+<p>更重要的是區分「評審發現」和「已驗證事實」。AI 說介面支援取消，不代表已經執行過取消流程。原型裡按鈕置灰，也不代表伺服器端能防止重複執行。</p>
+<p>建議使用如下驗收表：</p>
+<table>
+	<thead>
+			<tr>
+					<th>檢查項</th>
+					<th>驗證動作</th>
+					<th>通過標準</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>查詢條件保留</td>
+					<td>查詢失敗後重試</td>
+					<td>原篩選條件仍在</td>
+			</tr>
+			<tr>
+					<td>請求先後順序</td>
+					<td>發起 A 後快速發起 B，讓 A 最後回傳</td>
+					<td>頁面最終保持 B 的結果</td>
+			</tr>
+			<tr>
+					<td>錯誤狀態</td>
+					<td>模擬介面失敗</td>
+					<td>明確顯示失敗，不呈現有效零值</td>
+			</tr>
+			<tr>
+					<td>重複操作</td>
+					<td>使用同一操作識別碼重複傳送請求</td>
+					<td>符合約定的冪等行為，需驗證伺服器端</td>
+			</tr>
+			<tr>
+					<td>結果未知</td>
+					<td>模擬請求逾時但伺服器端已接受</td>
+					<td>可以查詢狀態，不直接斷言未執行</td>
+			</tr>
+			<tr>
+					<td>內容極限</td>
+					<td>輸入長名稱和較大數值</td>
+					<td>主要內容可讀，關鍵操作可達</td>
+			</tr>
+	</tbody>
+</table>
+<p>對於可執行的軟體，盡可能實際執行這些場景。對於只交付設計稿的任務，要明確這些是待驗證的要求。</p>
+<h2 id="九把長提示詞拆成幾個有產出的階段">九、把長提示詞拆成幾個有產出的階段</h2>
+<p>一次把所有要求塞進提示詞，重點可能被稀釋。可以讓協作逐步推進，但每一步都要有具體產出。</p>
+<table>
+	<thead>
+			<tr>
+					<th>階段</th>
+					<th>產出</th>
+					<th>注意</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>一、澄清任務</td>
+					<td>主要使用者、核心任務、會改變方案的約束</td>
+					<td>非關鍵的缺失，做合理假設；影響資料口徑、權限或不可逆操作的資訊，要確認</td>
+			</tr>
+			<tr>
+					<td>二、確定方向</td>
+					<td>兩種有真實取捨的方案</td>
+					<td>例如異常優先與任務列表優先，而不是僅更換顏色</td>
+			</tr>
+			<tr>
+					<td>三、完成實作</td>
+					<td>結構、元件、狀態與操作行為</td>
+					<td>把選定方向落實</td>
+			</tr>
+			<tr>
+					<td>四、針對風險驗證</td>
+					<td>驗收表的執行結果</td>
+					<td>先查資料正確性、失敗恢復和高影響操作，再查佈局和視覺細節</td>
+			</tr>
+	</tbody>
+</table>
+<p>小任務可以合併階段。修改一處按鈕間距，不需要重新做一輪產品研究。方法的複雜度要與任務規模匹配。</p>
+<h2 id="十一份可直接複用的綜合提示詞">十、一份可直接複用的綜合提示詞</h2>
+<p>以下模板適合軟體頁面、內部工具和資料看板。使用時刪去無關部分，並補充真實約束。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>請為下面的需求完成設計並交付可評審結果：
+</span></span><span style="display:flex;"><span>[填寫需求]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>【使用情境】
+</span></span><span style="display:flex;"><span>主要使用者：[填寫]
+</span></span><span style="display:flex;"><span>典型場景：[填寫]
+</span></span><span style="display:flex;"><span>最重要的三項任務：[填寫]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>【約束】
+</span></span><span style="display:flex;"><span>必須沿用：[元件、介面、權限或指標口徑]
+</span></span><span style="display:flex;"><span>允許調整：[填寫]
+</span></span><span style="display:flex;"><span>當前交付階段：[方案 / 原型 / 可執行實作]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>【設計判斷】
+</span></span><span style="display:flex;"><span>先識別最影響使用者完成任務的問題。
+</span></span><span style="display:flex;"><span>需要比較方向時，提出兩種有明確取捨的方案，並推薦一種。
+</span></span><span style="display:flex;"><span>說明選擇依據，只解釋會影響結果的關鍵決定。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>【資訊與視覺】
+</span></span><span style="display:flex;"><span>按任務重要性組織內容，明確主要操作與低頻操作。
+</span></span><span style="display:flex;"><span>建立一致的字型、間距、對齊和狀態顏色規則。
+</span></span><span style="display:flex;"><span>使用長文字、大數值、空值和窄螢幕場景檢查佈局。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>【互動狀態】
+</span></span><span style="display:flex;"><span>覆蓋載入、成功、空結果、失敗、舊結果和權限不足。
+</span></span><span style="display:flex;"><span>說明操作進行中、結果未知和可重試狀態如何區分。
+</span></span><span style="display:flex;"><span>防止舊請求覆蓋新條件下的結果。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>【副作用】
+</span></span><span style="display:flex;"><span>檢查重複提交、部分失敗、併發操作、取消、撤銷和重試。
+</span></span><span style="display:flex;"><span>區分前端緩解措施與伺服器端保證。
+</span></span><span style="display:flex;"><span>明確高影響操作的作用範圍和恢復路徑。
+</span></span><span style="display:flex;"><span>不為低風險操作增加不必要的確認步驟。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>【交付與驗證】
+</span></span><span style="display:flex;"><span>交付與當前階段相符的具體結果，不只羅列設計原則。
+</span></span><span style="display:flex;"><span>給出關鍵驗收場景、驗證動作和通過標準。
+</span></span><span style="display:flex;"><span>明確哪些內容已經驗證，哪些仍是假設或依賴後端。
+</span></span><span style="display:flex;"><span>完成後審查高影響問題並修正，不為湊數量製造修改。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>缺少非關鍵資料時，做合理假設並繼續。
+</span></span><span style="display:flex;"><span>缺失資訊會改變資料口徑、權限或不可逆操作時，明確指出並確認。
+</span></span></code></pre></div><h2 id="結語讓提示詞承載判斷依據">結語：讓提示詞承載判斷依據</h2>
+<p>優秀的軟體設計常體現在很小的地方：失敗後保留了使用者輸入，逾時後沒有誤導使用者再次執行，舊資料帶著明確的時間標記，異常資訊提供了足夠的判斷依據。</p>
+<p>這些細節很難僅靠「更美觀、更專業」推導出來。它們要被納入任務定義，也要在實作後接受檢查。</p>
+<p>提示詞能改善 AI 得到的上下文、約束和評審標準，卻不能代替真實使用者回饋，也不能憑文字建立工程保證。</p>
+<p>下一次讓 AI 設計軟體時，先寫清楚四件事：<strong>使用者要作出什麼判斷，系統會改變什麼狀態，失敗後如何恢復，以及用什麼證據確認設計有效。</strong> 這四個問題，比繼續疊加風格形容詞，更接近設計工作的核心。</p>
+<h2 id="本文邊界與未驗證項">本文邊界與未驗證項</h2>
+<ol>
+<li>本文的六部分任務書、狀態表、驗收表和提示詞模板，是作者整理的工程判斷，沒有用不同模型做過對照實驗，不保證輸出品質。</li>
+<li>「只給風格詞，AI 容易落入常見模板」是推測，沒有實測資料支援。</li>
+<li>引用的 NN/g、WCAG、React、MDN、RFC 和 Stripe 文件，只用於支援文中對應的具體論點；本文只核對了相關段落，沒有通讀全文。</li>
+<li>Stripe 的冪等行為只是一個產品的例子，不代表通用標準。IETF 的 <code>Idempotency-Key</code> 文件是草案（查核時為第 08 版），可能變動。</li>
+<li>第六節的監控台是虛構場景，數字僅用於說明計算方式。</li>
+</ol>
+<h2 id="參考資料">參考資料</h2>
+<p>以下連結查閱日期 2026-11-12，當日均可開啟（HTTP 200）。</p>
+<ol>
+<li><a href="https://www.nngroup.com/articles/ten-usability-heuristics/">Nielsen Norman Group：10 Usability Heuristics for User Interface Design</a></li>
+<li><a href="https://www.nngroup.com/articles/empty-state-interface-design/">Nielsen Norman Group：Designing Empty States in Complex Applications: 3 Guidelines</a></li>
+<li><a href="https://www.nngroup.com/articles/confirmation-dialog/">Nielsen Norman Group：Confirmation Dialogs Can Prevent User Errors — If Not Overused</a></li>
+<li><a href="https://alistapart.com/article/neveruseawarning/">A List Apart：Never Use a Warning When You Mean Undo（Aza Raskin，2007）</a></li>
+<li><a href="https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html">W3C：Understanding Success Criterion 1.4.1 Use of Color（WCAG 2.2）</a></li>
+<li><a href="https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html">W3C：Understanding Success Criterion 4.1.3 Status Messages（WCAG 2.2）</a></li>
+<li><a href="https://react.dev/learn/you-might-not-need-an-effect">React 文件：You Might Not Need an Effect（含競態條件的說明）</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/API/AbortController">MDN：AbortController</a></li>
+<li><a href="https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods">RFC 9110：HTTP Semantics，第 9.2.2 節 Idempotent Methods</a></li>
+<li><a href="https://docs.stripe.com/api/idempotent_requests">Stripe API 文件：Idempotent requests</a></li>
+<li><a href="https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/">IETF 草案：The Idempotency-Key HTTP Header Field（draft-ietf-httpapi-idempotency-key-header）</a></li>
+<li><a href="https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#be-clear-and-direct">Claude 文件：Prompting best practices，Be clear and direct</a></li>
+</ol>
+]]></content:encoded></item></channel></rss>

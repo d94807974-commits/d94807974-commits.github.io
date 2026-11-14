@@ -1,0 +1,79 @@
+---
+title: "寫作規範"
+url: https://d94807974-commits.github.io/writing-standards/
+markdown_url: https://d94807974-commits.github.io/writing-standards/index.md
+author: "Donald"
+language: zh-TW
+description: "本站每一篇文章遵守的寫作自我要求：語言、結構、核心觀點、來源、去識別化、圖解版、AI 友善存取與發布前檢查。"
+summary: " 這份規範是本站寫作的自我要求，也是後續文章的一致性基準。倉庫根目錄的 WRITING_GUIDE.md 是同一份內容。\n一、語言 正文、標題、摘要、tags 一律使用繁體中文（臺灣用語，例如「資料庫」「設定」「部署」）。 程式碼、命令、設定檔與程式碼註解一律使用英文。 專有名詞保留原文（Kafka、GTID、SLO），第一次出現時可附中文說明。 二、視角與結構 以工程師視角寫作：先場景，再方案，最後工程問題。 每個工程問題按「現象 / 原因 / 做法」三段寫。 結論先行，開頭點明核心觀點：每篇正文最開頭（有圖解版時放在圖解版連結之後）放一個「核心觀點」區塊，用一兩句話點明本文立場或結論；寫法固定為 \u003e [!VIEWPOINT] 核心觀點，下一行接 \u003e 觀點句。只提煉正文已有的內容，不新增事實。正文負責提供證據。 先寫取捨與邊界，再寫優點；不寫沒有邊界的推薦。 三、事實與來源 關鍵事實必須有來源，文末列出「參考」連結。 區分實測、文件依據與未驗證，並在文中標示。 不捏造資料。沒有實測數字時，不寫數字。 版本、日期與資料註明查核日期（Asia/Singapore 時區）。 四、去識別化 不出現公司名、個人資訊、IP、主機名、叢集 ID、帳號、電子郵件、真實目錄。 以佔位符代替：\u003cmysql1-host\u003e、\u003ckafka\u003e:9092、\u003c內網IP\u003e、\u003c強密碼\u003e、${DORIS_HOME}。 庫表用通用範例（shop.orders、shop.users），路徑用通用路徑（/opt/kafka、/opt/secrets）。 文中公開產品、開源專案、公開新聞事件可以點名。 五、圖解版 每篇技術文章附一頁圖解版：用 answer-me-with-html 從簡短 Markdown 草稿產生單頁 HTML。 圖解版放在 static/visual/\u003cslug\u003e.html，文章開頭放一行連結。 圖解版至少包含：結論（callout）、架構（flow）、流程（sequence）、對比（table）、警示（callout）中合適的幾項。 圖解版同樣使用繁體中文並去識別化；產生時關閉版本檢查（AM_NO_UPDATE_CHECK=1），頁面不得有外部指令碼或統計。 六、句子與用詞（參考 STE） 一句話只講一件事；句子儘量簡短。 一個詞只表達一個意思，同一事物全文用同一個名稱。 操作步驟用祈使句，條件寫在前面：「如果建置失敗，先看日誌。」 不用空泛詞與套話（「賦能」「打通」「綜上所述」）；列舉要完整，不用「等」帶過。 可用 am lint \u003cfile\u003e 檢查長句與贅詞，只修明顯問題。 七、轉載與分析他人文章 註明原文標題、作者或來源與連結。 只引用短句並標示出處，不大段抄錄。 對原文的事實逐條查核，分開寫「成立」「值得商榷」「說反了」。 八、發布前檢查清單 簡體殘留：用 OpenCC 比對，正文無簡體字。 去識別化：grep 檢查 IP、主機名、電子郵件、真實路徑與帳號。 建置：hugo --minify 無錯誤，文章出現在輸出中（注意 date 不可晚於現在）。 圖解版：am render 無 STE 與程式碼警告，頁面無外部請求。 核心觀點：正文開頭有 \u003e [!VIEWPOINT] 核心觀點 區塊，一兩句話，與正文一致。 AI 友善輸出：建置後 public/posts/\u003cslug\u003e/index.md 存在且含 front matter；public/llms.txt 列出新文章、public/llms-full.txt 含其全文、public/feed.json 可被 JSON 解析。這些檔案由 Hugo 範本自動產生，不手寫。 連結：部署後文章、圖解版、index.md、llms.txt、llms-full.txt、feed.json 與參考連結回應 200。 提交：一般 commit 推送 main，不用 force push。 九、版面與 AI 友善存取 樣式只改 assets/css/extended/custom.css，不改 PaperMod 主題檔案。表格直接用 Markdown 表格，桌面自動換行，窄螢幕才允許橫向捲動。 每頁自動輸出 Markdown 版（\u003c文章網址\u003eindex.md），並由範本產生 /llms.txt、/llms-full.txt、全文 RSS（/index.xml）、JSON Feed（/feed.json）、/sitemap.xml 與 /robots.txt。說明見 關於。 "
+---
+
+# 寫作規範
+
+
+> 這份規範是本站寫作的自我要求，也是後續文章的一致性基準。倉庫根目錄的 `WRITING_GUIDE.md` 是同一份內容。
+
+## 一、語言
+
+1. 正文、標題、摘要、tags 一律使用**繁體中文**（臺灣用語，例如「資料庫」「設定」「部署」）。
+2. 程式碼、命令、設定檔與程式碼註解一律使用**英文**。
+3. 專有名詞保留原文（Kafka、GTID、SLO），第一次出現時可附中文說明。
+
+## 二、視角與結構
+
+1. 以**工程師視角**寫作：先場景，再方案，最後工程問題。
+2. 每個工程問題按「**現象 / 原因 / 做法**」三段寫。
+3. **結論先行，開頭點明核心觀點**：每篇正文最開頭（有圖解版時放在圖解版連結之後）放一個「核心觀點」區塊，用一兩句話點明本文立場或結論；寫法固定為 `> [!VIEWPOINT] 核心觀點`，下一行接 `> 觀點句`。只提煉正文已有的內容，不新增事實。正文負責提供證據。
+4. 先寫取捨與邊界，再寫優點；不寫沒有邊界的推薦。
+
+## 三、事實與來源
+
+1. 關鍵事實必須有來源，文末列出「參考」連結。
+2. 區分**實測**、**文件依據**與**未驗證**，並在文中標示。
+3. 不捏造資料。沒有實測數字時，不寫數字。
+4. 版本、日期與資料註明查核日期（Asia/Singapore 時區）。
+
+## 四、去識別化
+
+1. 不出現公司名、個人資訊、IP、主機名、叢集 ID、帳號、電子郵件、真實目錄。
+2. 以佔位符代替：`<mysql1-host>`、`<kafka>:9092`、`<內網IP>`、`<強密碼>`、`${DORIS_HOME}`。
+3. 庫表用通用範例（`shop.orders`、`shop.users`），路徑用通用路徑（`/opt/kafka`、`/opt/secrets`）。
+4. 文中公開產品、開源專案、公開新聞事件可以點名。
+
+## 五、圖解版
+
+1. 每篇技術文章附一頁**圖解版**：用 [answer-me-with-html](https://github.com/QingYunA/answer-me-with-html) 從簡短 Markdown 草稿產生單頁 HTML。
+2. 圖解版放在 `static/visual/<slug>.html`，文章開頭放一行連結。
+3. 圖解版至少包含：結論（callout）、架構（flow）、流程（sequence）、對比（table）、警示（callout）中合適的幾項。
+4. 圖解版同樣使用繁體中文並去識別化；產生時關閉版本檢查（`AM_NO_UPDATE_CHECK=1`），頁面不得有外部指令碼或統計。
+
+## 六、句子與用詞（參考 STE）
+
+1. 一句話只講一件事；句子儘量簡短。
+2. 一個詞只表達一個意思，同一事物全文用同一個名稱。
+3. 操作步驟用祈使句，條件寫在前面：「如果建置失敗，先看日誌。」
+4. 不用空泛詞與套話（「賦能」「打通」「綜上所述」）；列舉要完整，不用「等」帶過。
+5. 可用 `am lint <file>` 檢查長句與贅詞，只修明顯問題。
+
+## 七、轉載與分析他人文章
+
+1. 註明原文標題、作者或來源與連結。
+2. 只引用短句並標示出處，不大段抄錄。
+3. 對原文的事實逐條查核，分開寫「成立」「值得商榷」「說反了」。
+
+## 八、發布前檢查清單
+
+- [ ] 簡體殘留：用 OpenCC 比對，正文無簡體字。
+- [ ] 去識別化：grep 檢查 IP、主機名、電子郵件、真實路徑與帳號。
+- [ ] 建置：`hugo --minify` 無錯誤，文章出現在輸出中（注意 date 不可晚於現在）。
+- [ ] 圖解版：`am render` 無 STE 與程式碼警告，頁面無外部請求。
+- [ ] 核心觀點：正文開頭有 `> [!VIEWPOINT] 核心觀點` 區塊，一兩句話，與正文一致。
+- [ ] AI 友善輸出：建置後 `public/posts/<slug>/index.md` 存在且含 front matter；`public/llms.txt` 列出新文章、`public/llms-full.txt` 含其全文、`public/feed.json` 可被 JSON 解析。這些檔案由 Hugo 範本自動產生，不手寫。
+- [ ] 連結：部署後文章、圖解版、`index.md`、`llms.txt`、`llms-full.txt`、`feed.json` 與參考連結回應 200。
+- [ ] 提交：一般 commit 推送 main，不用 force push。
+
+## 九、版面與 AI 友善存取
+
+1. 樣式只改 `assets/css/extended/custom.css`，不改 PaperMod 主題檔案。表格直接用 Markdown 表格，桌面自動換行，窄螢幕才允許橫向捲動。
+2. 每頁自動輸出 Markdown 版（`<文章網址>index.md`），並由範本產生 `/llms.txt`、`/llms-full.txt`、全文 RSS（`/index.xml`）、JSON Feed（`/feed.json`）、`/sitemap.xml` 與 `/robots.txt`。說明見 [關於](https://d94807974-commits.github.io/about/)。
+

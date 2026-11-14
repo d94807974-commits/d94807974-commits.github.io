@@ -1,0 +1,936 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>文章分析 on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/%E6%96%87%E7%AB%A0%E5%88%86%E6%9E%90/</link><description>Recent content in 文章分析 on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Thu, 12 Nov 2026 13:05:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/%E6%96%87%E7%AB%A0%E5%88%86%E6%9E%90/index.xml" rel="self" type="application/rss+xml"/><item><title>「學生思維」的五個慣性：從解題到面對真實問題，哪些要換、哪些要留</title><link>https://d94807974-commits.github.io/posts/student-mindset-five-patterns-school-to-work/</link><pubDate>Thu, 12 Nov 2026 13:05:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/student-mindset-five-patterns-school-to-work/</guid><description>以一篇談「學生思維」的文章為起點，把它的五個模式（單一能力維度、遵循規則、等待評判、靜態必然、萬事俱備）放回「解題環境」來理解：考試是定義清楚、有標準答案、評分公開的問題，現實不是。本文逐條說明每個模式在學校為何合理、在職場為何失效，並補上原文過頭的地方：硬性規則不能繞過，運氣故事有倖存者偏差，行動要小而可逆。每個模式附替代做法與自我檢查，最後給一張對照表與一週實驗。引用 Roth 等人的成績與工作表現統合分析、Goodhart 定律、Rittel 與 Webber 的惡性問題、Simon 的滿意解、Argyris、Fleming 與 Wald 等公開資料。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/student-mindset-five-patterns-school-to-work.html">五個學生思維的成因、失效場景與替代做法</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>「學生思維」是解題環境訓練出來的合理策略，問題出在把它原封不動搬到定義不清、沒有標準答案、評分不公開的現實。要換的是「等答案」的姿態：把價值看成多維的、把規則分成硬限制與軟流程、自己建立回饋、先分類問題、用小而可逆的行動取代準備到百分之百。要留的是精確與紀律。</p>
+</div><blockquote>
+  <p>本文的起點：一篇題為〈「學生思維」的5個根本錯誤思維模式〉的文章。作者不詳；文中稱靈感來自知乎用戶「溫酒」的一則想法。全文由讀者提供，我沒有在網路上找到原文網址與原帖，因此無法核對作者與發表日期。下文引用原文只取短句並轉為繁體，標註「原文」。查核日期：2026-11-12（Asia/Singapore）。</p>
+
+</blockquote><h2 id="一原文在講什麼">一、原文在講什麼</h2>
+<p>原文的主張很集中：學生時代的「解題思維」被帶進職場，會讓人吃虧。它列出五個模式：</p>
+<table>
+	<thead>
+			<tr>
+					<th>模式</th>
+					<th>原文的說法（短句）</th>
+					<th>本文的判斷</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>單一能力維度</td>
+					<td>「分數高的人，贏得一切。」職場用「價值」衡量，且「價值≠能力≠分數」</td>
+					<td>方向對；「資源、背景」的解釋過於單一</td>
+			</tr>
+			<tr>
+					<td>遵循規則</td>
+					<td>「你認，它們就是鋼鐵牢籠，你不認，它們就是紙老虎。」</td>
+					<td>對軟流程成立；對硬性規則是危險的</td>
+			</tr>
+			<tr>
+					<td>等待評判</td>
+					<td>考試的評判太公平，現實沒有；「你找誰說理去？」</td>
+					<td>成立；運氣的例子要小心倖存者偏差</td>
+			</tr>
+			<tr>
+					<td>靜態必然</td>
+					<td>考題預設「一定給定了充足條件供我解答」</td>
+					<td>成立；但不是所有現實問題都無解</td>
+			</tr>
+			<tr>
+					<td>萬事俱備</td>
+					<td>「書生造反十年不成」；「行動中調整，幹就完了。」</td>
+					<td>方向對；「幹就完了」缺少邊界</td>
+			</tr>
+	</tbody>
+</table>
+<p>原文最有價值的一句，是結尾這句：</p>
+<blockquote>
+  <p>「不要妄想任何人告訴你，一個遵照執行就能成功的『規則』。」（原文）</p>
+
+</blockquote><p>這句話我同意。但原文有幾處寫得過頭，例如把企業描述成把人當耗材，把規則說成紙老虎。本文會逐項補上邊界。原文沒有引用資料，屬個人經驗文，本文也不假設它的每個案例都成立。</p>
+<h2 id="二先看環境考試是哪一類問題">二、先看「環境」：考試是哪一類問題</h2>
+<p>要理解這五個模式，先問：考試到底是哪一類問題？</p>
+<p>我把考試的特徵歸納成四點。這是我的歸納，不是引用：</p>
+<ol>
+<li><strong>問題已定義</strong>：題目告訴你要解什麼。</li>
+<li><strong>條件給足</strong>：題目裡有需要的資訊。</li>
+<li><strong>有標準答案</strong>：做對或做錯，有人能判定。</li>
+<li><strong>評分者公開且公正</strong>：標準事先公開，誰來評都一樣。</li>
+</ol>
+<p>Rittel 與 Webber 在 1973 年的論文裡，把問題分成「溫和」（tame）與「惡性」（wicked）兩類。溫和問題的例子是解方程式、分析化合物結構、五步將死的棋局；這類問題「目標清楚，也能判斷是否解決」。惡性問題則包括政策、規劃這類沒有明確定義的問題，他們寫道：社會問題「從不會被解決，充其量只是一再被重新解決」（&ldquo;re-solved—over and over again&rdquo;）。</p>
+<p>要小心的是，他們談的是公共政策與都市規劃，本文把它類推到職場，屬於類比，不是原論文的結論。但這個框架有用：<strong>考試是溫和問題的極致；現實裡既有溫和問題，也有惡性問題，而且常常混在一起。</strong></p>
+<p>所以，「學生思維」是一組在考試環境裡合理的策略：</p>
+<table>
+	<thead>
+			<tr>
+					<th>考試環境的特徵</th>
+					<th>對應的策略</th>
+					<th>在考試裡為什麼合理</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>分數可排序</td>
+					<td>追求單一維度的高分</td>
+					<td>分數就是排名</td>
+			</tr>
+			<tr>
+					<td>規則即評分標準</td>
+					<td>嚴格遵守規則</td>
+					<td>違規會直接扣分</td>
+			</tr>
+			<tr>
+					<td>評分者公正</td>
+					<td>做完等評判</td>
+					<td>評判不需要你去爭取</td>
+			</tr>
+			<tr>
+					<td>題目保證有解</td>
+					<td>相信一定有方法</td>
+					<td>出題者通常驗證過</td>
+			</tr>
+			<tr>
+					<td>準備越充分分數越高</td>
+					<td>準備到萬事俱備才動手</td>
+					<td>考前複習確實有用</td>
+			</tr>
+	</tbody>
+</table>
+<p>這張表要說的是：<strong>策略沒有錯，是環境換了。</strong> 原文把這個過程稱為「馴化」，我不這麼看。精確、紀律、按步驟做事，這些訓練在工程裡仍然有價值，後面會說哪些要留。</p>
+<h2 id="三五個模式逐項拆解">三、五個模式，逐項拆解</h2>
+<p>每個模式按同一個順序：學校為什麼合理、現實為什麼失效、原文要打折的地方、替代做法、自我檢查。</p>
+<h3 id="1-單一能力維度分數不是價值">1. 單一能力維度：分數不是價值</h3>
+<p><strong>學校為什麼合理</strong>：分數把不同人放在同一把尺上，區分度高，比較快。</p>
+<p><strong>現實為什麼失效</strong>：職場的產出沒有單一刻度，而且尺是多把的。幾個可查的事實：</p>
+<ul>
+<li><strong>成績與工作表現有關，但沒有那麼強。</strong> Roth 等人 1996 年的統合分析（Journal of Applied Psychology）發現，成績與工作表現的觀察相關係數是 .16，校正研究誤差後升到 .30 上下。相關係數會隨畢業後的時間下降：畢業一年後平均 .23，二到五年 .15，六年以上 .05。作者提醒，這個下降也可能來自統計上的範圍限制，不一定代表成績本身失去意義；他們的結論還是「成績可能比以前認為的更能預測工作表現」。所以準確的說法是：<strong>成績不是沒用，只是它預測的範圍和時間都有限。</strong></li>
+<li><strong>指標變成目標，就會失真。</strong> Strathern 1997 年的文章把這個現象寫成：「當一個指標變成目標，它就不再是好指標」（&ldquo;When a measure becomes a target, it ceases to be a good measure&rdquo;），她把這個觀察歸給 Keith Hoskin，並稱為 Goodhart 定律。學校的分數是這樣，職場的 KPI 也是。</li>
+<li><strong>把能力說成固定的，會有後果。</strong> Mueller 與 Dweck 1998 年的研究（六個實驗）發現，被稱讚「聰明」的五年級學生，失敗後比被稱讚「努力」的學生堅持更少、興趣更低、表現更差，也更常把智力看成固定特質。這項研究出自 Dweck 的團隊，是「成長心態」研究的早期成果之一。但要補一句：Sisk 等人 2018 年的兩個統合分析發現，成長心態與學業成績的整體關聯與介入效果都偏弱，只有低社經與學業高風險的學生可能受益。所以本文只用它來說明「分數＝能力」這種歸因的代價，不主張「改變心態就會成功」。</li>
+</ul>
+<p><strong>原文要打折的地方</strong>：</p>
+<ul>
+<li>原文說，有資源、背景或他人賞識時，價值絕對比單一的能力維度高。部分成立：價值包含稀缺性、信任與可得性。但「為什麼能力不如我的人升職」常常有可驗證的原因：對方承擔的範圍更大、成果更容易被看見、和組織目標更一致、風險承擔得更可靠。本文沒有資料說這些原因各占多少。</li>
+<li>原文說在資本眼裡，所有人事物都是耗材與器物。這是概括，不是事實。我的判斷是：把所有差距都歸因於背景，等於把可改變的部分也一併放棄。</li>
+</ul>
+<p><strong>替代做法</strong>：把「能力」拆成「價值」，用五問檢查自己的工作：</p>
+<table>
+	<thead>
+			<tr>
+					<th>問題</th>
+					<th>學生思維的回答</th>
+					<th>價值思維的回答</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>做出什麼</td>
+					<td>我完成了所有任務</td>
+					<td>我解決了誰的什麼問題</td>
+			</tr>
+			<tr>
+					<td>沒有我會怎樣</td>
+					<td>沒想過</td>
+					<td>哪個決定、哪條風險會變差</td>
+			</tr>
+			<tr>
+					<td>可靠嗎</td>
+					<td>我做得很好</td>
+					<td>時程與品質可預期，風險先說</td>
+			</tr>
+			<tr>
+					<td>被看見嗎</td>
+					<td>做好自然會被看到</td>
+					<td>關鍵人知道我做了什麼、為什麼重要</td>
+			</tr>
+			<tr>
+					<td>誰信任我</td>
+					<td>沒想過</td>
+					<td>哪些人敢把重要的事交給我</td>
+			</tr>
+	</tbody>
+</table>
+<p>「被看見」這一項，我在〈<a href="/posts/managing-up-essay-engineer-review/">工程師視角讀《向上管理的本質》</a>〉裡談過；「專業價值」與「服從」的差別，在〈<a href="/posts/liu-run-big-vendor-professional-value-engineer-review/">工程師視角讀劉潤〈如何成為一個大乙方〉</a>〉裡談過。</p>
+<p><strong>自我檢查</strong>：</p>
+<ul>
+<li><input disabled="" type="checkbox"> 我能用一句話說出自己上個月的工作解決了誰的什麼問題。</li>
+<li><input disabled="" type="checkbox"> 我能說出一個指標被「刷高」但實際沒有變好的例子。</li>
+<li><input disabled="" type="checkbox"> 我沒有把別人的升遷只歸因於背景。</li>
+</ul>
+<h3 id="2-遵循規則規則要分層">2. 遵循規則：規則要分層</h3>
+<p><strong>學校為什麼合理</strong>：規則和得分直接綁定。違規扣分，守規加分。</p>
+<p><strong>現實為什麼失效</strong>：很多規則在現實裡是流程，不是底線。Amazon 2016 年致股東信把這個問題叫做「流程當成代理指標」（process as proxy）：流程本來為結果服務，但容易變成目標，人們開始只確認「流程有沒有做對」。信中說，有經驗的主管會在聽到「我們照流程做了」這種辯解時，去檢討流程本身，並問：「我們擁有流程，還是流程擁有我們？」</p>
+<p><strong>原文要打折的地方</strong>：這裡原文過頭最多。「規矩是紙老虎」只對一部分規則成立。</p>
+<ul>
+<li><strong>硬性限制不能繞。</strong> 法規、合規、資安、資料保護、他人的權益，這些規則的代價不是「被批評」。</li>
+<li><strong>「試一下又不會死」不適用於高風險領域。</strong> Diane Vaughan 對挑戰者號發射決策的研究指出，NASA 並不是單純違規：O 形環的異常一再被分析後歸為「可接受的風險」，偏離逐步變成常態，她稱之為「偏差正常化」（normalization of deviance）。這個故事的教訓是：<strong>可怕的不是一次明目張膽的違規，而是一次一次小的「這次應該沒事」。</strong></li>
+<li><strong>彈性流程，不等於彈性倫理。</strong> 原文主張以目標為導向、凡事可以變通；這若指流程，可以；若指誠信、安全或對他人的承諾，不行。</li>
+</ul>
+<p><strong>替代做法</strong>：碰到規則，先分三層：</p>
+<table>
+	<thead>
+			<tr>
+					<th>層級</th>
+					<th>例子</th>
+					<th>做法</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>硬性限制</td>
+					<td>法規、合規、資安底線、對客戶的承諾</td>
+					<td>不談，找合規的路</td>
+			</tr>
+			<tr>
+					<td>組織流程</td>
+					<td>審批步驟、模板、門檻、資格</td>
+					<td>問「這條規則防什麼風險」，提例外申請</td>
+			</tr>
+			<tr>
+					<td>慣例與默契</td>
+					<td>「一向這樣做」的格式與分工</td>
+					<td>直接提出改進，小範圍試</td>
+			</tr>
+	</tbody>
+</table>
+<p>提出例外時，用固定格式，讓對方好批准：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>Goal:        what outcome needs this exception
+</span></span><span style="display:flex;"><span>Rule:        which rule or step, and what risk it guards against
+</span></span><span style="display:flex;"><span>Proposal:    what we do instead, and how the risk is covered
+</span></span><span style="display:flex;"><span>Scope/Time:  smallest scope, end date, rollback plan
+</span></span><span style="display:flex;"><span>Approver:    who owns this rule
+</span></span></code></pre></div><p>原文舉的「競聘門檻」例子：若是「僅供參考的條件」，條件不足也可以報名，並說明自己如何補足；若是法定資格或證照，就是硬限制。先問清楚是哪一種，再決定。</p>
+<p><strong>自我檢查</strong>：</p>
+<ul>
+<li><input disabled="" type="checkbox"> 我說得出這條規則防的是什麼風險。</li>
+<li><input disabled="" type="checkbox"> 我知道這條規則是誰定的，誰有權核准例外。</li>
+<li><input disabled="" type="checkbox"> 我要試的事，失敗了可以回復，也沒有碰到硬性限制。</li>
+</ul>
+<h3 id="3-等待評判沒有人會替你打分">3. 等待評判：沒有人會替你打分</h3>
+<p><strong>學校為什麼合理</strong>：考試有公開的標準和固定的評分者，回饋定期到來。做完交卷，就會有分數。</p>
+<p><strong>現實為什麼失效</strong>：現實裡</p>
+<ul>
+<li>標準常常是隱性的，評審不只一個人；</li>
+<li>回饋稀少，而且延遲；</li>
+<li>「做完」不等於「被看見」，更不等於「被理解」。</li>
+</ul>
+<p>原文指出，這個模式的另一個害處是「等待」：做完之後就坐等成功。這點成立。補充 Argyris 1991 年在《哈佛商業評論》的觀察：高學歷、高成就的專業人士，往往不擅長學習，因為他們很少經歷失敗，沒有機會反省自己的假設；一旦遇到失敗或表現不如預期，容易採取防衛姿態，把責任推給外部。這與「等評判」有關：一直有人給分的人，對「沒有人給分」的情境缺少練習。</p>
+<p><strong>原文要打折的地方</strong>：原文用兩個「運氣」的例子，一個是青黴素的發現，另一個是網路走紅的案例。</p>
+<ul>
+<li><strong>青黴素的例子只說對一半。</strong> Fleming 1945 年的諾貝爾獎演講說，青黴素「始於一次偶然的觀察」，並說：「我唯一的功勞，是沒有忽略這個觀察，並以細菌學家的身分繼續追下去」（&ldquo;My only merit is that I did not neglect the observation and that I pursued the subject as a bacteriologist&rdquo;）。偶然是真的，但注意到它並跟進，也是真的。<strong>運氣不可控，可控的是你有多少次暴露在機會裡，以及看到之後做什麼。</strong></li>
+<li><strong>成功故事有倖存者偏差。</strong> Wald 在二戰期間分析返航飛機的彈孔，得到的結論是：沒有彈孔的位置，很可能是「中彈就回不來」的位置（Mangel 與 Samaniego 1984 年的文章整理了他的方法）。同理，我們看到的「碰運氣紅了」，只是倖存者；沒紅的人不會出現在故事裡。本文因此不展開原文的網路走紅例子，單一走紅案例無法當成策略。</li>
+</ul>
+<p><strong>替代做法</strong>：自己建立回饋迴路。</p>
+<ol>
+<li><strong>開工前問驗收標準</strong>：「做到什麼程度，你會覺得這件事做好了？」</li>
+<li><strong>中間成果先給人看</strong>：兩小時寫出一頁草稿，找一個人看，比獨自打磨三天有效。</li>
+<li><strong>問具體的問題</strong>：不問「怎麼樣」，問「哪一處你最不放心」。</li>
+<li><strong>固定同步</strong>：每週一次，三行：進度、風險、需要的決定。</li>
+<li><strong>完成後補一句</strong>：這件事解決了什麼，下一步誰需要知道。</li>
+</ol>
+<p><strong>自我檢查</strong>：</p>
+<ul>
+<li><input disabled="" type="checkbox"> 我知道這件事的驗收標準是誰定的、寫在哪裡。</li>
+<li><input disabled="" type="checkbox"> 我上週至少讓一個人看過半成品。</li>
+<li><input disabled="" type="checkbox"> 我沒有把「沒有回饋」當成「沒有問題」。</li>
+</ul>
+<h3 id="4-靜態必然先分類再決定怎麼做">4. 靜態必然：先分類，再決定怎麼做</h3>
+<p><strong>學校為什麼合理</strong>：考題保證有解，條件在題目裡，題目不會在你作答時改變。</p>
+<p><strong>現實為什麼失效</strong>：原文列出三個隱含前提：條件充足、一定有方法、題目靜態不變。對應到 Rittel 與 Webber 的描述，惡性問題的特徵是：問題的定義本身就是問題的一部分，沒有明確的停止點，答案不是對或錯，而是好或壞。</p>
+<p><strong>原文要打折的地方</strong>：原文說：「永遠不是靜態分析能得到一個正確的答案」（原文）。這句話對惡性問題成立，但不能套到所有問題。工程裡有大量溫和問題：一個可重現的 bug、一次資料遷移的對帳、一個有明確規格的介面。對這些問題，<strong>精確與按步驟做仍然是最快的路</strong>。學生思維的問題是不分類，把所有問題都當成有標準答案；反過來的問題是，把所有問題都當成混沌，放棄分析。</p>
+<p><strong>替代做法</strong>：先分類，再選方法。</p>
+<table>
+	<thead>
+			<tr>
+					<th>問題類型</th>
+					<th>特徵</th>
+					<th>工程例子</th>
+					<th>做法</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>溫和</td>
+					<td>目標清楚，能判斷是否解決</td>
+					<td>修可重現的 bug、資料對帳</td>
+					<td>精確分析、按步驟做、寫驗證</td>
+			</tr>
+			<tr>
+					<td>條件不全</td>
+					<td>目標清楚，資訊不夠</td>
+					<td>容量規劃、方案選型</td>
+					<td>列假設、做小實驗補資訊</td>
+			</tr>
+			<tr>
+					<td>惡性</td>
+					<td>目標有爭議，沒有停止點</td>
+					<td>平臺是否被採用、流程改革</td>
+					<td>小步嘗試、定期回頭看、接受「夠好」</td>
+			</tr>
+	</tbody>
+</table>
+<p>對後兩類，用「假設清單」代替「答案」：</p>
+<ul>
+<li>寫下這個決定依賴的假設（條件、資源、他人的行為）。</li>
+<li>每條假設標一個「回頭看」的日期。</li>
+<li>預先寫下：「出現什麼情況，我會改變決定。」</li>
+</ul>
+<p>最後一點很重要：<strong>做對了也可能沒有回報。</strong> 所以評價決定時，要把「過程」和「單次結果」分開看。原文說「有時候付出努力得不到回報」，這句我同意。</p>
+<p><strong>自我檢查</strong>：</p>
+<ul>
+<li><input disabled="" type="checkbox"> 我這個問題，是溫和、條件不全，還是惡性？</li>
+<li><input disabled="" type="checkbox"> 我寫下了三條假設，並標了回頭看的日期。</li>
+<li><input disabled="" type="checkbox"> 我預先寫了「什麼情況下我會改變決定」。</li>
+</ul>
+<h3 id="5-萬事俱備用小而可逆的行動取代百分之百的準備">5. 萬事俱備：用小而可逆的行動取代百分之百的準備</h3>
+<p><strong>學校為什麼合理</strong>：考試的規則是「準備越充分，分數越高」，考前複習確實有效。</p>
+<p><strong>現實為什麼失效</strong>：資訊永遠不完整，而等待本身有成本。三個公開的說法可以參考：</p>
+<ul>
+<li><strong>Simon 1956 年</strong>提出「滿意解」（satisficing）：決策者的資訊與計算能力有限，適應良好的行為通常是找到「夠好」的選項就停，而不是搜尋最佳解。</li>
+<li><strong>Amazon 2016 年致股東信</strong>建議：很多決定只需要你想要的資訊的約 70%；等到 90%，多半已經太慢。同一封信的前提是：你要擅長快速發現並修正錯誤，而且許多決定是可逆的「雙向門」。</li>
+<li><strong>精實創業</strong>（Lean Startup）的「建造—衡量—學習」迴圈：先找出要解決的問題，做出最小可行產品（MVP）快速學習，再用可行動的指標決定轉向或堅持。</li>
+</ul>
+<p>這三者的共同點，是「行動」，而且是<strong>有範圍、有指標、能回頭</strong>的行動。</p>
+<p><strong>原文要打折的地方</strong>：原文的建議是：目標，分析現有條件，行動中組織其他條件，然後成功。前半段合理。問題在後面：</p>
+<ul>
+<li><strong>「幹就完了」沒有邊界。</strong> 行動不等於魯莽。不可逆又高風險的事（刪除資料、生產環境的大規模變更、資金、安全），仍然需要準備、檢查清單與回滾方案。</li>
+<li><strong>「碰運氣」不是策略。</strong> 前面說了倖存者偏差。小實驗不是碰運氣，它是用很小的成本買資訊。</li>
+<li><strong>最後那個箭頭是「成功」。</strong> 行動只保證你得到資訊，不保證成功。</li>
+</ul>
+<p><strong>替代做法</strong>：把決定先分級，再決定準備多少。</p>
+<table>
+	<thead>
+			<tr>
+					<th>條件</th>
+					<th>做法</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>可逆、影響小</td>
+					<td>用 70% 的資訊就動，記下結果</td>
+			</tr>
+			<tr>
+					<td>可逆、影響大</td>
+					<td>小範圍先做，設止損線</td>
+			</tr>
+			<tr>
+					<td>不可逆、影響大</td>
+					<td>該準備的準備，加檢查清單與回滾方案，找人覆核</td>
+			</tr>
+	</tbody>
+</table>
+<p>每個小實驗，先寫五行：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>Hypothesis:  what we believe, and why
+</span></span><span style="display:flex;"><span>Experiment:  the smallest action that tests it
+</span></span><span style="display:flex;"><span>Time box:    when we stop and look at the result
+</span></span><span style="display:flex;"><span>Success:     the metric or observation that counts as success
+</span></span><span style="display:flex;"><span>Stop/Undo:   the condition to stop, and how to roll back
+</span></span></code></pre></div><p><strong>自我檢查</strong>：</p>
+<ul>
+<li><input disabled="" type="checkbox"> 我寫下了「夠好」的標準，以及停止研究的時間。</li>
+<li><input disabled="" type="checkbox"> 這件事可逆嗎？如果不可逆，我做了哪些準備？</li>
+<li><input disabled="" type="checkbox"> 我的實驗有時間盒、成功判準和止損線。</li>
+</ul>
+<h2 id="四一張對照表">四、一張對照表</h2>
+<table>
+	<thead>
+			<tr>
+					<th>學生思維</th>
+					<th>在學校合理的原因</th>
+					<th>現實為什麼失效</th>
+					<th>替代做法</th>
+					<th>要留下的部分</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>單一能力維度</td>
+					<td>分數可排序</td>
+					<td>價值是多維的，指標會被刷</td>
+					<td>用五問檢查價值</td>
+					<td>持續提升專業能力</td>
+			</tr>
+			<tr>
+					<td>遵循規則</td>
+					<td>規則即評分標準</td>
+					<td>規則有層次，流程會變代理指標</td>
+					<td>分三層，提例外申請</td>
+					<td>硬性限制不繞</td>
+			</tr>
+			<tr>
+					<td>等待評判</td>
+					<td>評分者公開公正</td>
+					<td>標準隱性，回饋稀少</td>
+					<td>自己建回饋迴路</td>
+					<td>對品質的自我要求</td>
+			</tr>
+			<tr>
+					<td>靜態必然</td>
+					<td>題目保證有解</td>
+					<td>問題有類型，條件會變</td>
+					<td>先分類，列假設</td>
+					<td>溫和問題要精確</td>
+			</tr>
+			<tr>
+					<td>萬事俱備</td>
+					<td>準備越多分數越高</td>
+					<td>資訊不完整，等待有成本</td>
+					<td>分級後小步實驗</td>
+					<td>高風險事要準備</td>
+			</tr>
+	</tbody>
+</table>
+<h2 id="五一週實驗">五、一週實驗</h2>
+<p>不必一次改五個。選一個最像你的，做一週：</p>
+<table>
+	<thead>
+			<tr>
+					<th>如果你常常…</th>
+					<th>本週做這件事</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>做完就等</td>
+					<td>週三前，把一份半成品給一個人看，問「哪一處最不放心」</td>
+			</tr>
+			<tr>
+					<td>覺得規則卡住</td>
+					<td>找一條卡住你的規則，寫出它防的風險，判斷屬於哪一層</td>
+			</tr>
+			<tr>
+					<td>一直在準備</td>
+					<td>選一件小事，寫五行實驗，兩天內做完</td>
+			</tr>
+			<tr>
+					<td>把差距都歸因於別人</td>
+					<td>寫下三個你能改變的因素，做其中一個</td>
+			</tr>
+			<tr>
+					<td>覺得做不好就是失敗</td>
+					<td>把一個決定拆成「過程」和「結果」兩欄，各自評價</td>
+			</tr>
+	</tbody>
+</table>
+<h2 id="六我的看法">六、我的看法</h2>
+<p>我讀完原文的感受是：它指出的方向我大多同意，但我不同意「學生思維是錯誤」這個說法。更準確的說法是：<strong>「學生思維」是一個在特定環境裡很好用的工具，工程師的問題常常是只有這一個工具。</strong></p>
+<p>能留下的有三樣：</p>
+<ol>
+<li><strong>精確。</strong> 資料對不上、設定寫錯，在工程裡有真實代價。</li>
+<li><strong>紀律。</strong> 按步驟做、寫驗證、守約定，是可靠性的基礎。</li>
+<li><strong>對品質的要求。</strong> 不因為「沒人看」就降低標準。</li>
+</ol>
+<p>要換掉的，是「等」：等題目、等答案、等評分、等準備好。換成「問」、「試」和「說」：問清楚目標，試一個小的可逆動作，把結果與風險說出來。</p>
+<p>這跟原文的結尾並不矛盾。沒有人會給你一個遵照執行就能成功的規則；但這不等於不需要規則。<strong>你要做的，是自己判斷每一條規則屬於哪一層。</strong></p>
+<h2 id="七邊界與未驗證">七、邊界與未驗證</h2>
+<ol>
+<li>原文作者不詳，我沒有找到原文與知乎原帖的網址，無法核對作者與發表日期。原文是個人經驗文，沒有引用資料。</li>
+<li>原文說現在的教育方式與十幾年、二十年前相比沒有任何變化，本文沒有查證，也沒有評論教育制度。</li>
+<li>本文把 Rittel 與 Webber 的「惡性問題」從政策規劃類推到職場，屬於類比。</li>
+<li>Roth 等人的研究是 1996 年的統合分析，涵蓋的是畢業生的成績與工作表現；成長心態的研究證據有爭議（Sisk 等人 2018 年的結果偏弱）。本文只用它們說明概念，不據此給出任何數字預測。</li>
+<li>Amazon 股東信是一家公司的經營主張，不是研究結論；本文引用的是它對「流程當代理指標」與「決策速度」的描述。</li>
+<li>本文的替代做法（五問、三層規則、回饋迴路、問題分類、小實驗）是我的整理，沒有經過實測，使用時請按自己的環境調整。</li>
+</ol>
+<h2 id="參考">參考</h2>
+<p>原文：</p>
+<ul>
+<li>〈「學生思維」的5個根本錯誤思維模式〉，作者不詳，內文稱靈感來自知乎用戶「溫酒」的想法。全文由讀者提供，未找到公開網址。</li>
+</ul>
+<p>研究與公開文獻：</p>
+<ul>
+<li>Roth, BeVier, Switzer, Schippmann (1996), Meta-analyzing the relationship between grades and job performance, Journal of Applied Psychology 81(5), 548–556：<a href="https://doi.org/10.1037/0021-9010.81.5.548">https://doi.org/10.1037/0021-9010.81.5.548</a></li>
+<li>Mueller &amp; Dweck (1998), Praise for intelligence can undermine children&rsquo;s motivation and performance, Journal of Personality and Social Psychology 75(1), 33–52：<a href="https://doi.org/10.1037/0022-3514.75.1.33">https://doi.org/10.1037/0022-3514.75.1.33</a></li>
+<li>Sisk et al. (2018), To what extent and under which circumstances are growth mind-sets important to academic achievement? Two meta-analyses, Psychological Science 29(4), 549–571：<a href="https://pubmed.ncbi.nlm.nih.gov/29505339/">https://pubmed.ncbi.nlm.nih.gov/29505339/</a></li>
+<li>Strathern (1997), &ldquo;Improving ratings&rdquo;: audit in the British University system, European Review 5(3), 305–321（Goodhart 定律的常見引述）：<a href="https://unfinished.observer/sources/strathern-improving-ratings">https://unfinished.observer/sources/strathern-improving-ratings</a></li>
+<li>Rittel &amp; Webber (1973), Dilemmas in a general theory of planning, Policy Sciences 4(2), 155–169：<a href="https://doi.org/10.1007/bf01405730">https://doi.org/10.1007/bf01405730</a></li>
+<li>Simon (1956), Rational choice and the structure of the environment, Psychological Review 63(2), 129–138：<a href="https://doi.org/10.1037/h0042769">https://doi.org/10.1037/h0042769</a></li>
+<li>Argyris (1991), Teaching Smart People How to Learn, Harvard Business Review：<a href="https://hbr.org/1991/05/teaching-smart-people-how-to-learn">https://hbr.org/1991/05/teaching-smart-people-how-to-learn</a></li>
+<li>Fleming (1945), Penicillin, Nobel Lecture：<a href="https://www.nobelprize.org/uploads/2018/06/fleming-lecture.pdf">https://www.nobelprize.org/uploads/2018/06/fleming-lecture.pdf</a></li>
+<li>Mangel &amp; Samaniego (1984), Abraham Wald&rsquo;s work on aircraft survivability, Journal of the American Statistical Association 79(386)：<a href="https://www.tandfonline.com/doi/abs/10.1080/01621459.1984.10478038">https://www.tandfonline.com/doi/abs/10.1080/01621459.1984.10478038</a></li>
+<li>Vaughan，挑戰者號發射決策與「偏差正常化」的介紹（哥倫比亞大學雜誌）：<a href="https://magazine.columbia.edu/article/challenger-disaster-normalization-deviance">https://magazine.columbia.edu/article/challenger-disaster-normalization-deviance</a></li>
+</ul>
+<p>公司與方法論：</p>
+<ul>
+<li>Amazon, 2016 Letter to Shareholders（Resist Proxies；High-Velocity Decision Making）：<a href="https://www.aboutamazon.com/news/company-news/2016-letter-to-shareholders">https://www.aboutamazon.com/news/company-news/2016-letter-to-shareholders</a></li>
+<li>The Lean Startup, Methodology：<a href="https://theleanstartup.com/principles">https://theleanstartup.com/principles</a></li>
+</ul>
+<p>本站相關文章：</p>
+<ul>
+<li>〈工程師視角讀《向上管理的本質》〉：<a href="https://d94807974-commits.github.io/posts/managing-up-essay-engineer-review/">https://d94807974-commits.github.io/posts/managing-up-essay-engineer-review/</a></li>
+<li>〈工程師視角讀劉潤〈如何成為一個大乙方〉〉：<a href="https://d94807974-commits.github.io/posts/liu-run-big-vendor-professional-value-engineer-review/">https://d94807974-commits.github.io/posts/liu-run-big-vendor-professional-value-engineer-review/</a></li>
+</ul>
+]]></content:encoded></item><item><title>工程師視角讀劉潤〈如何成為一個大乙方〉：專業價值不是服從，也不是一律拒絕</title><link>https://d94807974-commits.github.io/posts/liu-run-big-vendor-professional-value-engineer-review/</link><pubDate>Tue, 10 Nov 2026 12:10:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/liu-run-big-vendor-professional-value-engineer-review/</guid><description>分析劉潤 2021 年的文章〈所有的合作，都要有專業的價值：如何成為一個大乙方？〉：小乙方靠服從、大乙方靠專業，專業包括能力（了解自己、理解他人）與態度（有原則的堅定）。本文逐條核對文中案例與數字的出處，指出成立與被簡化的部分，再落到乙方交付、外包與供應商、內部平臺團隊、顧問與架構師、何時說不、需求澄清與範圍管理、SLA 與責任邊界等工程場景，給出可執行做法與檢查清單。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/liu-run-big-vendor-professional-value-engineer-review.html">小乙方與大乙方的回覆差異、說不的判斷與交付流程</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>劉潤「小乙方靠服從，大乙方靠專業」的判斷方向是對的：把對方的問題當成需求照單全收，是交付失敗的常見起點。但專業價值不等於敢拒絕；工程上要做的是把問題還原成目標、給出帶成本的選項與建議、主動列出風險，只在底線問題上堅持，並用合約、SLA 與決策紀錄把責任邊界寫清楚。</p>
+</div><blockquote>
+  <p>原文：〈所有的合作，都要有專業的價值：如何成為一個大乙方？〉，劉潤口述、蕉皮編輯，微信公眾號「劉潤」第 1268 篇原創，2021-08-25 首發。微信原文連結未能在搜尋中取得；本文依官方帳號「劉潤商學」2026-06-29 在騰訊新聞的重發版（標註「本文首發於2021年8月」）與搜狐 2021-08-25 的轉載版閱讀全文。下文引用原文只取短句並轉為繁體，標註「原文」。查核日期：2026-11-10（Asia/Singapore）。</p>
+
+</blockquote><h2 id="一原文在講什麼">一、原文在講什麼</h2>
+<p>原文分三段，每段一個故事：</p>
+<table>
+	<thead>
+			<tr>
+					<th>段落</th>
+					<th>故事</th>
+					<th>原文短句</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>小乙方與大乙方</td>
+					<td>作者看演講場地時提了三個問題，第一家供應商都回「好的，可以」並記下；第二家給出判斷、A/B 方案、成本與建議，還主動提醒十幾處要注意的細節</td>
+					<td>「小乙方，靠『服從性』；大乙方，靠『專業性』。」</td>
+			</tr>
+			<tr>
+					<td>專業的能力</td>
+					<td>了解自己：作者的公司能提供知識、流量、信用三樣東西。理解他人：品牌方的 brief 連每段比例都規定好，作者改用自己的文章結構，理由是要同時照顧讀者</td>
+					<td>「因為我為你的目標和需求負責。」</td>
+			</tr>
+			<tr>
+					<td>專業的態度</td>
+					<td>「Assertive，有原則的堅定」：拒絕在推廣文裡加入攻擊競品的話，並按合約退款；拒絕替別人「論證」既定結論</td>
+					<td>「每一段文字，每一篇文章，都完全代表自己的真實觀點。」</td>
+			</tr>
+	</tbody>
+</table>
+<p>結尾的結論是：甲方是客戶與合作夥伴，不是「爸爸」。</p>
+<h2 id="二事實與說法核對">二、事實與說法核對</h2>
+<p>原文是個人經驗文，沒有引用外部研究。能核對的是案例的一致性與數字的出處。</p>
+<table>
+	<thead>
+			<tr>
+					<th>說法</th>
+					<th>核對結果</th>
+					<th>判斷</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>「10 月份辦演講」看場地的對話</td>
+					<td>2026 年官方重發版改寫為「每年10月份」。2023 年劉潤公眾號第 1991 篇〈重要時刻，不要輸在同理心上〉用了幾乎相同的對話結構，但場景換成藝術展覽，提醒事項從「10幾處」變成「大概有20項」（轉載站目前回應 500，依搜尋快取讀取）</td>
+					<td>適合當示意性的故事，不宜當成可查證的事件紀錄</td>
+			</tr>
+			<tr>
+					<td>公眾號讀者「差不多有180萬」</td>
+					<td>2021 版寫 180 萬；2026 重發版改為「440多萬」；另一篇談 To B 合作的文章寫 220 萬。都是作者自述</td>
+					<td>未驗證；重發時數字被更新，說明這是寫作當下的自述</td>
+			</tr>
+			<tr>
+					<td>拒絕加入攻擊競品內容、按合約退款</td>
+					<td>只有作者單方敘述，沒有對方說法</td>
+					<td>無法核實；但「按合約退款」這個細節本身是可複製的機制</td>
+			</tr>
+			<tr>
+					<td>小乙方「沒做過什麼大的項目，也沒有很強的專業能力」所以靠服從</td>
+					<td>因果被簡化。服從也可能是議價力弱的結果：小供應商拒絕一次，可能就失去這個客戶</td>
+					<td>值得商榷</td>
+			</tr>
+			<tr>
+					<td>第一家供應商「把問題當成要求」</td>
+					<td>只有甲方視角。對方把問題記下、回去評估，也是一種常見做法；文章沒有給對方的說法</td>
+					<td>結論可能成立，證據只有一面</td>
+			</tr>
+			<tr>
+					<td>「Assertive，有原則的堅定」</td>
+					<td>原文強調「堅定」。工程組織常見的版本是 Amazon 領導力準則 &ldquo;Have Backbone; Disagree and Commit&rdquo;：反對時要 &ldquo;respectfully challenge&rdquo;，決定後要 &ldquo;commit wholly&rdquo;</td>
+					<td>成立但只講了一半：少了「尊重地反對」與「決定後全力執行」</td>
+			</tr>
+	</tbody>
+</table>
+<h2 id="三哪些觀點成立">三、哪些觀點成立</h2>
+<p><strong>1. 問題不等於需求。</strong> 原文最有價值的一句是「他把我的問題和建議，當成了要求」（原文）。軟體圈有個對應的名詞叫 XY 問題：對方問的是自己想到的解法（Y），而不是真正的問題（X）。照著 Y 做，常常白做。</p>
+<p><strong>2. 回覆要帶選項、成本與建議。</strong> 第二家供應商的回覆有四個部分：判斷（椅子要撤、螢幕要換）、兩個方案的優劣、成本、明確建議。這與架構決策紀錄（ADR，Architecture Decision Record）的結構一致：背景、選項、決定、後果。</p>
+<p><strong>3. 主動提醒風險是專業的一部分。</strong> 「還有如下這麼10幾處，是咱們必須重點關注的」（原文）。ACM 職業道德守則 2.5 條要求對系統及其影響做全面評估，「including analysis of possible risks」。不說出來的風險，出事時就變成責任糾紛。</p>
+<p><strong>4. 了解自己，不承諾做不到的事。</strong> 原文說了解自己才「不會承諾自己做不到的事情」（原文）。ACM 守則 1.3 條要求誠實說明能力的限制，2.6 條要求只在能力範圍內接案，發現能力不足時要告知客戶。</p>
+<p><strong>5. 底線要靠機制守住。</strong> 原文拒稿後「按照合同，把錢退給了」對方（原文）。這一步比「堅定」兩個字更重要：事先寫好的條款，讓拒絕有成本上限，也讓對方知道規則。</p>
+<h2 id="四哪些地方要打折">四、哪些地方要打折</h2>
+<p><strong>1. 說不的底氣，部分來自議價力。</strong> 作者能拒絕 brief、拒絕改稿，背後是幾百萬讀者帶來的稀缺性。新團隊、新供應商照搬「我寫不了」，結果可能只是失去合作。工程上的替代做法是：先用證據說服（數據、過往案例、風險），把拒絕留給底線問題。</p>
+<p><strong>2. 原則和偏好要分開。</strong> 原文的三個拒絕案例都是誠信問題（攻擊對手、論證既定結論、粉飾財務危機）。但 brief 的段落比例屬於表達方式的偏好。把偏好包裝成原則，會讓合作方覺得你難以合作。</p>
+<p><strong>3. 專業判斷也會錯。</strong> 原文承認「我們的觀點，當然也是會錯的」（原文），但沒有說錯了怎麼辦。Amazon 的 &ldquo;Are Right, A Lot&rdquo; 準則要求主動尋找反證（&ldquo;work to disconfirm their beliefs&rdquo;）。工程上對應的是：建議要附上前提與驗證方式，前提不成立時能回頭修改。</p>
+<p><strong>4. 甲方保有決定權。</strong> 大乙方給建議，甲方做決定。對方在知情的情況下選了你不推薦的方案，只要不碰底線，就照做，並把決定記下來。這就是 disagree and commit。</p>
+<h2 id="五落到工程場景">五、落到工程場景</h2>
+<h3 id="1-乙方交付外包與供應商">1. 乙方交付、外包與供應商</h3>
+<p><strong>現象</strong>：需求文件寫得很細，交付時才發現做出來的東西不能用；雙方互指「這是你要求的」。</p>
+<p><strong>原因</strong>：雙方都把文件當成目標，沒有人負責確認文件背後的業務目標。</p>
+<p><strong>做法</strong>：</p>
+<ol>
+<li>開工前做一次「目標回述」：用自己的話寫下對方要達成的業務結果與驗收方式，請對方確認。</li>
+<li>每個需求標註來源：是對方的問題、對方提出的解法，還是我方建議。</li>
+<li>對方提出的解法，先問「這要解決什麼問題」，再決定是否照做。</li>
+</ol>
+<h3 id="2-內部平臺團隊對業務方">2. 內部平臺團隊對業務方</h3>
+<p><strong>現象</strong>：業務方提出「幫我開一個資料庫帳號，給全部權限」。平臺團隊照做最快，但會留下安全與穩定性問題。</p>
+<p><strong>原因</strong>：平臺團隊的角色被看成「工單處理者」，而不是有自己服務邊界的提供者。</p>
+<p><strong>做法</strong>：</p>
+<ol>
+<li>公開服務目錄：能提供什麼、交付時間、SLO、不提供什麼。這就是平臺版的「了解自己」。</li>
+<li>對超出目錄的請求，用固定格式回覆：還原目標、給出目錄內的替代方案、說明例外流程與核准人。</li>
+<li>權限、資料、安全相關的請求，預設走最小權限，例外要有到期日。</li>
+</ol>
+<h3 id="3-顧問與架構師">3. 顧問與架構師</h3>
+<p><strong>現象</strong>：被請來「背書」既定方案；或只給結論，不給理由。</p>
+<p><strong>原因</strong>：把專業價值當成頭銜，而不是可檢驗的判斷。</p>
+<p><strong>做法</strong>：</p>
+<ol>
+<li>評估報告分三段：事實（量測或文件依據）、判斷（含前提）、建議（含替代方案與成本）。</li>
+<li>被要求論證既定結論時，改為提供獨立評估；評估結果與對方預期不同，照實寫。這與原文拒絕「論證五大戰略先進性」是同一件事。</li>
+<li>重要建議寫成 ADR，記錄當時的選項與取捨，方便日後回頭檢查。</li>
+</ol>
+<h3 id="4-何時該說不">4. 何時該說不</h3>
+<table>
+	<thead>
+			<tr>
+					<th>情境</th>
+					<th>屬於</th>
+					<th>做法</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>要求跳過安全審查、關閉稽核日誌、共用高權限帳號</td>
+					<td>底線</td>
+					<td>拒絕，並提供合規的替代方案</td>
+			</tr>
+			<tr>
+					<td>要求報告裡隱藏已知缺陷、修改量測數據</td>
+					<td>底線</td>
+					<td>拒絕；ACM 守則 1.3 條明列偽造資料違反守則</td>
+			</tr>
+			<tr>
+					<td>要求承諾做不到的時程或可用性</td>
+					<td>底線</td>
+					<td>說明做不到的原因，給出做得到的範圍與條件</td>
+			</tr>
+			<tr>
+					<td>指定不推薦的技術方案</td>
+					<td>偏好或取捨</td>
+					<td>說明風險與成本，對方知情決定後照做並記錄</td>
+			</tr>
+			<tr>
+					<td>文件格式、命名、介面樣式</td>
+					<td>偏好</td>
+					<td>照對方習慣做</td>
+			</tr>
+	</tbody>
+</table>
+<h3 id="5-需求澄清與範圍管理">5. 需求澄清與範圍管理</h3>
+<p><strong>現象</strong>：每次會議都多出「順便」的需求，交付日不變。</p>
+<p><strong>原因</strong>：沒有把範圍變更和時程、成本連在一起。</p>
+<p><strong>做法</strong>：</p>
+<ol>
+<li>每個新需求都回答三個問題：要解決什麼問題、不做會怎樣、要拿掉什麼或延後多久。</li>
+<li>範圍變更用書面確認，附上對時程與成本的影響。</li>
+<li>把「不做什麼」也寫進範圍說明，避免被當成隱含承諾。</li>
+</ol>
+<h3 id="6-sla-與責任邊界">6. SLA 與責任邊界</h3>
+<p><strong>現象</strong>：事故發生後，雙方對「誰該負責」各說各話。</p>
+<p><strong>原因</strong>：責任只在口頭上，沒有量化的承諾與後果。</p>
+<p><strong>做法</strong>：</p>
+<ol>
+<li>區分 SLO 與 SLA。Google SRE 書的定義是：SLA 是與使用者之間包含後果的明示或默示合約；沒有明確後果的，多半只是 SLO。</li>
+<li>SLA 寫清楚量測方式、排除條件、依賴方責任、未達標的後果。</li>
+<li>把底線條款與退出條款寫進合約。原文「按照合同退款」的做法，就是事先約定好的退出機制。</li>
+</ol>
+<h2 id="六可以直接用的回覆格式">六、可以直接用的回覆格式</h2>
+<p>收到對方的問題或指定解法時，用四段回覆：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>1. Restate: what problem are we solving, and how will we know it is solved?
+</span></span><span style="display:flex;"><span>2. Options: A / B (and &#34;do nothing&#34;), each with trade-offs, cost, and risk.
+</span></span><span style="display:flex;"><span>3. Recommendation: which option, why, and the assumptions behind it.
+</span></span><span style="display:flex;"><span>4. Also note: other risks or details you may not have asked about.
+</span></span></code></pre></div><p>這四段分別對應原文第二家供應商的回覆：確認問題、A/B 方案與成本、明確建議、主動提醒十幾處細節。</p>
+<h2 id="七檢查清單">七、檢查清單</h2>
+<ul>
+<li><input disabled="" type="checkbox"> 我寫下了對方的業務目標與驗收方式，並請對方確認。</li>
+<li><input disabled="" type="checkbox"> 每個需求都標了來源：問題、對方的解法，或我方建議。</li>
+<li><input disabled="" type="checkbox"> 重要決定附有選項、成本、風險與建議，並記錄在 ADR 或決策紀錄裡。</li>
+<li><input disabled="" type="checkbox"> 我主動列出了對方沒問到的風險。</li>
+<li><input disabled="" type="checkbox"> 我公開了自己的服務範圍、不提供的項目與 SLO。</li>
+<li><input disabled="" type="checkbox"> 我沒有承諾做不到的時程或可用性。</li>
+<li><input disabled="" type="checkbox"> 我分清了底線與偏好；只在底線上拒絕。</li>
+<li><input disabled="" type="checkbox"> 對方在知情下做了不同決定時，我照做並記錄。</li>
+<li><input disabled="" type="checkbox"> 合約或服務協議寫明了 SLA、責任邊界、底線條款與退出方式。</li>
+</ul>
+<h2 id="八邊界與限制">八、邊界與限制</h2>
+<ol>
+<li>原文是個人經驗文，案例只有作者單方敘述，本文無法核實其中任何一個事件。</li>
+<li>原文的情境是內容合作與活動供應商，搬到軟體交付時，「專業判斷」需要更多可量測的證據支撐。</li>
+<li>本文的工程做法來自公開的工程實踐與職業守則，沒有實測資料。</li>
+<li>劉潤其他談 To B 合作與同理心的文章，本文只用來核對案例與數字的一致性，沒有展開分析。</li>
+</ol>
+<h2 id="參考">參考</h2>
+<p>原文與相關文章：</p>
+<ul>
+<li>劉潤，〈所有的合作，都要有專業的價值：如何成為一個大乙方？〉，劉潤商學 2026-06-29 重發（騰訊新聞）：<a href="https://news.qq.com/rain/a/20260629A02DK900">https://news.qq.com/rain/a/20260629A02DK900</a></li>
+<li>同文 2021-08-25 轉載（搜狐，來源：劉潤）：<a href="https://www.sohu.com/a/485561310_117018">https://www.sohu.com/a/485561310_117018</a></li>
+<li>同文轉載（MBA 智庫資訊，2021-09-03）：<a href="https://news.mbalib.com/story/252277">https://news.mbalib.com/story/252277</a></li>
+<li>同文轉載（天九雲，標題改為〈在演講現場，與合作夥伴聊了聊後，我決定不合作了〉）：<a href="https://www.tojoyun.com/news/zixun/61270e4edecd2229720a6247">https://www.tojoyun.com/news/zixun/61270e4edecd2229720a6247</a></li>
+<li>劉潤，〈To B合作，要更有專業精神和價值〉（轉載）：<a href="https://www.growthhk.cn/quan/50898.html">https://www.growthhk.cn/quan/50898.html</a></li>
+<li>劉潤，〈重要時刻，不要輸在同理心上〉，公眾號第 1991 篇（轉載，查核時回應 500）：<a href="http://www.yinhang.mbahome.com/depth/2023/0826/5499.html">http://www.yinhang.mbahome.com/depth/2023/0826/5499.html</a></li>
+</ul>
+<p>工程與職業實踐：</p>
+<ul>
+<li>Amazon Leadership Principles（Have Backbone; Disagree and Commit；Are Right, A Lot）：<a href="https://www.amazon.jobs/content/en/our-workplace/leadership-principles">https://www.amazon.jobs/content/en/our-workplace/leadership-principles</a></li>
+<li>ACM Code of Ethics and Professional Conduct（1.3、2.5、2.6）：<a href="https://www.acm.org/code-of-ethics">https://www.acm.org/code-of-ethics</a></li>
+<li>The XY Problem：<a href="https://xyproblem.info/">https://xyproblem.info/</a></li>
+<li>Google SRE Book, Service Level Objectives：<a href="https://sre.google/sre-book/service-level-objectives/">https://sre.google/sre-book/service-level-objectives/</a></li>
+<li>Michael Nygard, Documenting Architecture Decisions：<a href="https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions">https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions</a></li>
+</ul>
+]]></content:encoded></item><item><title>工程師視角讀《向上管理的本質》：預防、迭代、溝通，哪些成立、哪些要打折</title><link>https://d94807974-commits.github.io/posts/managing-up-essay-engineer-review/</link><pubDate>Mon, 09 Nov 2026 16:00:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/managing-up-essay-engineer-review/</guid><description>分析一篇講「向上管理」的公眾號文章：它用扁鵲三兄弟、稻盛和夫重建日航、觸龍說趙太后三個故事，講預防問題、快速迭代、共情溝通三種能力。本文從工程師視角逐條核對史實與資料，指出哪些觀點成立、哪些被簡化或說反了，並把它們落到 SRE、事後復盤、DORA 指標、設計文件等可執行的工程做法上。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/managing-up-essay-engineer-review.html">事實核對、觸龍的說服順序與工程化做法</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>原文的三個觀點（預防勝於救火、小步迭代、先建立信任再說服）方向都對，但三個故事都被簡化過。對工程師有用的是把它們工程化：讓預防可量化、讓回饋迴路變短、讓溝通從對方的目標出發。</p>
+</div><blockquote>
+  <p>原文：〈讓任何領導都喜歡你的秘訣-向上管理的本質〉，微信公眾號 YouCore，2026-11-08 發布，<a href="https://mp.weixin.qq.com/s/_OtDXMfzlvg_MWeymz9O0w">https://mp.weixin.qq.com/s/_OtDXMfzlvg_MWeymz9O0w</a>。下文引用原文只取短句，並標註「原文」。</p>
+
+</blockquote><h2 id="一原文在講什麼">一、原文在講什麼</h2>
+<p>原文篇幅不長，分三節，每節一個故事、一個結論：</p>
+<table>
+	<thead>
+			<tr>
+					<th>節</th>
+					<th>故事</th>
+					<th>原文結論（短句引用）</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>01 解決問題能力</td>
+					<td>扁鵲說自己醫術在三兄弟中最差：大哥在病發作前就治好，二哥在病剛起時治好，自己在病重時才出手</td>
+					<td>「防火，永遠比救火更重要」</td>
+			</tr>
+			<tr>
+					<td>02 學習迭代能力</td>
+					<td>稻盛和夫接手破產的日航，用阿米巴經營把公司切成小單元獨立核算，一年創下最高盈利、三年重新上市</td>
+					<td>「沒有迭代的學習，你就是無效重複」</td>
+			</tr>
+			<tr>
+					<td>03 溝通共情能力</td>
+					<td>觸龍勸趙太后讓長安君去齊國做人質，先聊身體、聊孩子，最後太后同意</td>
+					<td>「溝通的本質，不是用邏輯碾壓對方，而是建立我懂你的連線」</td>
+			</tr>
+	</tbody>
+</table>
+<p>文末是一個「工作 SOP 模板」的推廣入口。標題說的是「向上管理」，但正文講的其實是三種通用職場能力，並沒有直接討論如何與上級對齊目標、管理期望。這一點後面再談。</p>
+<h2 id="二先核對事實">二、先核對事實</h2>
+<p>講道理可以用故事，但故事裡的事實如果錯了，結論就要打折。下面逐條對照原始出處。</p>
+<table>
+	<thead>
+			<tr>
+					<th>原文說法</th>
+					<th>原始出處</th>
+					<th>判斷</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>扁鵲自稱三兄弟中醫術最差，「大家都笑了」</td>
+					<td>《鶡冠子·世賢》：是<strong>魏文侯</strong>問扁鵲「子昆弟三人其孰最善為醫」，扁鵲答「長兄最善，中兄次之，扁鵲最為下」</td>
+					<td>故事主體成立；問話人和場景是改編</td>
+			</tr>
+			<tr>
+					<td>日航「虧損2萬億日元」</td>
+					<td>日航 2010 年 1 月申請重整時的<strong>負債</strong>約 2.3 兆日圓，是戰後日本最大的企業破產</td>
+					<td>把「負債」說成「虧損」，概念錯</td>
+			</tr>
+			<tr>
+					<td>「一個78歲的老人」接手</td>
+					<td>稻盛和夫生於 1932 年 1 月，2010 年 2 月出任日航會長</td>
+					<td>成立</td>
+			</tr>
+			<tr>
+					<td>「僅僅一年，日航就實現了歷史上最高的盈利」</td>
+					<td>重整完成後的會計年度（2010 年 4 月～2011 年 3 月）營業利益 1,884 億日圓；2011 年度再到 2,049 億日圓</td>
+					<td>大致成立</td>
+			</tr>
+			<tr>
+					<td>「僅僅三年，日航重新上市」</td>
+					<td>2012 年 9 月 19 日重新在東證上市，距破產約 2 年 8 個月</td>
+					<td>成立（略有取整）</td>
+			</tr>
+			<tr>
+					<td>「他只做了一件事：阿米巴經營」「切分成3000個小單元」</td>
+					<td>官方資料確實強調導入阿米巴經營和按航線核算損益；但重建同時還有：銀行<strong>債務減免 5,215 億日圓</strong>、企業再生支援機構<strong>注資 3,500 億日圓</strong>、淘汰巨無霸機隊、出售子公司、裁員與減薪、退休金削減</td>
+					<td>「只做了一件事」不成立；「3000個」在所查官方資料中未找到</td>
+			</tr>
+			<tr>
+					<td>稻盛和夫說「答案永遠在現場，但只有願意迭代的人才能看見」</td>
+					<td>「答案在現場」是稻盛常被引用的說法；後半句未找到出處</td>
+					<td>後半句疑為附會</td>
+			</tr>
+			<tr>
+					<td>觸龍「全程走心，不談理」「從頭到尾沒有一句道理」</td>
+					<td>《戰國策·趙策四》：觸龍在建立信任後，明確提出「父母之愛子，則為之計深遠」，並以「位尊而無功，奉厚而無勞」論證長安君必須「有功於國」才能自保</td>
+					<td><strong>說反了</strong>：觸龍的關鍵恰恰是講了道理，只是從對方的利益出發講</td>
+			</tr>
+			<tr>
+					<td>觸龍為兒子求「黑衣衛的閒職」</td>
+					<td>原文是「願令得補黑衣之數，以衛王宮」，黑衣指王宮衛士</td>
+					<td>大意成立</td>
+			</tr>
+	</tbody>
+</table>
+<p>核對結果：<strong>三個故事的骨架都在，但第二、第三個故事的「結論部分」被改寫過</strong>。日航被講成單一方法的勝利，觸龍被講成「只靠共情」。這兩處改寫，正好都是對工程實踐影響最大的地方。</p>
+<h2 id="三觀點一預防勝於救火成立但預防需要被看見">三、觀點一：預防勝於救火——成立，但預防需要被看見</h2>
+<h3 id="31-成立的部分">3.1 成立的部分</h3>
+<p>這一點在工程上幾乎是共識。Google SRE 的做法可以看成「大哥治病」的制度化：</p>
+<ul>
+<li><strong>事後復盤（postmortem）</strong>：不追究個人，追問系統為什麼允許錯誤發生，並產出可追蹤的改進項。</li>
+<li><strong>錯誤預算（error budget）</strong>：用 SLO 把「可以接受多少不穩定」量化，預算快用完時優先做穩定性工作，而不是繼續上新功能。</li>
+<li><strong>消除瑣事（toil）</strong>：把重複的人工救火變成自動化，從根上減少事故來源。</li>
+</ul>
+<h3 id="32-值得商榷的部分">3.2 值得商榷的部分</h3>
+<p>原文說領導更器重「那些平時看起來很閒、卻從不出事的人」。現實往往相反：MIT 的 Repenning 與 Sterman 有一篇論文，標題就是 <em>Nobody Ever Gets Credit for Fixing Problems that Never Happened</em>。預防的成果是「什麼都沒發生」，而「什麼都沒發生」在報告裡是看不見的；救火則有明確的事件、時間線和英雄。</p>
+<p>如果組織只獎勵救火，就會出現：</p>
+<ul>
+<li><strong>能力陷阱</strong>：大家忙著救火，沒時間做預防，於是火越來越多；</li>
+<li><strong>逆向激勵</strong>：預防做得好的人看起來「沒產出」。</li>
+</ul>
+<p>另一個風險是<strong>過度預防</strong>：任何預防都有成本。把每一個低機率風險都做到極致，會拖慢交付，這也是 SRE 用錯誤預算而不是「零故障」作為目標的原因。</p>
+<h3 id="33-工程化做法">3.3 工程化做法</h3>
+<p>讓預防<strong>可量化、可追蹤、可彙報</strong>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#75715e"># risk register entry (one per prevention item)</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">id</span>: <span style="color:#ae81ff">R-012</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">risk</span>: <span style="color:#e6db74">&#34;binlog retention shorter than max consumer downtime&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">likelihood</span>: <span style="color:#ae81ff">medium       </span> <span style="color:#75715e"># low / medium / high</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">impact</span>: <span style="color:#ae81ff">high             </span> <span style="color:#75715e"># data re-snapshot, hours of catch-up</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">leading_indicator</span>: <span style="color:#e6db74">&#34;binlog_retention_hours - max_lag_hours&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">action</span>: <span style="color:#e6db74">&#34;raise retention to 7d and alert when margin &lt; 24h&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">cost</span>: <span style="color:#e6db74">&#34;0.5 day + extra disk&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">status</span>: <span style="color:#ae81ff">done</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">evidence</span>: <span style="color:#e6db74">&#34;alert fired once in staging, no production incident&#34;</span>
+</span></span></code></pre></div><ul>
+<li>週報裡除了「做了什麼」，加上<strong>領先指標</strong>：SLO 達成率、錯誤預算消耗、告警數趨勢、近失（near-miss）事件。</li>
+<li>每一項預防工作都寫清楚「如果不做，最可能發生什麼、損失多大」，讓「沒發生的事」有一個可比較的反事實。</li>
+<li>同時保留救火能力：值班、runbook、演練。預防不是取消救火，而是讓救火變少、變短。</li>
+</ul>
+<h2 id="四觀點二小單元快反饋成立但別把成功歸因給單一方法">四、觀點二：小單元、快反饋——成立，但別把成功歸因給單一方法</h2>
+<h3 id="41-成立的部分">4.1 成立的部分</h3>
+<p>阿米巴經營的核心，按稻盛和夫官方網站的描述，是把組織分成小的自主單元，每個單元有自己的領導和核算，讓每個人看見自己的投入產出。日航的具體變化之一，是從過去只看全網收支，改成<strong>逐條航線核算盈虧</strong>。</p>
+<p>這和軟體工程的經驗高度一致：</p>
+<ul>
+<li><strong>小批次</strong>：小的變更更容易驗證、出錯時更容易回滾；</li>
+<li><strong>短反饋迴路</strong>：DORA 的四項關鍵指標（部署頻率、變更前置時間、變更失敗率、故障恢復時間）本質上就是在度量反饋迴路的長短；</li>
+<li><strong>成本透明</strong>：雲成本按服務、按團隊分攤（showback），團隊才會主動最佳化。</li>
+</ul>
+<h3 id="42-值得商榷的部分">4.2 值得商榷的部分</h3>
+<ul>
+<li><strong>單因歸因</strong>：日航的重建同時有債務減免、公共資金注資、機隊和航線重整、裁員減薪、退休金削減。這些是重整程式與外部壓力下才能推動的結構性改變。只說「他只做了一件事」，會讓讀者以為換一套核算方法就能起死回生。工程上的類比是：系統性能提升 10 倍，不能只歸功於最後上線的那一個快取。</li>
+<li><strong>區域性最優</strong>：每個小單元獨立核算，容易出現單元之間互相計價、推諉的問題。軟體團隊按指標考核時同樣如此——古德哈特定律：指標一旦成為目標，就不再是好指標。</li>
+<li><strong>倖存者偏差</strong>：成功案例被反覆講，導入同類方法卻失敗的案例很少被講。</li>
+</ul>
+<h3 id="43-工程化做法">4.3 工程化做法</h3>
+<ul>
+<li>先度量回路：從提交到上線要多久？從告警到定位要多久？從需求到使用者反饋要多久？先找最長的那一段。</li>
+<li>每一個考核指標配一個<strong>護欄指標</strong>：追部署頻率，就同時看變更失敗率；追成本下降，就同時看 SLO。</li>
+<li>復盤成功案例時，和復盤事故一樣列出<strong>所有</strong>貢獻因素，而不只是最顯眼的那一個。</li>
+</ul>
+<h2 id="五觀點三先共情再說服成立一半觸龍其實講了道理">五、觀點三：先共情再說服——成立一半，觸龍其實講了道理</h2>
+<h3 id="51-原文說反的地方">5.1 原文說反的地方</h3>
+<p>原文的結論是「觸龍從頭到尾沒有一句道理」。但對照《戰國策》原文，觸龍的說服分成兩段：</p>
+<ol>
+<li><strong>建立信任</strong>：聊身體、聊飲食、為自己的小兒子求職，讓盛怒的太后「色稍解」，並讓太后自己說出「丈夫亦愛憐其少子乎」；</li>
+<li><strong>從對方的目標出發講道理</strong>：先讓太后承認「父母之愛子，則為之計深遠」，再用趙國與諸侯子孫「位尊而無功，奉厚而無勞」的先例，推匯出長安君必須現在「有功於國」，否則太后百年之後無以自保。</li>
+</ol>
+<p>所以觸龍不是不講理，而是<strong>換了講理的出發點</strong>：大臣們講的是「國家需要」，觸龍講的是「你愛兒子，就該這樣做」。共情是讓對方願意聽，道理才是讓對方改變決定的原因。</p>
+<h3 id="52-工程化做法">5.2 工程化做法</h3>
+<p>工程師寫技術方案、向上彙報時，最常見的問題是只講「技術上應該」，不講「這對你的目標意味著什麼」。可以這樣做：</p>
+<ul>
+<li><strong>先寫對方的目標</strong>：設計文件開頭寫清楚背景、目標、非目標，用對方關心的語言（風險、成本、交付時間）描述問題。</li>
+<li><strong>給選項，不給單一答案</strong>：列出兩到三個方案及其取捨，再給出推薦和理由。</li>
+<li><strong>沒有意外（no surprises）</strong>：壞訊息儘早說，並附上影響範圍和應對方案。</li>
+<li><strong>先傾聽再提案</strong>：先問清楚對方擔心什麼，再決定從哪個角度講。</li>
+</ul>
+<h2 id="六標題與內容的落差向上管理到底是什麼">六、標題與內容的落差：向上管理到底是什麼</h2>
+<p>原文標題是「讓任何領導都喜歡你的秘訣」，但「讓領導喜歡」不是向上管理的目標。哈佛商業評論的經典文章 <em>Managing Your Boss</em>（Gabarro 與 Kotter）把它定義為：<strong>有意識地與上級合作，為雙方和組織取得最好的結果</strong>。要點包括：</p>
+<ul>
+<li>瞭解上級的目標、壓力、工作風格與偏好的溝通方式；</li>
+<li>瞭解自己的長處、短處與風格；</li>
+<li>建立一種雙方都適用的關係：期望一致、資訊流通、可靠誠實、善用上級的時間與資源。</li>
+</ul>
+<p>從這個定義看，原文的三種能力都是<strong>基礎</strong>，但還缺少關鍵的一環：<strong>主動對齊目標與期望</strong>。工程師可以落到這幾件事上：</p>
+<table>
+	<thead>
+			<tr>
+					<th>動作</th>
+					<th>頻率</th>
+					<th>產出</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>確認季度目標與優先順序</td>
+					<td>每季度</td>
+					<td>一頁紙：目標、非目標、衡量方式</td>
+			</tr>
+			<tr>
+					<td>一對一</td>
+					<td>每週或每兩週</td>
+					<td>進度、風險、需要的支援</td>
+			</tr>
+			<tr>
+					<td>風險提前通報</td>
+					<td>發現時</td>
+					<td>現象、影響、選項、建議</td>
+			</tr>
+			<tr>
+					<td>預防工作彙報</td>
+					<td>每月</td>
+					<td>領先指標、避免的風險、成本</td>
+			</tr>
+	</tbody>
+</table>
+<h2 id="七小結">七、小結</h2>
+<table>
+	<thead>
+			<tr>
+					<th>原文觀點</th>
+					<th>判斷</th>
+					<th>工程化版本</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>防火比救火重要</td>
+					<td>成立</td>
+					<td>SLO、錯誤預算、事後復盤；讓預防<strong>被看見</strong></td>
+			</tr>
+			<tr>
+					<td>持續迭代</td>
+					<td>成立，但案例歸因過度簡化</td>
+					<td>縮短反饋迴路（DORA）、指標配護欄、完整歸因</td>
+			</tr>
+			<tr>
+					<td>共情溝通</td>
+					<td>只對一半：觸龍也講了道理</td>
+					<td>從對方目標出發寫方案、給選項、沒有意外</td>
+			</tr>
+			<tr>
+					<td>標題：讓領導喜歡你</td>
+					<td>偏離向上管理的本義</td>
+					<td>與上級對齊目標和期望，為組織取得結果</td>
+			</tr>
+	</tbody>
+</table>
+<p>讀這類文章時，工程師的習慣可以派上用場：<strong>故事先查來源，結論先找反例，方法先問成本</strong>。剩下來的部分，往往仍然值得用。</p>
+<h2 id="參考">參考</h2>
+<ul>
+<li>原文：〈讓任何領導都喜歡你的秘訣-向上管理的本質〉，YouCore，<a href="https://mp.weixin.qq.com/s/_OtDXMfzlvg_MWeymz9O0w">https://mp.weixin.qq.com/s/_OtDXMfzlvg_MWeymz9O0w</a></li>
+<li>《鶡冠子·世賢》（扁鵲三兄弟）：<a href="https://ctext.org/he-guan-zi/shi-xian/zh">https://ctext.org/he-guan-zi/shi-xian/zh</a></li>
+<li>《戰國策·趙策四·觸龍說趙太后》：<a href="https://zh.wikisource.org/wiki/%E8%A7%B8%E9%BE%8D%E8%AA%AA%E8%B6%99%E5%A4%AA%E5%90%8E">https://zh.wikisource.org/wiki/%E8%A7%B8%E9%BE%8D%E8%AA%AA%E8%B6%99%E5%A4%AA%E5%90%8E</a></li>
+<li>Kazuo Inamori Archive, <em>Reviving Japan Airlines (2010)</em>：<a href="https://global.kyocera.com/inamori/archive/episode/episode-18.html">https://global.kyocera.com/inamori/archive/episode/episode-18.html</a></li>
+<li>Kazuo Inamori, <em>Amoeba Management</em>：<a href="https://global.kyocera.com/inamori/management/amoeba/">https://global.kyocera.com/inamori/management/amoeba/</a></li>
+<li>Nippon.com, <em>JAL&rsquo;s Bumpy Ride: From Bankruptcy to Relisting</em>（債務減免、注資、裁員與減薪）：<a href="https://www.nippon.com/en/articles/-/14228">https://www.nippon.com/en/articles/-/14228</a></li>
+<li>BBC, <em>JAL profits boosted by cost cuts</em>（2011 年度營業利益）：<a href="https://www.bbc.com/news/business-18056883">https://www.bbc.com/news/business-18056883</a></li>
+<li>Google SRE Book：<a href="https://sre.google/sre-book/postmortem-culture/">Postmortem Culture</a>、<a href="https://sre.google/sre-book/embracing-risk/">Embracing Risk</a>、<a href="https://sre.google/sre-book/eliminating-toil/">Eliminating Toil</a></li>
+<li>DORA 四項關鍵指標：<a href="https://dora.dev/guides/dora-metrics-four-keys/">https://dora.dev/guides/dora-metrics-four-keys/</a></li>
+<li>Repenning &amp; Sterman, <em>Nobody Ever Gets Credit for Fixing Problems that Never Happened</em> (2001)：<a href="https://web.mit.edu/nelsonr/www/Repenning=Sterman_CMR_su01_.pdf">https://web.mit.edu/nelsonr/www/Repenning=Sterman_CMR_su01_.pdf</a></li>
+<li>Gabarro &amp; Kotter, <em>Managing Your Boss</em>, Harvard Business Review：<a href="https://hbr.org/2005/01/managing-your-boss">https://hbr.org/2005/01/managing-your-boss</a></li>
+</ul>
+]]></content:encoded></item></channel></rss>

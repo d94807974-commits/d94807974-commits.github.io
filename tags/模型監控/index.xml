@@ -1,0 +1,639 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>模型監控 on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/%E6%A8%A1%E5%9E%8B%E7%9B%A3%E6%8E%A7/</link><description>Recent content in 模型監控 on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Fri, 13 Nov 2026 14:12:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/%E6%A8%A1%E5%9E%8B%E7%9B%A3%E6%8E%A7/index.xml" rel="self" type="application/rss+xml"/><item><title>小額信貸自動化風控的反詐欺監控：從環節攔截、Flink CEP 到 PSI 告警的工程實踐</title><link>https://d94807974-commits.github.io/posts/microlending-antifraud-monitoring-engineering/</link><pubDate>Fri, 13 Nov 2026 15:13:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/microlending-antifraud-monitoring-engineering/</guid><description>把小額信貸的反詐欺拆成兩條線：按業務環節攔截，以及持續監控規則、模型與資料是否失效。本文給出參考架構、Flink CEP 與 Flink SQL 的即時特徵範例、PSI 計算與 Prometheus 告警設定，並逐一核對各開源元件的授權。程式碼在本機實跑，法規條文逐條對照官方文本。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/microlending-antifraud-monitoring-engineering.html">反詐欺全流程的攔截點、參考架構與監控分層</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>小額信貸的反詐欺要拆成兩條線：一條在註冊、進件、審批、放款前、貸後、催收各環節攔截，一條持續監控規則、模型、資料來源與系統是否失效。工程上先把事件流、特徵、決策留痕和標籤回流做成閉環，再按授權條款選元件；PSI 只用來觸發調查，不能自動決定重訓或下線。</p>
+</div><blockquote>
+  <p><strong>適用對象與邊界</strong>：面向全流程線上、自動審批的網路小額貸款或助貸技術團隊。法規部分只引用本文已對照官方文本的條文；程式碼的實測範圍與未驗證項見文末〈本文邊界與未驗證項〉。查核日期 2026-11-13（Asia/Singapore）。本文不是法律意見。</p>
+
+</blockquote><p>很多團隊做反詐欺，是從「選一個規則引擎」開始的。但規則引擎只是決策鏈上的一個節點。上線後真正出問題的地方通常在別處：特徵在線上和離線算得不一樣，某條規則悄悄停止命中，三方資料介面逾時被預設值默默填充，模型分數分布慢慢漂移卻沒人發現。</p>
+<p>本文從工程師視角把這條鏈走一遍：先看法規對工程有什麼硬約束，再看各環節在哪裡攔截，然後給出架構、即時特徵、PSI 與告警的可執行範例，最後比較元件和授權。</p>
+<h2 id="一法規對工程的硬約束">一、法規對工程的硬約束</h2>
+<p>先說明一個容易混淆的地方。網路小額貸款公司適用的是《小額貸款公司監督管理暫行辦法》（金規〔2024〕26號，金融監管總局 2024-12-31 印發，自印發之日起施行）。這份辦法<strong>沒有</strong>規定模型監控的細節，全文也沒有出現 PSI、人工複核或預警模型這些詞。模型有效性、穩定性、獨立評審和退出機制的具體要求，寫在《商業銀行互聯網貸款管理暫行辦法》（銀保監會令 2020 年第 9 號）裡。如果業務是與銀行聯合放款或助貸，銀行側的要求會傳導到你的系統。《國家金融監督管理總局關於加強商業銀行互聯網助貸業務管理提升金融服務質效的通知》（金規〔2025〕9號，自 2025-10-01 起施行）也明確：互聯網助貸屬於互聯網貸款，須遵守該辦法。</p>
+<p>下表只列本文逐條對照過官方文本的條文，以及它們對工程的含義。</p>
+<table>
+	<thead>
+			<tr>
+					<th>出處</th>
+					<th>條文要點</th>
+					<th>對工程的含義</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>26號 第九條</td>
+					<td>網路小貸的申請受理、風險審核、審批、發放和回收等核心環節應線上完成</td>
+					<td>每個環節都要有可程式化的決策點和完整留痕</td>
+			</tr>
+			<tr>
+					<td>26號 第十五條</td>
+					<td>不得將授信審查、風險控制等核心業務外包</td>
+					<td>決策服務、規則和特徵定義要自己掌握，三方只提供資料</td>
+			</tr>
+			<tr>
+					<td>26號 第二十三條</td>
+					<td>風險防控體系應包括風控模型、反詐欺系統、風險識別機制、風險監測手段、風險處置措施、客戶身份識別與登記系統等</td>
+					<td>監控與處置不是附加項，是體系的一部分</td>
+			</tr>
+			<tr>
+					<td>26號 第二十四條</td>
+					<td>逾期超過九十天的貸款劃分為不良貸款</td>
+					<td>貸後標籤要有一個與此對齊的定義，並與詐欺標籤分開</td>
+			</tr>
+			<tr>
+					<td>26號 第二十九條</td>
+					<td>互聯網業務系統能完整記錄並保存資料；等保定級不低於第三級</td>
+					<td>事件與決策日誌要可追溯，系統要通過等保評估</td>
+			</tr>
+			<tr>
+					<td>26號 第三十八條</td>
+					<td>收集、使用客戶資訊須取得授權；未經授權不得收集、使用、加工、傳輸</td>
+					<td>特徵採集前先檢查授權，授權範圍要能追溯到特徵</td>
+			</tr>
+			<tr>
+					<td>銀行辦法 第十八條</td>
+					<td>身份核驗不得全權委託合作機構</td>
+					<td>活體與聯網核查的結果要自己留存、自己校驗</td>
+			</tr>
+			<tr>
+					<td>銀行辦法 第二十二條</td>
+					<td>建立人工複核機制，作為模型自動審批的必要補充，並明確觸發條件</td>
+					<td>決策輸出要有「轉人工」分支和觸發原因</td>
+			</tr>
+			<tr>
+					<td>銀行辦法 第二十六條</td>
+					<td>授信與首筆放款間隔超過一個月，放款前須再評估信用狀況</td>
+					<td>放款前要重新跑一次決策，不能沿用授信結果</td>
+			</tr>
+			<tr>
+					<td>銀行辦法 第二十九條</td>
+					<td>建立風險監測預警模型，設定預警指標與觸發條件</td>
+					<td>預警指標要寫成可執行的告警規則</td>
+			</tr>
+			<tr>
+					<td>銀行辦法 第四十條</td>
+					<td>日常監測至少包括已上線模型的有效性與穩定性，以及模型審批貸款的實際違約情況</td>
+					<td>PSI 之外要有 KS／AUC 與實際違約的對照</td>
+			</tr>
+			<tr>
+					<td>銀行辦法 第四十一條</td>
+					<td>無法繼續滿足要求的模型應立即停止使用</td>
+					<td>模型要有可一鍵停用的開關和備援策略</td>
+			</tr>
+	</tbody>
+</table>
+<p>第二十三條有一句：「網路小額貸款公司建立的風險防控體系應當包括數據驅動的風控模型、反欺詐系統……」（引文由簡體轉為繁體，內容不變）。這句話的工程翻譯很直接：風控模型只是其中一項，監測和處置要一起建。</p>
+<h2 id="二六個環節的攔截點">二、六個環節的攔截點</h2>
+<p>每個環節有各自的訊號，也有各自適合的計算方式。下表按「同步」「串流」「批次」區分落點，這決定了後面該用什麼元件。</p>
+<table>
+	<thead>
+			<tr>
+					<th>環節</th>
+					<th>典型訊號</th>
+					<th>落點</th>
+					<th>說明</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>註冊／登入</td>
+					<td>設備指紋異常、同設備短時間多帳號註冊、撞庫式登入失敗</td>
+					<td>串流</td>
+					<td>視窗聚合，例如「同設備 10 分鐘內註冊帳號數」</td>
+			</tr>
+			<tr>
+					<td>進件申請</td>
+					<td>實名與活體、名單、多頭借貸、手機號與證件一致性</td>
+					<td>同步</td>
+					<td>申請時要即時回應，查徵信須先取得授權</td>
+			</tr>
+			<tr>
+					<td>審批授信</td>
+					<td>硬規則、反詐欺模型、關聯圖譜（共用設備、聯絡人、銀行卡）</td>
+					<td>同步</td>
+					<td>輸出通過、拒絕或轉人工，並留存特徵快照</td>
+			</tr>
+			<tr>
+					<td>放款前</td>
+					<td>改卡、改手機號、換設備後立即提現</td>
+					<td>串流</td>
+					<td>事件序列，適合 CEP</td>
+			</tr>
+			<tr>
+					<td>貸後</td>
+					<td>首期違約、按放款月份的 Vintage、集中逾期、失聯</td>
+					<td>批次</td>
+					<td>結果回流成標籤</td>
+			</tr>
+			<tr>
+					<td>催收</td>
+					<td>區分詐欺（冒用身份、團夥騙貸）與信用違約</td>
+					<td>批次</td>
+					<td>混用標籤會讓反詐欺模型學錯對象</td>
+			</tr>
+	</tbody>
+</table>
+<p>這張表的重點在最後一欄：「同步」放在決策服務裡，「串流」放在 Flink，「批次」放在每日作業。把串流問題放進同步呼叫，會拖慢審批；把批次問題當即時問題做，成本高而且沒有必要。</p>
+<h2 id="三參考架構與資料流">三、參考架構與資料流</h2>
+<p>下圖是一條可以由小團隊落地的主鏈。進件系統同步呼叫決策服務，同時把事件寫進 Kafka。Flink 算視窗特徵和事件序列，特徵寫到線上特徵庫。決策服務讀特徵，串起規則引擎、模型和圖譜查詢，輸出決策並留痕。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span> [進件/登入/改卡/提現/還款 App]
+</span></span><span style="display:flex;"><span>      | sync request                         | events
+</span></span><span style="display:flex;"><span>      v                                      v
+</span></span><span style="display:flex;"><span> [決策服務] &lt;---- features ---- [特徵庫(online)] &lt;---- [Flink: HOP window + CEP]
+</span></span><span style="display:flex;"><span>   |  rules / model / graph             ^                      ^
+</span></span><span style="display:flex;"><span>   |                                    |                      |
+</span></span><span style="display:flex;"><span>   |  decision + feature snapshot       |               [Kafka: risk.events]
+</span></span><span style="display:flex;"><span>   v                                    |
+</span></span><span style="display:flex;"><span> [決策日誌 / 特徵快照] --&gt; [貸後標籤(FPD, 逾期, 詐欺/信用違約)] --+--&gt; 回流特徵與訓練庫
+</span></span><span style="display:flex;"><span>   |
+</span></span><span style="display:flex;"><span>   +--&gt; [Prometheus: 耗時, 錯誤, 命中, 通過率] --&gt; [告警]
+</span></span><span style="display:flex;"><span>   +--&gt; [批次作業: PSI / KS / 缺失率] ----------&gt; [告警]
+</span></span></code></pre></div><p>資料流按四步走：</p>
+<ol>
+<li><strong>事件進入</strong>：App 與決策服務把註冊、登入、改卡、提現等事件寫進 <code>risk.events</code>，欄位用 <code>user_id</code>、<code>device_id</code>、<code>event_type</code>、<code>event_time</code>，不放明文證件號與手機號。</li>
+<li><strong>即時特徵</strong>：Flink 以事件時間算視窗特徵與序列命中，結果寫到另一個 Kafka 主題，再由消費端寫入線上特徵庫。</li>
+<li><strong>決策與留痕</strong>：決策服務讀取特徵，串行執行規則、模型和圖譜查詢，輸出通過、拒絕或轉人工，並把分數、命中規則和特徵快照落庫。</li>
+<li><strong>標籤回流</strong>：貸後與催收結果回流成標籤，區分詐欺與信用違約，供規則復盤和模型訓練使用。</li>
+</ol>
+<p>特徵庫的角色是讓線上決策和離線訓練使用同一份特徵定義。Feast 官方有一份〈Fraud detection on GCP〉教程，涵蓋特徵回填、時間點正確的訓練資料集和低延遲線上預測。教程以 GCP 為例，自建環境要自行替換儲存。</p>
+<h2 id="四即時特徵與事件序列flink-範例實跑">四、即時特徵與事件序列：Flink 範例（實跑）</h2>
+<h3 id="現象">現象</h3>
+<p>放款前的詐欺常是一段行為序列：先改銀行卡，很快就提現。單看每個事件都正常，只有放在一起才可疑。同樣，批量註冊要看「同一設備在一段時間內出現幾個帳號」。</p>
+<h3 id="原因">原因</h3>
+<p>這兩類訊號都依賴事件時間和狀態。如果在決策服務裡用資料庫即時查詢拼湊，延遲高、容易漏事件；用 Flink 的視窗與 CEP，狀態和逾時由引擎管理。</p>
+<h3 id="做法">做法</h3>
+<p><strong>範例一：用 Flink CEP（DataStream API）判斷「改卡後 10 分鐘內提現」。</strong> 以下程式在本機用 Flink 2.3.0 的 MiniCluster 實跑通過，使用 <code>flink-streaming-java</code>、<code>flink-clients</code>、<code>flink-cep</code> 三個依賴。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>Pattern<span style="color:#f92672">&lt;</span>LoanEvent, <span style="color:#f92672">?&gt;</span> pattern <span style="color:#f92672">=</span> Pattern
+</span></span><span style="display:flex;"><span>    .<span style="color:#f92672">&lt;</span>LoanEvent<span style="color:#f92672">&gt;</span>begin(<span style="color:#e6db74">&#34;card&#34;</span>, AfterMatchSkipStrategy.<span style="color:#a6e22e">skipPastLastEvent</span>())
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">where</span>(SimpleCondition.<span style="color:#a6e22e">of</span>(e <span style="color:#f92672">-&gt;</span> <span style="color:#e6db74">&#34;CARD_CHANGED&#34;</span>.<span style="color:#a6e22e">equals</span>(e.<span style="color:#a6e22e">eventType</span>)))
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">followedBy</span>(<span style="color:#e6db74">&#34;withdraw&#34;</span>)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">where</span>(SimpleCondition.<span style="color:#a6e22e">of</span>(e <span style="color:#f92672">-&gt;</span> <span style="color:#e6db74">&#34;WITHDRAW&#34;</span>.<span style="color:#a6e22e">equals</span>(e.<span style="color:#a6e22e">eventType</span>)))
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">within</span>(Duration.<span style="color:#a6e22e">ofMinutes</span>(10));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>DataStream<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">&gt;</span> alerts <span style="color:#f92672">=</span> CEP
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">pattern</span>(events.<span style="color:#a6e22e">keyBy</span>(e <span style="color:#f92672">-&gt;</span> e.<span style="color:#a6e22e">userId</span>), pattern)
+</span></span><span style="display:flex;"><span>    .<span style="color:#a6e22e">select</span>(<span style="color:#66d9ef">new</span> PatternSelectFunction<span style="color:#f92672">&lt;</span>LoanEvent, String<span style="color:#f92672">&gt;</span>() {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">@Override</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">public</span> String <span style="color:#a6e22e">select</span>(Map<span style="color:#f92672">&lt;</span>String, List<span style="color:#f92672">&lt;</span>LoanEvent<span style="color:#f92672">&gt;&gt;</span> match) {
+</span></span><span style="display:flex;"><span>            LoanEvent card <span style="color:#f92672">=</span> match.<span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#34;card&#34;</span>).<span style="color:#a6e22e">get</span>(0);
+</span></span><span style="display:flex;"><span>            LoanEvent withdraw <span style="color:#f92672">=</span> match.<span style="color:#a6e22e">get</span>(<span style="color:#e6db74">&#34;withdraw&#34;</span>).<span style="color:#a6e22e">get</span>(0);
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">long</span> gapSeconds <span style="color:#f92672">=</span> (withdraw.<span style="color:#a6e22e">eventTime</span> <span style="color:#f92672">-</span> card.<span style="color:#a6e22e">eventTime</span>) <span style="color:#f92672">/</span> 1000;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;ALERT user=&#34;</span> <span style="color:#f92672">+</span> card.<span style="color:#a6e22e">userId</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34; gap_seconds=&#34;</span> <span style="color:#f92672">+</span> gapSeconds;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    });
+</span></span></code></pre></div><p>事件來源要先指定事件時間與水位線，否則視窗和 <code>within</code> 不會觸發：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-java" data-lang="java"><span style="display:flex;"><span>.<span style="color:#a6e22e">assignTimestampsAndWatermarks</span>(
+</span></span><span style="display:flex;"><span>    WatermarkStrategy.<span style="color:#f92672">&lt;</span>LoanEvent<span style="color:#f92672">&gt;</span>forBoundedOutOfOrderness(Duration.<span style="color:#a6e22e">ofSeconds</span>(5))
+</span></span><span style="display:flex;"><span>        .<span style="color:#a6e22e">withTimestampAssigner</span>((e, ts) <span style="color:#f92672">-&gt;</span> e.<span style="color:#a6e22e">eventTime</span>));
+</span></span></code></pre></div><p>測試資料有 4 個使用者：u1 改卡後 3 分鐘提現，u4 改卡後夾著一個其他事件、9 分鐘提現，u2 在 30 分鐘後才提現，u3 沒有改卡。實跑輸出只有 u1（180 秒）和 u4（540 秒）兩條告警。<code>followedBy</code> 允許中間夾其他事件；如果要求緊接著發生，要改用 <code>next</code>。Flink 官方文件也建議用 <code>within()</code> 或 <code>until()</code> 讓引擎清理狀態，否則未完成的部分匹配會一直佔用狀態。</p>
+<p><strong>範例二：用 Flink SQL 算視窗特徵與序列。</strong> 下面兩段 SQL 同樣在 Flink 2.3.0 MiniCluster 上跑過。我把資料以 DataStream 轉成臨時檢視 <code>risk_events</code>，事件時間欄位為 <code>rowtime</code>。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#75715e">-- feature: distinct users registered per device in a 10-minute window, sliding every minute
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">SELECT</span> deviceId, window_start, window_end, <span style="color:#66d9ef">COUNT</span>(<span style="color:#66d9ef">DISTINCT</span> userId) <span style="color:#66d9ef">AS</span> reg_users_10m
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">FROM</span> <span style="color:#66d9ef">TABLE</span>(HOP(<span style="color:#66d9ef">TABLE</span> risk_events, <span style="color:#66d9ef">DESCRIPTOR</span>(rowtime),
+</span></span><span style="display:flex;"><span>               INTERVAL <span style="color:#e6db74">&#39;1&#39;</span> MINUTES, INTERVAL <span style="color:#e6db74">&#39;10&#39;</span> MINUTES))
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">WHERE</span> eventType <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;REGISTER&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">GROUP</span> <span style="color:#66d9ef">BY</span> deviceId, window_start, window_end
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">HAVING</span> <span style="color:#66d9ef">COUNT</span>(<span style="color:#66d9ef">DISTINCT</span> userId) <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">3</span>;
+</span></span></code></pre></div><p>測試資料中設備 <code>d1</code> 在 6 分鐘內有 4 個不同帳號註冊，輸出 8 個視窗，帳號數為 3 或 4；另一台只有 1 個帳號的設備沒有輸出。<code>HAVING</code> 的 3 是示範值，真實閾值要用自己的歷史資料校準。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#75715e">-- sequence: card changed, then withdraw within 10 minutes (same user)
+</span></span></span><span style="display:flex;"><span><span style="color:#66d9ef">SELECT</span> <span style="color:#f92672">*</span> <span style="color:#66d9ef">FROM</span> risk_events MATCH_RECOGNIZE (
+</span></span><span style="display:flex;"><span>  PARTITION <span style="color:#66d9ef">BY</span> userId <span style="color:#66d9ef">ORDER</span> <span style="color:#66d9ef">BY</span> rowtime
+</span></span><span style="display:flex;"><span>  MEASURES <span style="color:#66d9ef">C</span>.rowtime <span style="color:#66d9ef">AS</span> card_changed_at, W.rowtime <span style="color:#66d9ef">AS</span> withdraw_at
+</span></span><span style="display:flex;"><span>  ONE <span style="color:#66d9ef">ROW</span> PER <span style="color:#66d9ef">MATCH</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">AFTER</span> <span style="color:#66d9ef">MATCH</span> SKIP PAST <span style="color:#66d9ef">LAST</span> <span style="color:#66d9ef">ROW</span>
+</span></span><span style="display:flex;"><span>  PATTERN (<span style="color:#66d9ef">C</span> X<span style="color:#f92672">*?</span> W) WITHIN INTERVAL <span style="color:#e6db74">&#39;10&#39;</span> <span style="color:#66d9ef">MINUTE</span>
+</span></span><span style="display:flex;"><span>  DEFINE <span style="color:#66d9ef">C</span> <span style="color:#66d9ef">AS</span> <span style="color:#66d9ef">C</span>.eventType <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;CARD_CHANGED&#39;</span>,
+</span></span><span style="display:flex;"><span>         W <span style="color:#66d9ef">AS</span> W.eventType <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;WITHDRAW&#39;</span>
+</span></span><span style="display:flex;"><span>);
+</span></span></code></pre></div><p>這段只對 u1 輸出一筆（30 分鐘後才提現的 u6 沒有命中）。<code>X*?</code> 是懶惰量詞，作用是遇到第一個提現就結束匹配；寫成貪婪的 <code>X*</code> 會吞掉提現事件。</p>
+<p><strong>正式環境的 Kafka 來源與輸出表</strong>要寫成 DDL。我另建一個專案，用 Flink 2.2.0 加 <code>flink-sql-connector-kafka</code> 5.0.0-2.2 驗證 DDL 與 <code>INSERT INTO ... SELECT</code> 能通過規劃（<code>EXPLAIN</code>），但<strong>沒有連真實 Kafka 叢集做端到端驗證</strong>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">TABLE</span> risk_events (
+</span></span><span style="display:flex;"><span>  user_id STRING, device_id STRING, event_type STRING, event_time TIMESTAMP_LTZ(<span style="color:#ae81ff">3</span>),
+</span></span><span style="display:flex;"><span>  WATERMARK <span style="color:#66d9ef">FOR</span> event_time <span style="color:#66d9ef">AS</span> event_time <span style="color:#f92672">-</span> INTERVAL <span style="color:#e6db74">&#39;5&#39;</span> <span style="color:#66d9ef">SECOND</span>
+</span></span><span style="display:flex;"><span>) <span style="color:#66d9ef">WITH</span> (
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#39;connector&#39;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;kafka&#39;</span>, <span style="color:#e6db74">&#39;topic&#39;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;risk.events&#39;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#39;properties.bootstrap.servers&#39;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&lt;kafka&gt;:9092&#39;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#39;properties.group.id&#39;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;risk-features&#39;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#39;scan.startup.mode&#39;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;latest-offset&#39;</span>, <span style="color:#e6db74">&#39;format&#39;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;json&#39;</span>
+</span></span><span style="display:flex;"><span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">TABLE</span> device_features_10m (
+</span></span><span style="display:flex;"><span>  device_id STRING, window_start <span style="color:#66d9ef">TIMESTAMP</span>(<span style="color:#ae81ff">3</span>), window_end <span style="color:#66d9ef">TIMESTAMP</span>(<span style="color:#ae81ff">3</span>), reg_users_10m BIGINT
+</span></span><span style="display:flex;"><span>) <span style="color:#66d9ef">WITH</span> (
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#39;connector&#39;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;kafka&#39;</span>, <span style="color:#e6db74">&#39;topic&#39;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;risk.features.device_10m&#39;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#39;properties.bootstrap.servers&#39;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&lt;kafka&gt;:9092&#39;</span>, <span style="color:#e6db74">&#39;format&#39;</span> <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;json&#39;</span>
+</span></span><span style="display:flex;"><span>);
+</span></span></code></pre></div><p>這裡有兩個容易踩的坑：</p>
+<ul>
+<li><strong>連接器版本跟著 Flink 次版本走。</strong> 查核日期，Maven Central 上 <code>flink-sql-connector-kafka</code> 最新版本是 5.0.0-2.1 與 5.0.0-2.2，沒有對應 Flink 2.3 的版本。升級 Flink 前先確認連接器有對應版本。</li>
+<li><strong>叢集上要有 <code>flink-connector-base</code>。</strong> 我在本機 classpath 少了它，會出現 <code>ClassNotFoundException: DeliveryGuarantee</code>。標準 Flink 發行版已附帶，只有自己組 classpath 時才會遇到。</li>
+</ul>
+<h2 id="五監控分五層">五、監控分五層</h2>
+<p>反詐欺上線後，監控要覆蓋五個層次。每層看什麼、怎麼告警，下表按「層次、關鍵指標、怎麼看、性質」列出。數值閾值除特別註明外，都是示範值，要用自己的歷史基線校準。</p>
+<table>
+	<thead>
+			<tr>
+					<th>層次</th>
+					<th>關鍵指標</th>
+					<th>怎麼看</th>
+					<th>性質</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>業務</td>
+					<td>通過率、拒絕率、FPD、Vintage</td>
+					<td>按通路、時段、地域拆開，與自身歷史基線比較</td>
+					<td>操作建議；本文所查官方文本沒有統一法定閾值</td>
+			</tr>
+			<tr>
+					<td>模型</td>
+					<td>PSI、KS／AUC、實際違約</td>
+					<td>PSI 看漂移，KS／AUC 看排序能力，兩者分開判讀</td>
+					<td>銀行辦法第四十條要求監測有效性、穩定性與實際違約</td>
+			</tr>
+			<tr>
+					<td>規則</td>
+					<td>每條規則的命中率與命中後表現</td>
+					<td>命中突然變多或降到零，都可能是失效</td>
+					<td>操作建議</td>
+			</tr>
+			<tr>
+					<td>資料來源</td>
+					<td>特徵缺失率、三方逾時率、欄位分布</td>
+					<td>按供應商與介面分別看，介面失敗被預設值填充要能被發現</td>
+					<td>操作建議</td>
+			</tr>
+			<tr>
+					<td>系統</td>
+					<td>決策耗時 p99、錯誤率、降級次數</td>
+					<td>降級要可追溯</td>
+					<td>操作建議；等保要求見第一節</td>
+			</tr>
+	</tbody>
+</table>
+<p>「FPD」是首期違約，「Vintage」是按放款月份分組、隨帳齡觀察逾期率的曲線。FPD 高不等於詐欺，因為詐欺濃度只是通常更高，標籤仍要靠催收和調查區分。</p>
+<h2 id="六psi計算陷阱與工具對照">六、PSI：計算、陷阱與工具對照</h2>
+<h3 id="現象-1">現象</h3>
+<p>分數分布漂移時，通過率和違約率要幾個月後才反映出來。PSI（Population Stability Index，人群穩定性指數）可以更早發現：它比較當前樣本與建模基準在各分箱上的佔比差異。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>PSI = sum over bins i of (A_i - E_i) * ln(A_i / E_i)
+</span></span><span style="display:flex;"><span>A_i = share of the current sample in bin i
+</span></span><span style="display:flex;"><span>E_i = share of the baseline sample in bin i
+</span></span></code></pre></div><h3 id="原因-1">原因</h3>
+<p>PSI 的結果同時取決於分箱方式和空箱處理。同一組資料換個分箱，數字就不一樣；某個分箱在一邊為空，公式裡會出現 ln(0)。</p>
+<h3 id="做法-1">做法</h3>
+<p>下面的 Python 用基準樣本的分位數切箱，兩端設為無窮大以接住超出範圍的值，空箱用一個下限值 <code>eps</code> 保護：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> numpy <span style="color:#66d9ef">as</span> np
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>EPS <span style="color:#f92672">=</span> <span style="color:#ae81ff">1e-4</span>  <span style="color:#75715e"># floor for empty bins; without it ln(0) breaks the formula</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">psi_numeric</span>(expected, actual, bins<span style="color:#f92672">=</span><span style="color:#ae81ff">10</span>, eps<span style="color:#f92672">=</span>EPS):
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;&#34;&#34;PSI of `actual` against `expected` (baseline). Bin edges come from baseline quantiles.&#34;&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>    expected <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>asarray(expected, dtype<span style="color:#f92672">=</span>float)
+</span></span><span style="display:flex;"><span>    actual <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>asarray(actual, dtype<span style="color:#f92672">=</span>float)
+</span></span><span style="display:flex;"><span>    edges <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>unique(np<span style="color:#f92672">.</span>quantile(expected, np<span style="color:#f92672">.</span>linspace(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>, bins <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)))
+</span></span><span style="display:flex;"><span>    edges[<span style="color:#ae81ff">0</span>], edges[<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> <span style="color:#f92672">-</span>np<span style="color:#f92672">.</span>inf, np<span style="color:#f92672">.</span>inf  <span style="color:#75715e"># catch values outside the baseline range</span>
+</span></span><span style="display:flex;"><span>    e_cnt, _ <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>histogram(expected, bins<span style="color:#f92672">=</span>edges)
+</span></span><span style="display:flex;"><span>    a_cnt, _ <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>histogram(actual, bins<span style="color:#f92672">=</span>edges)
+</span></span><span style="display:flex;"><span>    e_pct <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>maximum(e_cnt <span style="color:#f92672">/</span> e_cnt<span style="color:#f92672">.</span>sum(), eps)
+</span></span><span style="display:flex;"><span>    a_pct <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>maximum(a_cnt <span style="color:#f92672">/</span> a_cnt<span style="color:#f92672">.</span>sum(), eps)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> float(np<span style="color:#f92672">.</span>sum((a_pct <span style="color:#f92672">-</span> e_pct) <span style="color:#f92672">*</span> np<span style="color:#f92672">.</span>log(a_pct <span style="color:#f92672">/</span> e_pct)))
+</span></span></code></pre></div><p><strong>實測（合成資料，固定亂數種子 42，numpy）</strong>：基準為平均 600、標準差 50 的常態分布，各 5 萬筆。</p>
+<table>
+	<thead>
+			<tr>
+					<th>情境</th>
+					<th>PSI</th>
+					<th>依經驗區間的讀法</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>同分布、不同樣本</td>
+					<td>0.0001</td>
+					<td>穩定</td>
+			</tr>
+			<tr>
+					<td>平均值 +10</td>
+					<td>0.0371</td>
+					<td>穩定</td>
+			</tr>
+			<tr>
+					<td>平均值 +40、標準差 60</td>
+					<td>0.5156</td>
+					<td>明顯偏移</td>
+			</tr>
+			<tr>
+					<td>當前樣本在最高十分位沒有值，<code>eps=1e-4</code></td>
+					<td>0.7572</td>
+					<td>—</td>
+			</tr>
+			<tr>
+					<td>同上，<code>eps=1e-8</code></td>
+					<td>1.6789</td>
+					<td>—</td>
+			</tr>
+	</tbody>
+</table>
+<p>最後兩列是重點：<strong>空箱時，PSI 的大小由你選的 <code>eps</code> 決定</strong>，同一批資料可以得到 0.76 或 1.68。所以空箱要單獨告警，並在報告裡記錄使用的 <code>eps</code>，不要只看一個總數。</p>
+<p><strong>和 Evidently 對照。</strong> Evidently 0.7.23 可以用 <code>DataDriftPreset(method=&quot;psi&quot;)</code> 計算，預設閾值是 PSI ≥ 0.1 判為漂移（官方文件的預設值，不是統計結論）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> evidently <span style="color:#f92672">import</span> DataDefinition, Dataset, Report
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> evidently.presets <span style="color:#f92672">import</span> DataDriftPreset
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>definition <span style="color:#f92672">=</span> DataDefinition(numerical_columns<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#34;score&#34;</span>], categorical_columns<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#34;channel&#34;</span>])
+</span></span><span style="display:flex;"><span>reference <span style="color:#f92672">=</span> Dataset<span style="color:#f92672">.</span>from_pandas(ref_df, data_definition<span style="color:#f92672">=</span>definition)
+</span></span><span style="display:flex;"><span>current <span style="color:#f92672">=</span> Dataset<span style="color:#f92672">.</span>from_pandas(cur_df, data_definition<span style="color:#f92672">=</span>definition)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>snapshot <span style="color:#f92672">=</span> Report([DataDriftPreset(method<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;psi&#34;</span>)])<span style="color:#f92672">.</span>run(current, reference)  <span style="color:#75715e"># run(current, reference)</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> m <span style="color:#f92672">in</span> snapshot<span style="color:#f92672">.</span>dict()[<span style="color:#e6db74">&#34;metrics&#34;</span>]:
+</span></span><span style="display:flex;"><span>    print(m[<span style="color:#e6db74">&#34;metric_name&#34;</span>], m[<span style="color:#e6db74">&#34;value&#34;</span>])
+</span></span></code></pre></div><p>用同一組合成資料（各 5000 筆，基準平均 600、標準差 50；當前平均 640、標準差 60；類別特徵三個類別，佔比從 0.5／0.3／0.2 變成 0.3／0.3／0.4），結果如下：</p>
+<table>
+	<thead>
+			<tr>
+					<th>特徵</th>
+					<th>本文程式</th>
+					<th>Evidently</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>類別特徵 <code>channel</code></td>
+					<td>0.2652</td>
+					<td>0.2652</td>
+			</tr>
+			<tr>
+					<td>數值特徵 <code>score</code></td>
+					<td>0.5177</td>
+					<td>0.6010</td>
+			</tr>
+	</tbody>
+</table>
+<p>類別特徵完全一致；數值特徵差了約 0.08，因為兩邊的分箱方式不同。這說明：<strong>跨工具比較 PSI 時，先固定分箱規則</strong>，否則兩個數字不能直接比。另外，我的環境裡 Evidently 0.7.23 搭配 pandas 3.1.1 匯入就失敗（<code>ImportError: infer_dtype_from_object</code>），降到 pandas 2.3.3 後正常。安裝時要固定 pandas 版本。</p>
+<p><strong>閾值怎麼用。</strong> 常見的經驗區間是小於 0.10 穩定、0.10 到 0.25 需要調查、大於等於 0.25 為明顯變化。arXiv 上有一篇對 PSI 檢定程序的評述（見參考），指出這類固定臨界值沒有考慮樣本量和分箱數。所以把超過閾值當成「開始調查」的信號：先拆通路佔比、檢查三方欄位，再看 KS／AUC 與 Vintage，然後才決定是否重訓。不要讓告警自動觸發重訓或下線。</p>
+<h2 id="七把-psi-與業務指標接進-prometheus">七、把 PSI 與業務指標接進 Prometheus</h2>
+<h3 id="現象-2">現象</h3>
+<p>PSI 是每日批次算出來的，決策耗時和通過率是即時產生的。如果兩套指標分在不同的地方，值班的人要開幾個頁面才能判斷問題出在哪。</p>
+<h3 id="做法-2">做法</h3>
+<p>PSI 作業算完後，用 <code>prometheus_client</code> 把結果寫成文字檔，由 node_exporter 的 textfile collector 收集。核心是三個指標：每個特徵的 PSI、最後一次成功執行的時間、特徵缺失率。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> prometheus_client <span style="color:#f92672">import</span> CollectorRegistry, Gauge, write_to_textfile
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>registry <span style="color:#f92672">=</span> CollectorRegistry()
+</span></span><span style="display:flex;"><span>psi_gauge <span style="color:#f92672">=</span> Gauge(<span style="color:#e6db74">&#34;risk_model_psi&#34;</span>, <span style="color:#e6db74">&#34;PSI against the training baseline&#34;</span>,
+</span></span><span style="display:flex;"><span>                  [<span style="color:#e6db74">&#34;model&#34;</span>, <span style="color:#e6db74">&#34;feature&#34;</span>], registry<span style="color:#f92672">=</span>registry)
+</span></span><span style="display:flex;"><span>last_run <span style="color:#f92672">=</span> Gauge(<span style="color:#e6db74">&#34;risk_psi_last_run_timestamp_seconds&#34;</span>, <span style="color:#e6db74">&#34;Unix time of the last successful PSI run&#34;</span>,
+</span></span><span style="display:flex;"><span>                 [<span style="color:#e6db74">&#34;model&#34;</span>], registry<span style="color:#f92672">=</span>registry)
+</span></span><span style="display:flex;"><span>missing_ratio <span style="color:#f92672">=</span> Gauge(<span style="color:#e6db74">&#34;risk_feature_missing_ratio&#34;</span>, <span style="color:#e6db74">&#34;Share of null or default-filled values&#34;</span>,
+</span></span><span style="display:flex;"><span>                      [<span style="color:#e6db74">&#34;feature&#34;</span>], registry<span style="color:#f92672">=</span>registry)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>psi_gauge<span style="color:#f92672">.</span>labels(model<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;fraud_v1&#34;</span>, feature<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;__score__&#34;</span>)<span style="color:#f92672">.</span>set(<span style="color:#ae81ff">0.18</span>)
+</span></span><span style="display:flex;"><span>last_run<span style="color:#f92672">.</span>labels(model<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;fraud_v1&#34;</span>)<span style="color:#f92672">.</span>set_to_current_time()
+</span></span><span style="display:flex;"><span>missing_ratio<span style="color:#f92672">.</span>labels(feature<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;vendor_a_score&#34;</span>)<span style="color:#f92672">.</span>set(<span style="color:#ae81ff">0.02</span>)
+</span></span><span style="display:flex;"><span>write_to_textfile(<span style="color:#e6db74">&#34;/var/lib/node_exporter/textfile/risk_psi.prom&#34;</span>, registry)
+</span></span></code></pre></div><p>實際輸出是標準的 Prometheus 文字格式，例如 <code>risk_model_psi{feature=&quot;__score__&quot;,model=&quot;fraud_v1&quot;} 0.18</code>。決策服務自己另外暴露四個指標：<code>risk_decisions_total{decision,channel}</code>、<code>risk_rule_hits_total{rule_id}</code>、<code>risk_vendor_requests_total{vendor,result}</code> 與直方圖 <code>risk_decision_duration_seconds</code>。</p>
+<p>告警規則如下。我用 <code>promtool check rules</code> 檢查語法，並用 <code>promtool test rules</code> 對 PSI 兩級告警與「作業過期」做了單元測試，三項都通過。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#f92672">groups</span>:
+</span></span><span style="display:flex;"><span>  - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">risk-recording</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">rules</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#f92672">record</span>: <span style="color:#ae81ff">risk:approval_ratio:rate1h</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">expr</span>: |<span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">          sum(rate(risk_decisions_total{decision=&#34;approve&#34;}[1h]))
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">          / sum(rate(risk_decisions_total[1h]))</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">risk-model</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">rules</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">RiskModelPsiInvestigate</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">risk_model_psi &gt;= 0.10 and risk_model_psi &lt; 0.25</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">for</span>: <span style="color:#ae81ff">1h</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">labels</span>: {<span style="color:#f92672">severity</span>: <span style="color:#ae81ff">warning}</span>
+</span></span><span style="display:flex;"><span>      - <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">RiskModelPsiShifted</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">risk_model_psi &gt;= 0.25</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">for</span>: <span style="color:#ae81ff">1h</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">labels</span>: {<span style="color:#f92672">severity</span>: <span style="color:#ae81ff">critical}</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">annotations</span>:
+</span></span><span style="display:flex;"><span>          <span style="color:#f92672">description</span>: <span style="color:#e6db74">&#34;Large shift. Open a model review; do not retrain automatically.&#34;</span>
+</span></span><span style="display:flex;"><span>      - <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">RiskPsiJobStale</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">time() - risk_psi_last_run_timestamp_seconds &gt; 36 * 3600</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">labels</span>: {<span style="color:#f92672">severity</span>: <span style="color:#ae81ff">warning}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">risk-business</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">rules</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">RiskApprovalRatioShift</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e"># illustrative threshold: calibrate on your own history</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">abs(risk:approval_ratio:rate1h / (risk:approval_ratio:rate1h offset 7d) - 1) &gt; 0.3</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">for</span>: <span style="color:#ae81ff">30m</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">labels</span>: {<span style="color:#f92672">severity</span>: <span style="color:#ae81ff">warning}</span>
+</span></span><span style="display:flex;"><span>      - <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">RiskRuleStoppedHitting</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">expr</span>: |<span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">          sum by (rule_id) (rate(risk_rule_hits_total[1h])) == 0
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">          and
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">          sum by (rule_id) (rate(risk_rule_hits_total[1h] offset 1d)) &gt; 0</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">for</span>: <span style="color:#ae81ff">1h</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">labels</span>: {<span style="color:#f92672">severity</span>: <span style="color:#ae81ff">warning}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  - <span style="color:#f92672">name</span>: <span style="color:#ae81ff">risk-data-and-system</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">rules</span>:
+</span></span><span style="display:flex;"><span>      - <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">RiskFeatureMissingHigh</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">expr</span>: <span style="color:#ae81ff">risk_feature_missing_ratio &gt; 0.2</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">for</span>: <span style="color:#ae81ff">15m</span>
+</span></span><span style="display:flex;"><span>      - <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">RiskVendorTimeouts</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">expr</span>: |<span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">          sum by (vendor) (rate(risk_vendor_requests_total{result=&#34;timeout&#34;}[10m]))
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">          / sum by (vendor) (rate(risk_vendor_requests_total[10m])) &gt; 0.05</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">for</span>: <span style="color:#ae81ff">10m</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">labels</span>: {<span style="color:#f92672">severity</span>: <span style="color:#ae81ff">critical}</span>
+</span></span><span style="display:flex;"><span>      - <span style="color:#f92672">alert</span>: <span style="color:#ae81ff">RiskDecisionLatencyP99</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">expr</span>: |<span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">          histogram_quantile(0.99,
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">            sum by (le) (rate(risk_decision_duration_seconds_bucket[5m]))) &gt; 0.5</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">for</span>: <span style="color:#ae81ff">5m</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">labels</span>: {<span style="color:#f92672">severity</span>: <span style="color:#ae81ff">critical}</span>
+</span></span></code></pre></div><p>幾個設計理由：</p>
+<ul>
+<li><strong><code>RiskPsiJobStale</code> 不能少。</strong> PSI 作業失敗時，指標會停在舊值，看起來「很穩定」。用最後成功時間加過期告警，才能發現作業本身壞了。</li>
+<li><strong>通過率用「同一時段上週」比較</strong>（<code>offset 7d</code>），避開日內與週內的自然波動。0.3 只是示範值。</li>
+<li><strong>規則命中數降到零也要告警。</strong> 特徵缺失或規則被繞過，都會讓命中悄悄歸零，而且不會報錯。</li>
+<li>需要注意：這份規則裡 <code>RiskApprovalRatioShift</code>、<code>RiskRuleStoppedHitting</code> 與延遲、逾時等規則，我只做了語法檢查，<strong>沒有用歷史資料驗證閾值</strong>。</li>
+</ul>
+<h2 id="八元件選型與授權">八、元件選型與授權</h2>
+<p>選型的第一個問題常常不是功能，而是授權。下表中的授權都是 2026-11-13 從官方倉庫的 LICENSE 檔、README 或官方網站讀取的結果。</p>
+<table>
+	<thead>
+			<tr>
+					<th>元件</th>
+					<th>用途</th>
+					<th>授權（開源版）</th>
+					<th>版本差異與注意</th>
+					<th>查核來源</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Apache Flink</td>
+					<td>即時計算、CEP、SQL</td>
+					<td>Apache-2.0</td>
+					<td>連接器版本隨 Flink 次版本走（見第四節）</td>
+					<td>GitHub <code>apache/flink</code> 倉庫授權欄位</td>
+			</tr>
+			<tr>
+					<td>Apache Kafka</td>
+					<td>事件匯流排</td>
+					<td>Apache-2.0</td>
+					<td>—</td>
+					<td>GitHub <code>apache/kafka</code> 倉庫授權欄位</td>
+			</tr>
+			<tr>
+					<td>Drools</td>
+					<td>規則引擎、DMN、CEP</td>
+					<td>Apache-2.0</td>
+					<td>現屬 Apache KIE（孵化中）專案，倉庫為 <code>apache/incubator-kie</code></td>
+					<td>kie.apache.org/drools；倉庫 LICENSE 與 DISCLAIMER-WIP</td>
+			</tr>
+			<tr>
+					<td>URule</td>
+					<td>中文視覺化規則引擎</td>
+					<td>開源版 Apache-2.0；另有商用 Pro 版</td>
+					<td>README 標示交叉決策表與複雜評分卡僅 Pro 版；倉庫最後推送時間為 2022-12-10</td>
+					<td>github.com/youseries/urule README</td>
+			</tr>
+			<tr>
+					<td>Nussknacker</td>
+					<td>即時決策視覺化平臺（跑在 Flink／Kafka 上）</td>
+					<td>核心 Apache-2.0；另有付費方案</td>
+					<td>官方定價頁列出付費方案含 AI／ML 元件與標準支援；Designer 的 Integrations 介面僅 Cloud 與 Enterprise 提供，開源版用設定檔</td>
+					<td>倉庫 README、docs.nussknacker.io、nussknacker.io/pricing</td>
+			</tr>
+			<tr>
+					<td>Feast</td>
+					<td>特徵庫</td>
+					<td>Apache-2.0</td>
+					<td>—</td>
+					<td>GitHub <code>feast-dev/feast</code> LICENSE；PyPI</td>
+			</tr>
+			<tr>
+					<td>NebulaGraph</td>
+					<td>圖資料庫</td>
+					<td>Apache-2.0（開源版）</td>
+					<td>Enterprise 需授權；Explorer 僅 Enterprise 提供</td>
+					<td>倉庫 README；官方手冊「About NebulaGraph licenses」</td>
+			</tr>
+			<tr>
+					<td>Neo4j</td>
+					<td>圖資料庫</td>
+					<td>Community 為 GPL-3.0</td>
+					<td>Enterprise 含閉源元件，需商業授權</td>
+					<td>倉庫 README 〈Licensing〉</td>
+			</tr>
+			<tr>
+					<td>toad</td>
+					<td>Python 評分卡工具（分箱、WOE、PSI）</td>
+					<td>MIT</td>
+					<td>—</td>
+					<td>GitHub <code>amphibian-dev/toad</code> LICENSE</td>
+			</tr>
+			<tr>
+					<td>Evidently</td>
+					<td>資料與模型漂移報告</td>
+					<td>Apache-2.0</td>
+					<td>PyPI 0.7.23；與 pandas 3.x 不相容（本文實測）</td>
+					<td>GitHub LICENSE；PyPI</td>
+			</tr>
+			<tr>
+					<td>Great Expectations（GX Core）</td>
+					<td>資料品質校驗</td>
+					<td>Apache-2.0</td>
+					<td>倉庫現在轉址到 <code>fivetran/great_expectations</code>（查核日期）</td>
+					<td>倉庫 LICENSE；PyPI</td>
+			</tr>
+			<tr>
+					<td>Prometheus</td>
+					<td>指標與告警</td>
+					<td>Apache-2.0</td>
+					<td>—</td>
+					<td>GitHub <code>prometheus/prometheus</code> 倉庫授權欄位</td>
+			</tr>
+			<tr>
+					<td>Grafana</td>
+					<td>看板</td>
+					<td>AGPL-3.0-only</td>
+					<td>官方說明部分元件有 Apache-2.0 例外，見其 LICENSING.md</td>
+					<td>github.com/grafana/grafana README；grafana.com/licensing</td>
+			</tr>
+			<tr>
+					<td>Apache Superset</td>
+					<td>業務報表</td>
+					<td>Apache-2.0</td>
+					<td>可作為不想引入 AGPL 時的替代</td>
+					<td>GitHub <code>apache/superset</code> 倉庫授權欄位</td>
+			</tr>
+	</tbody>
+</table>
+<p>三條選型取捨：</p>
+<ul>
+<li><strong>GPL 與 AGPL 要先交給法務。</strong> Neo4j Community 是 GPL-3.0，Grafana 是 AGPL-3.0-only。是否影響你的閉源部署，取決於你怎麼使用、是否修改與分發，本文不下結論。想避開這個問題，圖資料庫可以先評估 NebulaGraph 開源版，報表可以先評估 Superset。</li>
+<li><strong>開源版和付費版的功能邊界要寫進選型文件。</strong> URule 的複雜評分卡、Nussknacker 的 Integrations 介面與 AI／ML 元件、NebulaGraph 的 Explorer，都不在開源版裡。把付費功能當成預設可用，是常見的選型失誤。</li>
+<li><strong>維護狀態要看提交時間。</strong> URule 開源倉庫最後一次推送是 2022 年 12 月。這不代表它不能用，但意味著安全補丁和新版本相容性要由你自己負責。</li>
+</ul>
+<h2 id="九分階段落地">九、分階段落地</h2>
+<p>按能力推進，而不是按元件堆疊：</p>
+<ol>
+<li><strong>合規底線</strong>：身份核驗、授信審批和模型管理由自己掌握；特徵採集前檢查授權；事件與決策完整留痕。</li>
+<li><strong>硬規則、名單與基礎看板</strong>：用規則引擎配置黑名單、多頭、身份一致性、設備異常；用 Prometheus 看決策耗時與通過率、規則命中。這一階段先不上複雜模型。</li>
+<li><strong>貸後指標閉環</strong>：統一 FPD、Vintage 與失聯的定義；催收端把詐欺與信用違約分開打標。</li>
+<li><strong>有足夠標籤再上模型</strong>：用 toad 等工具做可解釋評分卡；建立獨立評審；每日跑 PSI，並同步看 KS／AUC 與實際違約。</li>
+<li><strong>即時特徵、CEP 與圖譜</strong>：量上來之後再上 Kafka、Flink 與特徵庫，再評估圖譜。</li>
+</ol>
+<h2 id="本文邊界與未驗證項">本文邊界與未驗證項</h2>
+<p><strong>已實測（本機）</strong></p>
+<ul>
+<li>Flink 2.3.0 MiniCluster：CEP 範例、HOP 視窗 SQL、<code>MATCH_RECOGNIZE</code>，資料為本文自造的小型測試集。</li>
+<li>Flink 2.2.0 加 <code>flink-sql-connector-kafka</code> 5.0.0-2.2：Kafka DDL 與 <code>INSERT INTO ... SELECT</code> 的 <code>EXPLAIN</code> 規劃通過。</li>
+<li>PSI 程式與 Evidently 0.7.23 的計算（合成資料，種子 42）。</li>
+<li>Prometheus 3.16.0 的 <code>promtool check rules</code>，以及 PSI 兩級告警與作業過期告警的 <code>promtool test rules</code>。</li>
+</ul>
+<p><strong>文件依據</strong></p>
+<ul>
+<li>法規條文：對照中國政府網上的 26號全文與銀行辦法全文。銀行辦法經 2021 年清理規章的決定修訂過第二十三條（「合同法」改「民法典」），與本文引用的條文無關。</li>
+<li>授權：讀自各官方倉庫的 LICENSE、README 與官方網站，不構成法律意見。</li>
+</ul>
+<p><strong>未驗證項</strong></p>
+<ul>
+<li>沒有連真實 Kafka 叢集做端到端實測；沒有做效能、吞吐、狀態大小或 checkpoint 的測試。</li>
+<li>CEP 的亂序、遲到事件與部分匹配逾時處理（<code>TimedOutPartialMatchHandler</code>）沒有實測，正式使用前要補測。</li>
+<li>沒有把文字檔交給真實的 node_exporter 與 Prometheus 伺服器抓取，只檢查了輸出格式與規則本身。</li>
+<li>通過率偏移、規則命中歸零、缺失率、供應商逾時與延遲等告警規則只做了語法檢查，閾值都是示範值。</li>
+<li>PSI 的 0.10／0.25 經驗區間來自評分卡文獻的慣用說法，本文沒有查到原書頁碼；只引用了 arXiv 評述中「臨界值不考慮樣本量與分箱數」的結論。</li>
+<li>金規〔2025〕9號只核對了標題、發文日期、施行日期與第一條「互聯網助貸屬於互聯網貸款」，沒有逐條對照。</li>
+<li>沒有評估各元件的社群活躍度、漏洞公告與維運成本；圖譜、特徵庫沒有實測。</li>
+<li>是否適用 26號、銀行辦法或其他規則，取決於你的牌照與業務模式，要由法務判斷。</li>
+<li>授權與版本會變，落地前請再讀一次原文。</li>
+</ul>
+<h2 id="參考">參考</h2>
+<p>法規與監管文件（中國政府網）：</p>
+<ul>
+<li><a href="https://www.gov.cn/gongbao/2025/issue_11926/202503/content_7013993.html">小額貸款公司監督管理暫行辦法（金規〔2024〕26號，國務院公報 2025 年第 8 號）</a></li>
+<li><a href="https://www.gov.cn/zhengce/2020-07/17/content_5718706.htm">商業銀行互聯網貸款管理暫行辦法（銀保監會令 2020 年第 9 號）</a></li>
+<li><a href="https://www.gov.cn/zhengce/zhengceku/2021-07/02/content_5622002.htm">中國銀保監會關於清理規章規範性文件的決定（2021 年第 7 號令）</a></li>
+<li><a href="https://www.gov.cn/zhengce/zhengceku/202504/content_7017135.htm">國家金融監督管理總局關於加強商業銀行互聯網助貸業務管理提升金融服務質效的通知（金規〔2025〕9號）</a></li>
+</ul>
+<p>技術文件：</p>
+<ul>
+<li><a href="https://nightlies.apache.org/flink/flink-docs-stable/docs/learn-flink/event_driven/">Apache Flink：Event-driven Applications</a></li>
+<li><a href="https://nightlies.apache.org/flink/flink-docs-stable/docs/libs/cep/">Apache Flink：FlinkCEP</a></li>
+<li><a href="https://nightlies.apache.org/flink/flink-docs-stable/docs/sql/reference/queries/match_recognize/">Apache Flink：Pattern Recognition（MATCH_RECOGNIZE）</a></li>
+<li><a href="https://nightlies.apache.org/flink/flink-docs-stable/docs/sql/reference/queries/window-tvf/">Apache Flink：Windowing TVF</a></li>
+<li><a href="https://nightlies.apache.org/flink/flink-docs-stable/docs/connectors/table/kafka/">Apache Flink：Kafka SQL Connector</a></li>
+<li><a href="https://docs.feast.dev/tutorials/tutorials-overview/fraud-detection">Feast：Fraud detection on GCP</a></li>
+<li><a href="https://docs.evidentlyai.com/metrics/customize_data_drift">Evidently：Customize Data Drift（含 PSI 預設閾值）</a></li>
+<li><a href="https://prometheus.io/docs/prometheus/latest/configuration/unit_testing_rules/">Prometheus：Unit testing for rules</a></li>
+<li><a href="https://arxiv.org/abs/2303.01227">A critical review of existing and new population stability testing procedures in credit risk scoring（arXiv:2303.01227）</a></li>
+</ul>
+<p>元件授權來源：</p>
+<ul>
+<li><a href="https://kie.apache.org/drools/">Apache KIE Drools</a>、<a href="https://github.com/youseries/urule">URule</a>、<a href="https://github.com/TouK/nussknacker">Nussknacker</a>、<a href="https://nussknacker.io/pricing/">Nussknacker 定價與版本比較</a>、<a href="https://docs.nussknacker.io/OSS_docs/">Nussknacker 開源版文件</a></li>
+<li><a href="https://github.com/vesoft-inc/nebula">NebulaGraph</a>、<a href="https://docs.nebula-graph.io/3.4.4/20.appendix/8.about-license/">NebulaGraph 授權說明</a>、<a href="https://github.com/neo4j/neo4j">Neo4j</a></li>
+<li><a href="https://github.com/amphibian-dev/toad">toad</a>、<a href="https://github.com/fivetran/great_expectations">Great Expectations（fivetran/great_expectations）</a>、<a href="https://grafana.com/licensing/">Grafana 授權說明</a>、<a href="https://github.com/grafana/grafana/blob/HEAD/LICENSING.md">Grafana LICENSING.md</a></li>
+</ul>
+]]></content:encoded></item></channel></rss>

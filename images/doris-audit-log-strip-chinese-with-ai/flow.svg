@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="618" viewBox="0 0 760 618" font-family="PingFang SC,Microsoft YaHei,Noto Sans CJK SC,sans-serif">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<defs><marker id="a" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker></defs>
+<rect x="130" y="15" width="500" height="58" rx="10" fill="#eef4ff" stroke="#3b6fd8" stroke-width="2"/>
+<text x="380" y="40" font-size="18" text-anchor="middle" fill="#222" font-weight="bold">FE 启动 DorisFE</text>
+<text x="380" y="61" font-size="14" text-anchor="middle" fill="#555">initLogging()</text>
+<line x1="380" y1="73" x2="380" y2="95" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<rect x="130" y="99" width="500" height="58" rx="10" fill="#fff4e5" stroke="#e8890c" stroke-width="2"/>
+<text x="380" y="124" font-size="18" text-anchor="middle" fill="#222" font-weight="bold">【补丁】读 fe.conf</text>
+<text x="380" y="145" font-size="14" text-anchor="middle" fill="#555">audit_log_filter_chinese 等</text>
+<line x1="380" y1="157" x2="380" y2="179" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<rect x="130" y="183" width="500" height="58" rx="10" fill="#eef4ff" stroke="#3b6fd8" stroke-width="2"/>
+<text x="380" y="208" font-size="18" text-anchor="middle" fill="#222" font-weight="bold">Log4jConfig.reconfig()</text>
+<text x="380" y="229" font-size="14" text-anchor="middle" fill="#555">拼 XML 模板 + 占位符替换</text>
+<line x1="380" y1="241" x2="380" y2="263" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<rect x="130" y="267" width="500" height="58" rx="10" fill="#fff4e5" stroke="#e8890c" stroke-width="2"/>
+<text x="380" y="292" font-size="18" text-anchor="middle" fill="#222" font-weight="bold">【补丁】注入审计过滤</text>
+<text x="380" y="313" font-size="14" text-anchor="middle" fill="#555">strip: %replace / drop: RegexFilter</text>
+<line x1="380" y1="325" x2="380" y2="347" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<rect x="130" y="351" width="500" height="58" rx="10" fill="#eef4ff" stroke="#3b6fd8" stroke-width="2"/>
+<text x="380" y="376" font-size="18" text-anchor="middle" fill="#222" font-weight="bold">写 conf/log4j2-spring.xml</text>
+<text x="380" y="397" font-size="14" text-anchor="middle" fill="#555">Auto Generated，每次覆盖</text>
+<line x1="380" y1="409" x2="380" y2="431" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<rect x="130" y="435" width="500" height="58" rx="10" fill="#eef4ff" stroke="#3b6fd8" stroke-width="2"/>
+<text x="380" y="460" font-size="18" text-anchor="middle" fill="#222" font-weight="bold">内存加载 + Spring Boot 再加载</text>
+<text x="380" y="481" font-size="14" text-anchor="middle" fill="#555">两条路径都带过滤</text>
+<line x1="380" y1="493" x2="380" y2="515" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<rect x="130" y="519" width="500" height="58" rx="10" fill="#eef4ff" stroke="#3b6fd8" stroke-width="2"/>
+<text x="380" y="544" font-size="18" text-anchor="middle" fill="#222" font-weight="bold">fe.audit.log</text>
+<text x="380" y="565" font-size="14" text-anchor="middle" fill="#555">中文被删除 / 整行丢弃</text>
+</svg>

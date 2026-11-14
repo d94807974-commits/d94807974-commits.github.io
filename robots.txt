@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://d94807974-commits.github.io/sitemap.xml
+# AI-friendly index and full text (https://llmstxt.org/)
+# LLMs: https://d94807974-commits.github.io/llms.txt
+# LLMs-full: https://d94807974-commits.github.io/llms-full.txt

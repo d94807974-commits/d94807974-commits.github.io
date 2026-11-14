@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>SRE on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/sre/</link><description>Recent content in SRE on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Mon, 09 Nov 2026 16:00:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/sre/index.xml" rel="self" type="application/rss+xml"/><item><title>工程師視角讀《向上管理的本質》：預防、迭代、溝通，哪些成立、哪些要打折</title><link>https://d94807974-commits.github.io/posts/managing-up-essay-engineer-review/</link><pubDate>Mon, 09 Nov 2026 16:00:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/managing-up-essay-engineer-review/</guid><description>分析一篇講「向上管理」的公眾號文章：它用扁鵲三兄弟、稻盛和夫重建日航、觸龍說趙太后三個故事，講預防問題、快速迭代、共情溝通三種能力。本文從工程師視角逐條核對史實與資料，指出哪些觀點成立、哪些被簡化或說反了，並把它們落到 SRE、事後復盤、DORA 指標、設計文件等可執行的工程做法上。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/managing-up-essay-engineer-review.html">事實核對、觸龍的說服順序與工程化做法</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>原文的三個觀點（預防勝於救火、小步迭代、先建立信任再說服）方向都對，但三個故事都被簡化過。對工程師有用的是把它們工程化：讓預防可量化、讓回饋迴路變短、讓溝通從對方的目標出發。</p>
+</div><blockquote>
+  <p>原文：〈讓任何領導都喜歡你的秘訣-向上管理的本質〉，微信公眾號 YouCore，2026-11-08 發布，<a href="https://mp.weixin.qq.com/s/_OtDXMfzlvg_MWeymz9O0w">https://mp.weixin.qq.com/s/_OtDXMfzlvg_MWeymz9O0w</a>。下文引用原文只取短句，並標註「原文」。</p>
+
+</blockquote><h2 id="一原文在講什麼">一、原文在講什麼</h2>
+<p>原文篇幅不長，分三節，每節一個故事、一個結論：</p>
+<table>
+	<thead>
+			<tr>
+					<th>節</th>
+					<th>故事</th>
+					<th>原文結論（短句引用）</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>01 解決問題能力</td>
+					<td>扁鵲說自己醫術在三兄弟中最差：大哥在病發作前就治好，二哥在病剛起時治好，自己在病重時才出手</td>
+					<td>「防火，永遠比救火更重要」</td>
+			</tr>
+			<tr>
+					<td>02 學習迭代能力</td>
+					<td>稻盛和夫接手破產的日航，用阿米巴經營把公司切成小單元獨立核算，一年創下最高盈利、三年重新上市</td>
+					<td>「沒有迭代的學習，你就是無效重複」</td>
+			</tr>
+			<tr>
+					<td>03 溝通共情能力</td>
+					<td>觸龍勸趙太后讓長安君去齊國做人質，先聊身體、聊孩子，最後太后同意</td>
+					<td>「溝通的本質，不是用邏輯碾壓對方，而是建立我懂你的連線」</td>
+			</tr>
+	</tbody>
+</table>
+<p>文末是一個「工作 SOP 模板」的推廣入口。標題說的是「向上管理」，但正文講的其實是三種通用職場能力，並沒有直接討論如何與上級對齊目標、管理期望。這一點後面再談。</p>
+<h2 id="二先核對事實">二、先核對事實</h2>
+<p>講道理可以用故事，但故事裡的事實如果錯了，結論就要打折。下面逐條對照原始出處。</p>
+<table>
+	<thead>
+			<tr>
+					<th>原文說法</th>
+					<th>原始出處</th>
+					<th>判斷</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>扁鵲自稱三兄弟中醫術最差，「大家都笑了」</td>
+					<td>《鶡冠子·世賢》：是<strong>魏文侯</strong>問扁鵲「子昆弟三人其孰最善為醫」，扁鵲答「長兄最善，中兄次之，扁鵲最為下」</td>
+					<td>故事主體成立；問話人和場景是改編</td>
+			</tr>
+			<tr>
+					<td>日航「虧損2萬億日元」</td>
+					<td>日航 2010 年 1 月申請重整時的<strong>負債</strong>約 2.3 兆日圓，是戰後日本最大的企業破產</td>
+					<td>把「負債」說成「虧損」，概念錯</td>
+			</tr>
+			<tr>
+					<td>「一個78歲的老人」接手</td>
+					<td>稻盛和夫生於 1932 年 1 月，2010 年 2 月出任日航會長</td>
+					<td>成立</td>
+			</tr>
+			<tr>
+					<td>「僅僅一年，日航就實現了歷史上最高的盈利」</td>
+					<td>重整完成後的會計年度（2010 年 4 月～2011 年 3 月）營業利益 1,884 億日圓；2011 年度再到 2,049 億日圓</td>
+					<td>大致成立</td>
+			</tr>
+			<tr>
+					<td>「僅僅三年，日航重新上市」</td>
+					<td>2012 年 9 月 19 日重新在東證上市，距破產約 2 年 8 個月</td>
+					<td>成立（略有取整）</td>
+			</tr>
+			<tr>
+					<td>「他只做了一件事：阿米巴經營」「切分成3000個小單元」</td>
+					<td>官方資料確實強調導入阿米巴經營和按航線核算損益；但重建同時還有：銀行<strong>債務減免 5,215 億日圓</strong>、企業再生支援機構<strong>注資 3,500 億日圓</strong>、淘汰巨無霸機隊、出售子公司、裁員與減薪、退休金削減</td>
+					<td>「只做了一件事」不成立；「3000個」在所查官方資料中未找到</td>
+			</tr>
+			<tr>
+					<td>稻盛和夫說「答案永遠在現場，但只有願意迭代的人才能看見」</td>
+					<td>「答案在現場」是稻盛常被引用的說法；後半句未找到出處</td>
+					<td>後半句疑為附會</td>
+			</tr>
+			<tr>
+					<td>觸龍「全程走心，不談理」「從頭到尾沒有一句道理」</td>
+					<td>《戰國策·趙策四》：觸龍在建立信任後，明確提出「父母之愛子，則為之計深遠」，並以「位尊而無功，奉厚而無勞」論證長安君必須「有功於國」才能自保</td>
+					<td><strong>說反了</strong>：觸龍的關鍵恰恰是講了道理，只是從對方的利益出發講</td>
+			</tr>
+			<tr>
+					<td>觸龍為兒子求「黑衣衛的閒職」</td>
+					<td>原文是「願令得補黑衣之數，以衛王宮」，黑衣指王宮衛士</td>
+					<td>大意成立</td>
+			</tr>
+	</tbody>
+</table>
+<p>核對結果：<strong>三個故事的骨架都在，但第二、第三個故事的「結論部分」被改寫過</strong>。日航被講成單一方法的勝利，觸龍被講成「只靠共情」。這兩處改寫，正好都是對工程實踐影響最大的地方。</p>
+<h2 id="三觀點一預防勝於救火成立但預防需要被看見">三、觀點一：預防勝於救火——成立，但預防需要被看見</h2>
+<h3 id="31-成立的部分">3.1 成立的部分</h3>
+<p>這一點在工程上幾乎是共識。Google SRE 的做法可以看成「大哥治病」的制度化：</p>
+<ul>
+<li><strong>事後復盤（postmortem）</strong>：不追究個人，追問系統為什麼允許錯誤發生，並產出可追蹤的改進項。</li>
+<li><strong>錯誤預算（error budget）</strong>：用 SLO 把「可以接受多少不穩定」量化，預算快用完時優先做穩定性工作，而不是繼續上新功能。</li>
+<li><strong>消除瑣事（toil）</strong>：把重複的人工救火變成自動化，從根上減少事故來源。</li>
+</ul>
+<h3 id="32-值得商榷的部分">3.2 值得商榷的部分</h3>
+<p>原文說領導更器重「那些平時看起來很閒、卻從不出事的人」。現實往往相反：MIT 的 Repenning 與 Sterman 有一篇論文，標題就是 <em>Nobody Ever Gets Credit for Fixing Problems that Never Happened</em>。預防的成果是「什麼都沒發生」，而「什麼都沒發生」在報告裡是看不見的；救火則有明確的事件、時間線和英雄。</p>
+<p>如果組織只獎勵救火，就會出現：</p>
+<ul>
+<li><strong>能力陷阱</strong>：大家忙著救火，沒時間做預防，於是火越來越多；</li>
+<li><strong>逆向激勵</strong>：預防做得好的人看起來「沒產出」。</li>
+</ul>
+<p>另一個風險是<strong>過度預防</strong>：任何預防都有成本。把每一個低機率風險都做到極致，會拖慢交付，這也是 SRE 用錯誤預算而不是「零故障」作為目標的原因。</p>
+<h3 id="33-工程化做法">3.3 工程化做法</h3>
+<p>讓預防<strong>可量化、可追蹤、可彙報</strong>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#75715e"># risk register entry (one per prevention item)</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">id</span>: <span style="color:#ae81ff">R-012</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">risk</span>: <span style="color:#e6db74">&#34;binlog retention shorter than max consumer downtime&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">likelihood</span>: <span style="color:#ae81ff">medium       </span> <span style="color:#75715e"># low / medium / high</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">impact</span>: <span style="color:#ae81ff">high             </span> <span style="color:#75715e"># data re-snapshot, hours of catch-up</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">leading_indicator</span>: <span style="color:#e6db74">&#34;binlog_retention_hours - max_lag_hours&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">action</span>: <span style="color:#e6db74">&#34;raise retention to 7d and alert when margin &lt; 24h&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">cost</span>: <span style="color:#e6db74">&#34;0.5 day + extra disk&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">status</span>: <span style="color:#ae81ff">done</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">evidence</span>: <span style="color:#e6db74">&#34;alert fired once in staging, no production incident&#34;</span>
+</span></span></code></pre></div><ul>
+<li>週報裡除了「做了什麼」，加上<strong>領先指標</strong>：SLO 達成率、錯誤預算消耗、告警數趨勢、近失（near-miss）事件。</li>
+<li>每一項預防工作都寫清楚「如果不做，最可能發生什麼、損失多大」，讓「沒發生的事」有一個可比較的反事實。</li>
+<li>同時保留救火能力：值班、runbook、演練。預防不是取消救火，而是讓救火變少、變短。</li>
+</ul>
+<h2 id="四觀點二小單元快反饋成立但別把成功歸因給單一方法">四、觀點二：小單元、快反饋——成立，但別把成功歸因給單一方法</h2>
+<h3 id="41-成立的部分">4.1 成立的部分</h3>
+<p>阿米巴經營的核心，按稻盛和夫官方網站的描述，是把組織分成小的自主單元，每個單元有自己的領導和核算，讓每個人看見自己的投入產出。日航的具體變化之一，是從過去只看全網收支，改成<strong>逐條航線核算盈虧</strong>。</p>
+<p>這和軟體工程的經驗高度一致：</p>
+<ul>
+<li><strong>小批次</strong>：小的變更更容易驗證、出錯時更容易回滾；</li>
+<li><strong>短反饋迴路</strong>：DORA 的四項關鍵指標（部署頻率、變更前置時間、變更失敗率、故障恢復時間）本質上就是在度量反饋迴路的長短；</li>
+<li><strong>成本透明</strong>：雲成本按服務、按團隊分攤（showback），團隊才會主動最佳化。</li>
+</ul>
+<h3 id="42-值得商榷的部分">4.2 值得商榷的部分</h3>
+<ul>
+<li><strong>單因歸因</strong>：日航的重建同時有債務減免、公共資金注資、機隊和航線重整、裁員減薪、退休金削減。這些是重整程式與外部壓力下才能推動的結構性改變。只說「他只做了一件事」，會讓讀者以為換一套核算方法就能起死回生。工程上的類比是：系統性能提升 10 倍，不能只歸功於最後上線的那一個快取。</li>
+<li><strong>區域性最優</strong>：每個小單元獨立核算，容易出現單元之間互相計價、推諉的問題。軟體團隊按指標考核時同樣如此——古德哈特定律：指標一旦成為目標，就不再是好指標。</li>
+<li><strong>倖存者偏差</strong>：成功案例被反覆講，導入同類方法卻失敗的案例很少被講。</li>
+</ul>
+<h3 id="43-工程化做法">4.3 工程化做法</h3>
+<ul>
+<li>先度量回路：從提交到上線要多久？從告警到定位要多久？從需求到使用者反饋要多久？先找最長的那一段。</li>
+<li>每一個考核指標配一個<strong>護欄指標</strong>：追部署頻率，就同時看變更失敗率；追成本下降，就同時看 SLO。</li>
+<li>復盤成功案例時，和復盤事故一樣列出<strong>所有</strong>貢獻因素，而不只是最顯眼的那一個。</li>
+</ul>
+<h2 id="五觀點三先共情再說服成立一半觸龍其實講了道理">五、觀點三：先共情再說服——成立一半，觸龍其實講了道理</h2>
+<h3 id="51-原文說反的地方">5.1 原文說反的地方</h3>
+<p>原文的結論是「觸龍從頭到尾沒有一句道理」。但對照《戰國策》原文，觸龍的說服分成兩段：</p>
+<ol>
+<li><strong>建立信任</strong>：聊身體、聊飲食、為自己的小兒子求職，讓盛怒的太后「色稍解」，並讓太后自己說出「丈夫亦愛憐其少子乎」；</li>
+<li><strong>從對方的目標出發講道理</strong>：先讓太后承認「父母之愛子，則為之計深遠」，再用趙國與諸侯子孫「位尊而無功，奉厚而無勞」的先例，推匯出長安君必須現在「有功於國」，否則太后百年之後無以自保。</li>
+</ol>
+<p>所以觸龍不是不講理，而是<strong>換了講理的出發點</strong>：大臣們講的是「國家需要」，觸龍講的是「你愛兒子，就該這樣做」。共情是讓對方願意聽，道理才是讓對方改變決定的原因。</p>
+<h3 id="52-工程化做法">5.2 工程化做法</h3>
+<p>工程師寫技術方案、向上彙報時，最常見的問題是只講「技術上應該」，不講「這對你的目標意味著什麼」。可以這樣做：</p>
+<ul>
+<li><strong>先寫對方的目標</strong>：設計文件開頭寫清楚背景、目標、非目標，用對方關心的語言（風險、成本、交付時間）描述問題。</li>
+<li><strong>給選項，不給單一答案</strong>：列出兩到三個方案及其取捨，再給出推薦和理由。</li>
+<li><strong>沒有意外（no surprises）</strong>：壞訊息儘早說，並附上影響範圍和應對方案。</li>
+<li><strong>先傾聽再提案</strong>：先問清楚對方擔心什麼，再決定從哪個角度講。</li>
+</ul>
+<h2 id="六標題與內容的落差向上管理到底是什麼">六、標題與內容的落差：向上管理到底是什麼</h2>
+<p>原文標題是「讓任何領導都喜歡你的秘訣」，但「讓領導喜歡」不是向上管理的目標。哈佛商業評論的經典文章 <em>Managing Your Boss</em>（Gabarro 與 Kotter）把它定義為：<strong>有意識地與上級合作，為雙方和組織取得最好的結果</strong>。要點包括：</p>
+<ul>
+<li>瞭解上級的目標、壓力、工作風格與偏好的溝通方式；</li>
+<li>瞭解自己的長處、短處與風格；</li>
+<li>建立一種雙方都適用的關係：期望一致、資訊流通、可靠誠實、善用上級的時間與資源。</li>
+</ul>
+<p>從這個定義看，原文的三種能力都是<strong>基礎</strong>，但還缺少關鍵的一環：<strong>主動對齊目標與期望</strong>。工程師可以落到這幾件事上：</p>
+<table>
+	<thead>
+			<tr>
+					<th>動作</th>
+					<th>頻率</th>
+					<th>產出</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>確認季度目標與優先順序</td>
+					<td>每季度</td>
+					<td>一頁紙：目標、非目標、衡量方式</td>
+			</tr>
+			<tr>
+					<td>一對一</td>
+					<td>每週或每兩週</td>
+					<td>進度、風險、需要的支援</td>
+			</tr>
+			<tr>
+					<td>風險提前通報</td>
+					<td>發現時</td>
+					<td>現象、影響、選項、建議</td>
+			</tr>
+			<tr>
+					<td>預防工作彙報</td>
+					<td>每月</td>
+					<td>領先指標、避免的風險、成本</td>
+			</tr>
+	</tbody>
+</table>
+<h2 id="七小結">七、小結</h2>
+<table>
+	<thead>
+			<tr>
+					<th>原文觀點</th>
+					<th>判斷</th>
+					<th>工程化版本</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>防火比救火重要</td>
+					<td>成立</td>
+					<td>SLO、錯誤預算、事後復盤；讓預防<strong>被看見</strong></td>
+			</tr>
+			<tr>
+					<td>持續迭代</td>
+					<td>成立，但案例歸因過度簡化</td>
+					<td>縮短反饋迴路（DORA）、指標配護欄、完整歸因</td>
+			</tr>
+			<tr>
+					<td>共情溝通</td>
+					<td>只對一半：觸龍也講了道理</td>
+					<td>從對方目標出發寫方案、給選項、沒有意外</td>
+			</tr>
+			<tr>
+					<td>標題：讓領導喜歡你</td>
+					<td>偏離向上管理的本義</td>
+					<td>與上級對齊目標和期望，為組織取得結果</td>
+			</tr>
+	</tbody>
+</table>
+<p>讀這類文章時，工程師的習慣可以派上用場：<strong>故事先查來源，結論先找反例，方法先問成本</strong>。剩下來的部分，往往仍然值得用。</p>
+<h2 id="參考">參考</h2>
+<ul>
+<li>原文：〈讓任何領導都喜歡你的秘訣-向上管理的本質〉，YouCore，<a href="https://mp.weixin.qq.com/s/_OtDXMfzlvg_MWeymz9O0w">https://mp.weixin.qq.com/s/_OtDXMfzlvg_MWeymz9O0w</a></li>
+<li>《鶡冠子·世賢》（扁鵲三兄弟）：<a href="https://ctext.org/he-guan-zi/shi-xian/zh">https://ctext.org/he-guan-zi/shi-xian/zh</a></li>
+<li>《戰國策·趙策四·觸龍說趙太后》：<a href="https://zh.wikisource.org/wiki/%E8%A7%B8%E9%BE%8D%E8%AA%AA%E8%B6%99%E5%A4%AA%E5%90%8E">https://zh.wikisource.org/wiki/%E8%A7%B8%E9%BE%8D%E8%AA%AA%E8%B6%99%E5%A4%AA%E5%90%8E</a></li>
+<li>Kazuo Inamori Archive, <em>Reviving Japan Airlines (2010)</em>：<a href="https://global.kyocera.com/inamori/archive/episode/episode-18.html">https://global.kyocera.com/inamori/archive/episode/episode-18.html</a></li>
+<li>Kazuo Inamori, <em>Amoeba Management</em>：<a href="https://global.kyocera.com/inamori/management/amoeba/">https://global.kyocera.com/inamori/management/amoeba/</a></li>
+<li>Nippon.com, <em>JAL&rsquo;s Bumpy Ride: From Bankruptcy to Relisting</em>（債務減免、注資、裁員與減薪）：<a href="https://www.nippon.com/en/articles/-/14228">https://www.nippon.com/en/articles/-/14228</a></li>
+<li>BBC, <em>JAL profits boosted by cost cuts</em>（2011 年度營業利益）：<a href="https://www.bbc.com/news/business-18056883">https://www.bbc.com/news/business-18056883</a></li>
+<li>Google SRE Book：<a href="https://sre.google/sre-book/postmortem-culture/">Postmortem Culture</a>、<a href="https://sre.google/sre-book/embracing-risk/">Embracing Risk</a>、<a href="https://sre.google/sre-book/eliminating-toil/">Eliminating Toil</a></li>
+<li>DORA 四項關鍵指標：<a href="https://dora.dev/guides/dora-metrics-four-keys/">https://dora.dev/guides/dora-metrics-four-keys/</a></li>
+<li>Repenning &amp; Sterman, <em>Nobody Ever Gets Credit for Fixing Problems that Never Happened</em> (2001)：<a href="https://web.mit.edu/nelsonr/www/Repenning=Sterman_CMR_su01_.pdf">https://web.mit.edu/nelsonr/www/Repenning=Sterman_CMR_su01_.pdf</a></li>
+<li>Gabarro &amp; Kotter, <em>Managing Your Boss</em>, Harvard Business Review：<a href="https://hbr.org/2005/01/managing-your-boss">https://hbr.org/2005/01/managing-your-boss</a></li>
+</ul>
+]]></content:encoded></item></channel></rss>

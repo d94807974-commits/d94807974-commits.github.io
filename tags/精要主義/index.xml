@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>精要主義 on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/%E7%B2%BE%E8%A6%81%E4%B8%BB%E7%BE%A9/</link><description>Recent content in 精要主義 on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Thu, 05 Nov 2026 13:25:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/%E7%B2%BE%E8%A6%81%E4%B8%BB%E7%BE%A9/index.xml" rel="self" type="application/rss+xml"/><item><title>《精要主義》×《輕鬆主義》整合讀書筆記：先做對的事，再把對的事做輕鬆</title><link>https://d94807974-commits.github.io/posts/essentialism-effortless-integrated-notes/</link><pubDate>Wed, 04 Nov 2026 14:51:09 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/essentialism-effortless-integrated-notes/</guid><description>把 Greg McKeown 的《精要主義》（探索、排除、執行）與《輕鬆主義》（輕鬆狀態、輕鬆行動、輕鬆成果）合成一個框架：前者回答做什麼，後者回答怎麼做。結合臺灣天下文化繁體版《少，但是更好》《努力，但不費力》的書摘、編輯導讀與書評，對照兩岸譯名（專準主義、精．簡．準），附章節對映表、工程落地方法、不足反思和可執行清單。</description><content:encoded><![CDATA[<div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>《精要主義》回答「做什麼」，《輕鬆主義》回答「怎麼做」。先只做對的事，再把對的事做得輕鬆。</p>
+</div><blockquote>
+  <p>素材說明：這篇筆記依據的是兩本書的出版社簡介與完整目錄，涵蓋英文版、簡體中文版和臺灣天下文化的繁體中文版。此外還用到作者官網、作者在 Next Big Idea Club 發表的長文摘要、Jordan Harbinger 播客的文字稿，以及天下文化官網「Bookzone」公開刊出的書摘與編輯導讀、《遠見》雜誌 2014 年的報道、臺灣讀書博主的長評，以及豆瓣讀者的摘錄和評論。</p>
+<p>引用規則：</p>
+<ul>
+<li>英文引文都是我在這些頁面上逐字核對過的原文，後面附中文意譯。</li>
+<li>繁體中文引文保留原字形，註明出處。</li>
+<li>簡體中文引文出自出版社簡介或豆瓣讀者摘錄。</li>
+<li>其餘章節層面的內容，我只根據目錄和作者公開的說法來概括，不對沒讀到的段落做推測。</li>
+</ul>
+<p>本文首發後，又補充了繁體中文資料並重寫。</p>
+
+</blockquote><figure>
+<img src="/images/essentialism-effortless-integrated-notes/white-room.jpg" alt="極簡白色房間" loading="lazy" width="800">
+<figcaption>圖片：Richard Schatzberger / <a href="https://commons.wikimedia.org/wiki/File:A_White_Room_-_Flickr_-_schatz.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>。少，但是更好——空間本身就是取捨。</figcaption>
+</figure>
+<h2 id="一兩本書的基本資訊一套框架三個中文版本">一、兩本書的基本資訊：一套框架，三個中文版本</h2>
+<table>
+	<thead>
+			<tr>
+					<th></th>
+					<th>《精要主義》</th>
+					<th>《輕鬆主義》</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>英文原書</td>
+					<td><em>Essentialism: The Disciplined Pursuit of Less</em>，Crown Business，2014-04-15，ISBN 9780804137386</td>
+					<td><em>Effortless: Make It Easier to Do What Matters Most</em>，Currency，2021-04-27，ISBN 9780593135648</td>
+			</tr>
+			<tr>
+					<td>繁體中文版（臺灣）</td>
+					<td>《少，但是更好》，詹採妮 譯，天下文化，2014-09-25 初版，ISBN 9789863205623；2021-12-29 出《新編增訂版》，ISBN 9789865254117，收錄〈二十一天專準主義挑戰〉</td>
+					<td>《努力，但不費力：只做最重要的事，其實沒有你想的那麼難》，張靖之 譯，天下文化，2021-12-29，ISBN 9789865254094；2022-12-23 另有書號 BCB754A 的新版次</td>
+			</tr>
+			<tr>
+					<td>簡體中文版</td>
+					<td>《精要主義：如何應對擁擠不堪的工作和生活》，邵信芳 譯，浙江人民出版社 / 湛廬文化，2016-04，ISBN 9787213072291；2023-09 由中國財政經濟出版社 / 湛廬再版，ISBN 9787522323732</td>
+					<td>《輕鬆主義：讓關鍵的事情變得容易做》，範兆明 譯，中國財政經濟出版社 / 湛廬文化，2022 年（豆瓣標 2022-2，豆瓣閱讀與讀書網標 2022-03），ISBN 9787522310893</td>
+			</tr>
+			<tr>
+					<td>豆瓣評分（查閱時）</td>
+					<td>2016 版 7.6（4531 人）；2023 版 6.6</td>
+					<td>7.4（1376 人）</td>
+			</tr>
+	</tbody>
+</table>
+<p>幾個值得注意的細節：</p>
+<ul>
+<li><strong>繁體版比簡體版來得早。</strong> 《少，但是更好》比簡體版早了一年半；《努力，但不費力》與 Effortless 英文版只隔八個月，比簡體版也早了兩三個月。</li>
+<li><strong>臺版兩本書同日出新版。</strong> 天下文化在 2021-12-29 同時推出了《少，但是更好（新編增訂版）》和《努力，但不費力》，顯然是當作一套書來經營的。2025 年，天下文化又把《少，但是更好》和一本《90天生活實踐》（周群英 譯）合成兩冊套書。</li>
+<li><strong>作者譯名不同。</strong> 臺版作者名譯作「葛瑞格．麥基昂」，簡體版譯作&quot;格雷戈·麥吉沃恩&quot;。</li>
+</ul>
+<p>天下文化的作者簡介寫道：作者在史丹佛大學與人合開「設計精簡生活」（Designing Life, Essentially）課程，曾獲世界經濟論壇任命為「青年全球領袖」，並主持 Podcast《What&rsquo;s Essential》。</p>
+<h2 id="二兩岸譯本對照同一套框架兩種中文">二、兩岸譯本對照：同一套框架，兩種中文</h2>
+<p>把三個版本的目錄放在一起讀，最大的收穫不是資訊量，而是<strong>譯名本身就是一種解讀</strong>。</p>
+<h3 id="1-書名一個強調主義一個強調取捨與努力">1. 書名：一個強調&quot;主義&quot;，一個強調&quot;取捨&quot;與&quot;努力&quot;</h3>
+<p>簡體版把兩本書譯成&quot;××主義&quot;，讀者一眼就知道它們是一個系列。臺版的書名走了另一條路：</p>
+<ul>
+<li>《少，但是更好》直譯作者的口號 <em>Weniger aber besser</em>。</li>
+<li>《努力，但不費力》把一對看似矛盾的詞放在一起。</li>
+</ul>
+<p>我認為後者翻得更準。&ldquo;輕鬆主義&quot;四個字很容易被讀成&quot;偷懶有理&rdquo;，而「努力，但不費力」先承認了努力，再討論怎樣不白費力氣。這正是作者在訪談裡反覆澄清的那條線（見第四節）。</p>
+<h3 id="2-精要主義的三步精挑簡化準確執行">2. 《精要主義》的三步：精挑、簡化、準確執行</h3>
+<p>臺版把 Essentialism 譯作「專準主義」，並把三個部分壓縮成一個口訣：「精．簡．準」。時任臺大管理學院院長的郭瑞祥在推薦語裡寫道，這本書在教人成為「精．簡．準」（精挑、簡化、準確執行）的專業工作者」。</p>
+<table>
+	<thead>
+			<tr>
+					<th>英文</th>
+					<th>簡體中文版</th>
+					<th>繁體中文版（臺灣）</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Essence（核心思維）</td>
+					<td>核心思維模式：選擇 / 甄別 / 取捨</td>
+					<td>追求本質：懂得選擇 / 懂得辨別 / 懂得取捨</td>
+			</tr>
+			<tr>
+					<td>Explore</td>
+					<td>探索：抽離 / 審視 / 遊戲 / 睡眠 / 精選</td>
+					<td>精挑：逃離 / 留意 / 玩樂 / 睡眠 / 嚴選</td>
+			</tr>
+			<tr>
+					<td>Eliminate</td>
+					<td>排除：澄清 / 勇氣 / 放棄 / 編輯 / 邊界</td>
+					<td>簡化：釐清 / 膽量 / 取消承諾 / 剪輯 / 界線</td>
+			</tr>
+			<tr>
+					<td>Execute</td>
+					<td>執行：緩衝 / 掃除 / 進步 / 心流 / 專注</td>
+					<td>準確執行：緩衝 / 減法 / 進展 / 心流 / 專注</td>
+			</tr>
+	</tbody>
+</table>
+<p>幾處差異值得注意：</p>
+<ul>
+<li><strong>Eliminate</strong>：簡體版譯作&quot;排除&quot;，臺版目錄的部名卻叫「簡化」，副標題是「如何排除瑣碎的多數？」。天下文化刊出的前言書摘裡，同一步又寫作「簡化、排除」。創業媒體 Innopreneur 的繁體文章則用「消除」。這樣一來，<em>Effortless</em> 第八章 Simplify 在簡體和繁體裡都叫&quot;簡化&quot;，但在臺版《少，但是更好》裡，「簡化」指的是刪專案。兩本書合讀時，一定要分清兩個&quot;簡化&quot;：前者刪的是要不要做的事，後者刪的是怎麼做裡的步驟。</li>
+<li><strong>Unschedule / Subtract</strong>：簡體版的&quot;放棄&quot;、&ldquo;掃除&rdquo;，臺版分別作「取消承諾：停損贏更大」和「減法：移除障礙，事半功倍」。「減法」兩個字比&quot;掃除&quot;更貼近原意：不是加把勁，而是拿掉阻礙。</li>
+<li><strong>新編增訂版的改動</strong>：臺版新編增訂版把二十章加附錄改排成〈二十一天專準主義挑戰〉的第一天到第二十一天，比如「剪輯：隱形的藝術」「界限：有界限，才有自由」。初版目錄裡的「界線」也改成了「界限」。</li>
+</ul>
+<h3 id="3-輕鬆主義臺版譯名更動作化">3. 《輕鬆主義》：臺版譯名更&quot;動作化&quot;</h3>
+<table>
+	<thead>
+			<tr>
+					<th>英文</th>
+					<th>簡體中文版</th>
+					<th>繁體中文版（臺灣）</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Effortless State</td>
+					<td>輕鬆狀態：倒置 / 享受 / 釋懷 / 休息 / 覺察</td>
+					<td>不費力的狀態：翻轉 / 享受 / 釋放 / 休息 / 察覺</td>
+			</tr>
+			<tr>
+					<td>Effortless Action</td>
+					<td>輕鬆行動：定義 / 開始 / 簡化 / 過程 / 節奏</td>
+					<td>不費力的行動：界定 / 起跑 / 簡化 / 推進 / 步調</td>
+			</tr>
+			<tr>
+					<td>Effortless Results</td>
+					<td>輕鬆成果：學習 / 提升 / 自動 / 信任 / 預防</td>
+					<td>不費力的成果：學習 / 提升 / 自動化 / 信任 / 預防</td>
+			</tr>
+	</tbody>
+</table>
+<p>臺版的章名副標題也很好用，幾乎可以直接當成工程團隊的口號：</p>
+<ul>
+<li>「界定：『完成』是什麼樣子」</li>
+<li>「起跑：顯而易見的第一步」</li>
+<li>「推進：產出垃圾的勇氣」</li>
+<li>「步調：慢即穩，穩即快」</li>
+<li>「自動化：做一次就好」</li>
+<li>「信任：發動高績效團隊的引擎」</li>
+</ul>
+<h2 id="三兩本書各自講了什麼">三、兩本書各自講了什麼</h2>
+<h3 id="精要主義做對的事">《精要主義》：做&quot;對的事&quot;</h3>
+<p>出版社的定位一句話說清了這本書：&ldquo;Essentialism isn&rsquo;t about getting more done in less time. It&rsquo;s about getting only the right things done.&quot;（精要主義不是在更少的時間裡做更多事，而是只做對的事。）</p>
+<p>天下文化刊出的前言書摘裡，作者講了一段親身經歷：女兒剛出生幾個小時，同事寫信說那天下午的客戶會需要他出席，他去了。事後他承認那場會「毫無成果可言」，自己「在想讓每個人都開心的情況下，我犧牲了最要緊的事」。他從中得到的教訓是：</p>
+<blockquote>
+  <p>「如果你不替自己的生活排定優先次序，別人就會代勞。」（《少，但是更好》前言書摘，天下文化 Bookzone）</p>
+
+</blockquote><p>作者用&quot;整理衣櫃&quot;來比喻全書的三步：</p>
+<ol>
+<li>不問「我以後還有沒有機會穿這件衣服？」，而問「我喜歡這件衣服嗎？」；</li>
+<li>把不要的真正裝袋送走；</li>
+<li>建立一套定期清理的例行流程。</li>
+</ol>
+<h3 id="輕鬆主義把對的事做輕鬆">《輕鬆主義》：把對的事&quot;做輕鬆&rdquo;</h3>
+<p>官網和出版社的簡介點出了它要反駁的信念：&ldquo;That if we want to overachieve, we have to overexert, overthink, and overdo.&quot;（想要超常成就，就必須用力過猛、想得過多、做得過頭。）它的立場是：&ldquo;The effortless way isn&rsquo;t the lazy way. It&rsquo;s the smart way.&quot;（輕鬆之道不是偷懶之道，而是聰明之道。）</p>
+<p>臺版的文案換了個說法講這件事：我們習慣把事情分成「困難而重要」和「簡單而瑣碎」兩類，「其實我們還有第三種選擇：把重要但困難的工作變得簡單。」（天下文化《努力，但不費力》書籍頁）</p>
+<h2 id="四整合一個講做什麼一個講怎麼做">四、整合：一個講&quot;做什麼&rdquo;，一個講&quot;怎麼做&rdquo;</h2>
+<h3 id="1-證據第一本書就預告了第二本">1. 證據：第一本書就預告了第二本</h3>
+<p>把兩本書看成&quot;上下集&quot;，並不只是我的讀法。天下文化刊出的《少，但是更好》前言書摘裡，作者在講第三步時寫道：</p>
+<blockquote>
+  <p>「一旦你釐清要保留的是哪些活動和努力⸺⸺使你能做出最高程度貢獻的那些⸺⸺你就需要一套能讓你盡可能輕鬆執行意圖的系統。在本書中，你將學習創造出一個使必要的事情盡可能輕鬆完成的過程。」</p>
+
+</blockquote><p>Innopreneur 的文章引用了原書中的英文：&ldquo;While Nonessentialists tend to force execution, Essentialists invest the time they have saved by eliminating the nonessentials into designing a system to make execution almost effortless.&quot;（非精要主義者傾向於硬推執行；精要主義者則把排除雜事省下的時間，投入到設計一套讓執行幾乎不費力的系統上。）這裡已經出現了 effortless 這個詞。</p>
+<p>作者在 Jordan Harbinger 的訪談裡，也把《精要主義》的落點概括為&quot;how to build systems to make execution of what is essential, as easy as possible&rdquo;（建立系統，讓精要之事執行起來儘可能容易）。</p>
+<p>《努力，但不費力》的臺版書摘則把接力棒說得更直接：</p>
+<blockquote>
+  <p>「當手上重要的事已經超出你所能負荷，你可以選擇割捨，或是找輕鬆的方法來做。《努力，但不費力》要談的則是，用對的方法來做對的事。」（〈別把「過勞倦怠」當成榮譽勳章！〉，天下文化 Bookzone，2021-12-22）</p>
+
+</blockquote><p>臺灣讀書部落格「超閱者」的一句話概括，正好是本文的標題：「如果說《少，但是更好》是教你如何做對的事情；這本書則是教你如何用對的方法來做對的事。」</p>
+<h3 id="2-精要主義的陷阱減法做完了剩下的仍然在硬扛">2. 精要主義的陷阱：減法做完了，剩下的仍然在硬扛</h3>
+<p>精要主義最常見的失敗方式，並不是沒做減法，而是做完減法後，用加倍的意志力去對付剩下的每一件事。&ldquo;既然這件事最重要，就該拼盡全力。&ldquo;結果是：重要的事少了，人卻更累了。</p>
+<p>臺版書摘開篇講了 Patrick McGinnis 的故事。他在 AIG 每週工作 80 小時，2008 年公司崩盤，他手上的股票跌了 97%。他事後的結論被譯成：</p>
+<blockquote>
+  <p>「我解決所有問題的方式，就是花更多時間、再努力一點。」但突然之間，他發現，「再努力一點的邊際報酬竟然是負的。」</p>
+
+</blockquote><p>作者由此得出的教訓是：「當你已經沒辦法再多努力一點，就是時候另覓出路了。」作者和天下文化編輯張彤華的導讀都借用了《動物農莊》裡的馬「拳擊手」：牠面對每一次挫折和每一個難題，回答總是「我會更努力的。」，最後積勞成疾，被送進老弱家畜屠宰場。</p>
+<p>作者在 Next Big Idea Club 的長文裡，講的是女兒 Eve 重病的經歷。這件事絕對屬於精要，但這場仗要打多久沒人知道：&ldquo;If your job is to keep the fires burning for an indefinite period, you can&rsquo;t throw all the fuel on the flames at the beginning.&quot;（如果你的任務是讓火無限期地燃燒，就不能一開始把所有燃料都扔進去。）</p>
+<p>所以兩本書合起來，構成一個完整的閉環：</p>
+<pre tabindex="0"><code>          《精要主義》：做什麼                    《輕鬆主義》：怎麼做
+  ┌──────────────────────────────┐    ┌──────────────────────────────────┐
+  │ 核心思維：選擇 / 甄別 / 取捨    │──▶│ 輕鬆狀態：倒置 / 享受 / 釋懷 / 休息 / 覺察 │
+  │ 探索（精挑）：抽離 審視 遊戲 睡眠 精選│ │  （先把&#34;人&#34;調到能清醒選擇的狀態）       │
+  ├──────────────────────────────┤    ├──────────────────────────────────┤
+  │ 排除（簡化）：澄清 勇氣 放棄 編輯 邊界│─▶│ 輕鬆行動：定義 / 開始 / 簡化 / 過程 / 節奏 │
+  │ 執行（準確執行）：緩衝 掃除 進步 心流 專注││  （把留下來的事拆成可持續的動作）         │
+  ├──────────────────────────────┤    ├──────────────────────────────────┤
+  │ 附錄：精要領導者               │──▶│ 輕鬆成果：學習 / 提升 / 自動 / 信任 / 預防 │
+  │                              │    │  （讓一次投入產生持續回報）               │
+  └──────────────────────────────┘    └──────────────────────────────────┘
+     問：這件事值得做嗎？（臺版：「現在所做的事情，是否值得投入？」）
+                                       問：What if this could be easy?
+                                       （臺版：「會不會這其實可以很簡單？」）
+</code></pre><p>再細一點，可以按章節對應：</p>
+<table>
+	<thead>
+			<tr>
+					<th>問題</th>
+					<th>精要主義（簡 / 繁）</th>
+					<th>輕鬆主義（簡 / 繁）</th>
+					<th>關係</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>我有沒有餘力做判斷？</td>
+					<td>抽離 / 逃離，睡眠</td>
+					<td>休息、覺察 / 察覺、釋懷 / 釋放</td>
+					<td>後者補上了情緒負擔（如抱怨）的清理</td>
+			</tr>
+			<tr>
+					<td>什麼算&quot;做完&rdquo;？</td>
+					<td>澄清 / 釐清</td>
+					<td>定義 / 界定</td>
+					<td>前者定方向，後者定終點</td>
+			</tr>
+			<tr>
+					<td>怎樣減少工作量？</td>
+					<td>編輯 / 剪輯，放棄 / 取消承諾</td>
+					<td>簡化 / 簡化</td>
+					<td>前者刪專案，後者刪步驟</td>
+			</tr>
+			<tr>
+					<td>怎樣開始？</td>
+					<td>進步 / 進展</td>
+					<td>開始 / 起跑，過程 / 推進</td>
+					<td>後者給出具體抓手</td>
+			</tr>
+			<tr>
+					<td>怎樣不燒盡？</td>
+					<td>緩衝 / 緩衝，邊界 / 界線</td>
+					<td>節奏 / 步調</td>
+					<td>後者把&quot;邊界&quot;做成節奏</td>
+			</tr>
+			<tr>
+					<td>怎樣排障？</td>
+					<td>掃除 / 減法</td>
+					<td>預防、自動 / 自動化</td>
+					<td>前者治當下的瓶頸，後者防未來的重複</td>
+			</tr>
+			<tr>
+					<td>團隊層面</td>
+					<td>精要領導者</td>
+					<td>提升、信任</td>
+					<td>後者講槓桿和信任結構</td>
+			</tr>
+	</tbody>
+</table>
+<h3 id="3-一個關鍵區分輕鬆不等於偷懶">3. 一個關鍵區分：輕鬆不等於偷懶</h3>
+<p>作者在訪談裡專門劃了這條線：&ldquo;Lazy is an unwillingness to work. Easy is just something doesn&rsquo;t require a lot of effort to get it done.&quot;（懶是不願工作；容易只是指一件事不需要大量努力就能完成。）他還說：&ldquo;Effort is a finite resource.&quot;（努力是有限的資源。）</p>
+<p>臺版文案的說法幾乎一致：「問題在於動力和努力都是有限的資源，我們愈是消耗，就愈容易過勞」。這句話把兩本書統一成一個經濟學問題：精要主義管&quot;把有限的努力投向哪裡&rdquo;，輕鬆主義管&quot;每單位努力能換來多少產出&rdquo;。</p>
+<h3 id="4-技術負責人身上的典型陷阱">4. 技術負責人身上的典型陷阱</h3>
+<p>我見過不少技術負責人，精要主義做得很好：季度目標只留三個，雜事推得乾乾淨淨。可那三件事，每一件都靠自己通宵頂上去：核心模組自己寫，關鍵評審自己看，線上事故自己衝在第一線。</p>
+<p>短期看，這是&quot;聚焦&rdquo;；長期看，這就是拳擊手式的「我會更努力」。團隊的能力沒有長起來，負責人自己成了系統裡唯一的瓶頸，也就是《精要主義》裡的&quot;最慢行進者&rdquo;。</p>
+<p>輕鬆主義給的出路不是&quot;再砍一件&quot;，而是換一個問題：怎樣讓這件事不依賴我的透支也能完成？答案往往落在三個地方：</p>
+<ul>
+<li>把知識寫下來，讓別人能接手（學習、提升）；</li>
+<li>把重複勞動交給指令碼（自動）；</li>
+<li>把決策權交給可信的人（信任）。</li>
+</ul>
+<h2 id="五放到工程師與技術負責人的日常">五、放到工程師與技術負責人的日常</h2>
+<h3 id="backlog-排序先用精要主義砍再用輕鬆主義拆">Backlog 排序：先用精要主義砍，再用輕鬆主義拆</h3>
+<ul>
+<li><strong>砍</strong>：給每個需求問一句，它能不能進前 10%？豆瓣讀者摘錄的簡體中譯本裡有一句判斷規則：&ldquo;如果答案不是一個確定的yes，那麼就應該是一個肯定的no&rdquo;。真實的 backlog 很難做到這麼絕對，但可以把&quot;不確定&quot;的需求統一放進&quot;下季度再評估&quot;，不讓它佔用本迭代的容量。</li>
+<li><strong>拆</strong>：對留下的需求，依次問輕鬆主義的幾個問題：完成長什麼樣？哪些步驟可以刪掉？第一個顯而易見的動作是什麼？</li>
+</ul>
+<h3 id="說不把拒絕做成機制而不是每次靠勇氣">說&quot;不&quot;：把拒絕做成機制，而不是每次靠勇氣</h3>
+<p>天下文化刊出的「界限」一章書摘，開頭引了 Anne Lamott 的一句話：「不，就是完整的句子。」這一章裡有兩個對工程團隊特別有用的做法。</p>
+<p><strong>一是「社會契約」。</strong> 作者和一位作風相反的同事搭檔，第一次開會就先講清各自的優先事項，以及自己願意或不願意承擔的額外工作。</p>
+<p><strong>二是「別搶他人的問題」。</strong> 原文是：「一旦我們替他們扛下問題，我們所做的一切不過是在奪走他們解決問題的能力而已。」</p>
+<p>這兩點可以沉澱成輕鬆主義式的&quot;一次性決定&quot;。出版社簡介的說法是&quot;Make one-time choices that eliminate many future decisions&quot;。落到團隊裡：</p>
+<ul>
+<li>公開 intake 規則和本季度目標，不在目標裡的需求，預設進入排隊；</li>
+<li>設立值班&quot;介面人&quot;，其餘人預設不接插單；</li>
+<li>專案啟動會先寫一份&quot;社會契約&quot;：本期目標、各自不接的事、升級路徑。</li>
+</ul>
+<p>作者在同一章裡提醒：「如果你不設定界限，就不會有任何界限。」《遠見》雜誌 2014 年的報道引了另一句：「只要你無法對不必要的事情說不，就等於在消極被動情況下說好。」</p>
+<h3 id="定義做完避免瓦薩號式的範圍蔓延">定義&quot;做完&quot;：避免瓦薩號式的範圍蔓延</h3>
+<p>在訪談裡，作者和主持人談到了那艘瑞典戰艦（瓦薩號）。作者說它&quot;not fit for purpose&quot;（不適合它原本的用途），因為造船的人從來沒有定義清楚&quot;完成&quot;長什麼樣。主持人當場就把它類比成軟體專案裡的 feature creep（功能蔓延）。</p>
+<p>工程上的對應物就是 Definition of Done：驗收標準、效能指標、回滾方案、文件，在開工前寫下來。作者給自己的書定過一個&quot;完成&quot;的樣子：&ldquo;I&rsquo;ve given this to my editor and she has looked through all of the chapters and said, &lsquo;Every one of them is solid and great.&rsquo;&quot;（我交給編輯，她看完所有章節後說：每一章都紮實而出色。）這個標準是可觀察的，不是&quot;我覺得寫好了&rdquo;。</p>
+<h3 id="第一個顯而易見的動作--零稿">第一個顯而易見的動作 + 零稿</h3>
+<p>作者在訪談裡說，完美主義讓人遲遲不開始；他的辦法是寫一份&quot;零稿&quot;：&ldquo;You don&rsquo;t publish rubbish, but you got to be willing to stare at rubbish.&quot;（你不會發布垃圾，但必須願意直視垃圾。）臺版第九章的章名把這個意思譯得很傳神：「推進：產出垃圾的勇氣」。</p>
+<p>落到工程上就是：</p>
+<ul>
+<li>先開一個 Draft PR；</li>
+<li>先寫一個能跑通主路徑的 spike；</li>
+<li>設計文件先寫成提綱，第一天就請同事看。</li>
+</ul>
+<p>第一個動作應該簡單到不需要任何心理建設，比如&quot;新建分支，寫一個失敗的測試&rdquo;。</p>
+<h3 id="節奏給工作量設上下限也給恢復留出時間">節奏：給工作量設上下限，也給恢復留出時間</h3>
+<p>作者用阿蒙森與斯科特的南極競賽說明節奏的價值：阿蒙森堅持每天前進約 15 英里，&ldquo;no more and no less&rdquo;（不多也不少）。作者建議給工作量同時設下限和上限，例如寫書&quot;never write less than 500 words a day, but never more than a thousand&quot;（每天不少於 500 字，也不多於 1000 字）。</p>
+<p>臺版「休息」一章的書摘給了一條更嚴格的規則：</p>
+<blockquote>
+  <p>「切勿在一天之內做超過隔天一早可以完全恢復的事情，切勿在一週之內做超過隔週一開始可以徹底恢復的事情。」</p>
+
+</blockquote><p>書摘還給了一個具體排法：「利用早上處理重要工作」，「分三個時段工作，每個時段不超過90分鐘」，中間休息 10 到 15 分鐘。</p>
+<p>工程團隊的對應做法是：</p>
+<ul>
+<li>設 WIP（在製品）上限；</li>
+<li>每天至少合併一個小 PR，但不在一天裡堆十個；</li>
+<li>上午留出兩到三個不開會的深度工作塊；</li>
+<li>值班或救火之後，第二天主動降負荷。</li>
+</ul>
+<p>《遠見》的報道還提到，LinkedIn 執行長 Jeff Weiner 每天會在行事曆裡預留兩個小時空檔。</p>
+<h3 id="自動化與預防時間管理的長尾">自動化與預防：時間管理的&quot;長尾&quot;</h3>
+<p>作者舉過一個例子：有人被一隻卡住的抽屜煩了兩年，修好它只用了兩分鐘。他的總結是：&ldquo;it usually takes less time to manage a problem than to solve it.&quot;（應付一個問題，通常比解決它花的時間少。）這正是 SRE 說的 toil（重複性雜務）。目標是&quot;find the most annoying thing that can be solved in the least amount of time&rdquo;（找到最煩人、又能用最少時間解決的那件事）。</p>
+<p>臺灣「閱讀前哨站」的書評補了一個有意思的視角。作者把&quot;檢查清單&quot;放進「自動化」一章，書評把它概括為「大腦決策的自動化」。書評裡還舉了一個例子：有人原本每到交週報那天都要忙到很晚，後來改成每天下班前用一到兩行話記下進度，到交週報時只要整理一下就行。</p>
+<p>對工程團隊來說，可以這樣落地：</p>
+<ul>
+<li>用指令碼替換手工釋出、手工對帳；</li>
+<li>把釋出、回滾、事故處置寫成 checklist 和 Runbook，相當於&quot;決策的自動化&quot;；</li>
+<li>每天在工單裡留一行進展，週報自動彙總；</li>
+<li>在復盤裡追問&quot;怎樣讓這類問題根本不會發生&quot;，對應「預防：預見問題，防患未然」一章。</li>
+</ul>
+<h3 id="信任低信任結構是自動出現的">信任：低信任結構是自動出現的</h3>
+<p>豆瓣讀者摘錄的第 14 章簡體中譯本裡寫道：在低度信任結構中，&ldquo;規則模稜兩可，沒人知道成功的標準是什麼&rdquo;；而&quot;低度信任結構通常是自動出現的，而不是有意為之&quot;。</p>
+<p>技術負責人要刻意搭建高信任結構：</p>
+<ul>
+<li>寫清楚每個模組的 owner；</li>
+<li>寫清楚介面契約和 SLO；</li>
+<li>寫清楚什麼情況下可以自行決定。</li>
+</ul>
+<p>信任一旦建立，Review 和審批就可以變輕。臺版把這一章叫做「信任：發動高績效團隊的引擎」。</p>
+<h2 id="六我的思考兩本書的不足">六、我的思考：兩本書的不足</h2>
+<p><strong>第一，過度假設個人擁有選擇權。</strong> 兩本書的讀者畫像，是能夠自主安排時間的知識工作者。一線工程師的 backlog 往往由產品、老闆和合規要求共同決定，&ldquo;確定的 yes 或肯定的 no&quot;在組織裡很難由個人說了算。</p>
+<p>有意思的是，「界限」一章的書摘裡，作者自己也承認：「界限確實可能付出昂貴的代價。」我認為更現實的做法是把精要主義上移到團隊層面：由技術負責人和產品負責人一起做取捨，再由個人去執行輕鬆主義。</p>
+<p><strong>第二，故事多、證據少，第二本更淺。</strong> 兩本書都大量依靠故事：南極競賽、瓦薩號、抽屜、女兒的病、McGinnis 的 AIG 往事。故事好記，但因果關係往往被簡化了。以斯科特的失敗為例，常見的解釋遠不止&quot;節奏&quot;一項，還包括運輸方式和補給安排。</p>
+<p>「閱讀前哨站」的評價很中肯：他對《少，但是更好》評價不錯，但《努力，但不費力》讓他覺得有點「搔不到癢處」，每個小節篇幅太短，讀起來「淺嚐即止」。如果你想「學習實踐步驟」，這本書「比較像是給予一些原則和基本指引」。這和豆瓣短評裡&quot;主旨很好……但是內容稍顯囉嗦&quot;的感受，算是兩岸讀者的共識。</p>
+<p><strong>第三，&ldquo;輕鬆&quot;容易被濫用。</strong> 作者再三強調&quot;easy does not equal lazy&rdquo;，但在團隊裡，&ldquo;找更輕鬆的路&quot;也可能被用來跳過測試、省略評審。臺版書名「努力，但不費力」在這點上是一個很好的提醒：努力本身沒有被取消。我的補丁是：可以簡化步驟，不能降低&quot;完成&quot;的標準。先定義完成，再談輕鬆。</p>
+<p><strong>第四，重複和&quot;雞湯感&rdquo;。</strong> 兩本書有大量重疊，比如休息與睡眠、邊界與節奏、小勝。如果只讀一本，我建議讀《精要主義》的框架，再把《輕鬆主義》當作&quot;執行&quot;部分的工具書來查。</p>
+<p><strong>第五，宗教與個人信仰色彩。</strong> 天下文化刊出的《少，但是更好》書摘（從內容看出自最後一章「存在」）從甘地寫到釋迦牟尼、摩西、穆罕默德和耶穌，稱「專準主義在許多靈性和宗教傳統中具有深厚的根基」。《努力，但不費力》的「釋放」一章則大量討論感恩。這些內容對部分讀者有幫助，但不是方法的必要組成部分，閱讀時可以剝離開。</p>
+<h2 id="七可執行清單">七、可執行清單</h2>
+<ol>
+<li><strong>每季度做一次&quot;前10%&ldquo;篩選</strong>：列出所有專案，只保留不超過 3 個精要目標，其餘明確降級或拒絕。</li>
+<li><strong>公開 intake 規則，專案啟動先簽&quot;社會契約&rdquo;</strong>：把&quot;說不&quot;寫成團隊預設流程，減少每次拒絕的情緒成本。</li>
+<li><strong>每個任務先寫&quot;完成長什麼樣&rdquo;</strong>：可觀察的驗收標準，寫進工單。</li>
+<li><strong>區分兩個&quot;簡化&quot;</strong>：先刪專案（精要主義的「簡化」），再刪步驟（輕鬆主義的「簡化」）。</li>
+<li><strong>寫下第一個顯而易見的動作</strong>：小到 5 分鐘內能開始，比如建分支、寫失敗的測試、開 Draft PR。</li>
+<li><strong>允許零稿</strong>：設計和程式碼先發草稿，早求反饋，靠迭代達到品質。</li>
+<li><strong>設節奏上下限</strong>：WIP 上限、每天的最小進展和最大投入、固定的收工時間。</li>
+<li><strong>守住恢復線</strong>：不在一天裡做超過第二天早上能恢復的量；上午留出深度工作塊，每塊不超過 90 分鐘。</li>
+<li><strong>每月消滅一件 toil</strong>：用&quot;最煩人、最省時&quot;的標準挑一項，做成指令碼、checklist 或 Runbook。</li>
+<li><strong>復盤時追問&quot;預防&quot;</strong>：每次事故至少產出一項讓同類問題不再發生的改動。</li>
+<li><strong>搭建高信任結構</strong>：明確 owner、契約、SLO 和自主決策邊界；不替別人扛下本該由他們解決的問題。</li>
+<li><strong>定期問一句</strong>：我是不是把事情弄得比必要的更難了？（&ldquo;how am I making things harder than they need to be?&quot;；臺版：「會不會這其實可以很簡單？」）</li>
+</ol>
+<h2 id="參考資料">參考資料</h2>
+<p><strong>英文資料</strong></p>
+<ol>
+<li>Penguin Random House：<em>Essentialism</em> 圖書頁 <a href="https://www.penguinrandomhouse.com/books/228364/essentialism-by-greg-mckeown/">https://www.penguinrandomhouse.com/books/228364/essentialism-by-greg-mckeown/</a></li>
+<li>Penguin Random House：<em>Effortless</em> 圖書頁 <a href="https://www.penguinrandomhouse.com/books/612206/effortless-by-greg-mckeown/">https://www.penguinrandomhouse.com/books/612206/effortless-by-greg-mckeown/</a></li>
+<li>作者官網：Essentialism <a href="https://gregmckeown.com/books/essentialism/">https://gregmckeown.com/books/essentialism/</a></li>
+<li>作者官網：Effortless <a href="https://gregmckeown.com/books/effortless/">https://gregmckeown.com/books/effortless/</a></li>
+<li>Orange County Library System：<em>Effortless</em> 書目與英文目錄 <a href="https://catalog.ocls.org/Record/.b23474580">https://catalog.ocls.org/Record/.b23474580</a></li>
+<li>Google Books：<em>Essentialism</em>（書目資訊與作者簡介） <a href="https://books.google.com/books/about/Essentialism.html?id=CleNDQAAQBAJ">https://books.google.com/books/about/Essentialism.html?id=CleNDQAAQBAJ</a></li>
+<li>Greg McKeown, &ldquo;Effortless: Make It Easier to Do What Matters Most&rdquo;（作者自述 5 個要點），Next Big Idea Club，2021-06-21 <a href="https://nextbigideaclub.com/magazine/effortless-make-easier-matters-bookbite/27845/">https://nextbigideaclub.com/magazine/effortless-make-easier-matters-bookbite/27845/</a></li>
+<li>The Jordan Harbinger Show #534：Greg McKeown, How to Make What Matters Effortless（含文字稿），2021-07-14 <a href="https://www.jordanharbinger.com/greg-mckeown-how-to-make-what-matters-effortless/">https://www.jordanharbinger.com/greg-mckeown-how-to-make-what-matters-effortless/</a></li>
+<li>Greg McKeown, &ldquo;The Disciplined Pursuit of Less&rdquo;, <em>Harvard Business Review</em>, 2012-08-08 <a href="https://hbr.org/2012/08/the-disciplined-pursuit-of-less">https://hbr.org/2012/08/the-disciplined-pursuit-of-less</a></li>
+<li>The Greg McKeown Podcast #82：Greg on the Power of Inversion <a href="https://www.thegoodpodcast.co/episodes/82-what-s-essential-greg-on-the-power-of-inversion-what-if-this-could-be-easy">https://www.thegoodpodcast.co/episodes/82-what-s-essential-greg-on-the-power-of-inversion-what-if-this-could-be-easy</a></li>
+<li>Mint Arrow Podcast Ep.118：Greg McKeown on Effortless（節目摘要） <a href="https://www.mintarrow.com/podcast/episode-118-greg-mckeown-on-effortless-what-to-do-when-everything-feels-important-and-nothing-can-be-eliminated/">https://www.mintarrow.com/podcast/episode-118-greg-mckeown-on-effortless-what-to-do-when-everything-feels-important-and-nothing-can-be-eliminated/</a></li>
+</ol>
+<p><strong>繁體中文資料</strong></p>
+<ol start="12">
+<li>天下文化：《少，但是更好（新編增訂版）》書籍頁（簡介、目錄、出版資訊） <a href="https://bookzone.cwgv.com.tw/book/BCB757">https://bookzone.cwgv.com.tw/book/BCB757</a></li>
+<li>天下文化：《努力，但不費力》書籍頁（簡介、目錄、出版資訊） <a href="https://bookzone.cwgv.com.tw/book/BCB754A">https://bookzone.cwgv.com.tw/book/BCB754A</a></li>
+<li>部落格來：《少，但是更好（新編增訂版）》 <a href="https://www.books.com.tw/products/0010912185">https://www.books.com.tw/products/0010912185</a></li>
+<li>部落格來：《努力，但不費力》（2021-12-29 版，ISBN 9789865254094） <a href="https://www.books.com.tw/products/0010912262">https://www.books.com.tw/products/0010912262</a>；2022-12-23 版 <a href="https://www.books.com.tw/products/0010947099">https://www.books.com.tw/products/0010947099</a></li>
+<li>城邦讀書花園：《少，但是更好》2014 初版（目錄、推薦語、譯後序） <a href="https://www.cite.com.tw/book?id=46630">https://www.cite.com.tw/book?id=46630</a></li>
+<li>天下文化 Bookzone 書摘：〈你才是你生活的主導者！懂得適時取捨，不一味迎合「他人的期待」〉（《少，但是更好》前言） <a href="https://bookzone.cwgv.com.tw/article/23294">https://bookzone.cwgv.com.tw/article/23294</a></li>
+<li>天下文化 Bookzone 書摘：〈有界限，才有自由〉 <a href="https://bookzone.cwgv.com.tw/article/1566">https://bookzone.cwgv.com.tw/article/1566</a></li>
+<li>天下文化 Bookzone 書摘：〈清除生活中不必要的人事物，擁抱「精、簡、準」的人生〉 <a href="https://bookzone.cwgv.com.tw/article/19546">https://bookzone.cwgv.com.tw/article/19546</a></li>
+<li>天下文化 Bookzone 書摘：〈別把「過勞倦怠」當成榮譽勳章！不是每件事都得這麼拚、這麼累〉 <a href="https://bookzone.cwgv.com.tw/article/23284">https://bookzone.cwgv.com.tw/article/23284</a></li>
+<li>天下文化 Bookzone 書摘：〈事半功倍的工作效率秘訣：學會放鬆和充足休息〉 <a href="https://bookzone.cwgv.com.tw/article/23337">https://bookzone.cwgv.com.tw/article/23337</a></li>
+<li>天下文化 Bookzone 編輯導讀（張彤華）：〈別讓加班變成職場中的「傳統文化」！走向努力但不費力的人生〉 <a href="https://bookzone.cwgv.com.tw/article/23473">https://bookzone.cwgv.com.tw/article/23473</a></li>
+<li>遠見雜誌：〈找回人生主導權，先學會「專準主義」〉，2014 年 10 月號 <a href="https://www.gvm.com.tw/article/19741">https://www.gvm.com.tw/article/19741</a></li>
+<li>閱讀前哨站：〈《努力，但不費力》讀後心得：聰明做事的三種方法〉 <a href="https://readingoutpost.com/effortless/">https://readingoutpost.com/effortless/</a></li>
+<li>超閱者：〈《努力，但不費力》閱讀筆記：擺脫過勞人生的三個方法〉 <a href="https://transcendentreaderblog.com/effortless/">https://transcendentreaderblog.com/effortless/</a></li>
+<li>Innopreneur：〈做更少但成就更多！專準主義 Essentialism 如何領導個人及企業達成目標？〉，2022-08-08 <a href="https://www.innopreneur.io/blogs/business-operation/leadership-and-talent/essentialism-in-leadership-and-goal-pursuit/">https://www.innopreneur.io/blogs/business-operation/leadership-and-talent/essentialism-in-leadership-and-goal-pursuit/</a></li>
+</ol>
+<p><strong>簡體中文資料</strong></p>
+<ol start="27">
+<li>豆瓣讀書：《精要主義》2016 浙江人民出版社版（簡介、目錄、摘錄、評分） <a href="https://book.douban.com/subject/26761859/">https://book.douban.com/subject/26761859/</a></li>
+<li>豆瓣讀書：《精要主義》2023 中國財政經濟出版社版 <a href="https://book.douban.com/subject/36549290/">https://book.douban.com/subject/36549290/</a></li>
+<li>豆瓣讀書：《輕鬆主義》（簡介、目錄、摘錄、短評） <a href="https://book.douban.com/subject/35799638/">https://book.douban.com/subject/35799638/</a></li>
+<li>豆瓣閱讀：《輕鬆主義》電子書 <a href="https://read.douban.com/ebook/384051973/">https://read.douban.com/ebook/384051973/</a></li>
+<li>讀書網：《輕鬆主義》 <a href="https://www.dushu.com/book/13904030/">https://www.dushu.com/book/13904030/</a></li>
+</ol>
+]]></content:encoded></item></channel></rss>

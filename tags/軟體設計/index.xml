@@ -1,0 +1,748 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>軟體設計 on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/%E8%BB%9F%E9%AB%94%E8%A8%AD%E8%A8%88/</link><description>Recent content in 軟體設計 on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Thu, 12 Nov 2026 14:16:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/%E8%BB%9F%E9%AB%94%E8%A8%AD%E8%A8%88/index.xml" rel="self" type="application/rss+xml"/><item><title>如何用提示詞引導 AI 做出優秀的軟體設計：把提示詞寫成一份小型設計任務書</title><link>https://d94807974-commits.github.io/posts/prompts-guide-ai-software-design-brief/</link><pubDate>Thu, 12 Nov 2026 14:16:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/prompts-guide-ai-software-design-brief/</guid><description>只寫「現代、簡潔、有高級感」，AI 往往只能交出好看卻不經用的介面。本文提出把提示詞寫成設計任務書：使用情境、核心任務、約束、取捨規則、交付物和驗收方式，並要求覆蓋載入、失敗、舊結果、重複提交與逾時等狀態。依據 Nielsen 啟發式、WCAG、HTTP 規範等公開資料整理，屬於工程判斷，沒有模型對照實驗。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/prompts-guide-ai-software-design-brief.html">提示詞即設計任務書：六個部分、五種狀態、四個驗收問題</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>「做得高階一點」這類風格詞，無法讓 AI 做出好的軟體設計。把提示詞寫成一份小型設計任務書：寫清使用情境、核心任務、約束、取捨規則、交付物和驗收方式，並要求覆蓋失敗、逾時、重複提交等正常流程之外的狀態。這樣設計判斷才能被檢查。這是一種協作方法，不能保證模型輸出品質。</p>
+</div><blockquote>
+  <p><strong>適用物件與邊界</strong>：面向用 AI 設計頁面、內部工具和資料看板的工程師與產品人員。本文的方法和提示詞模板是工程判斷，沒有做過不同模型的對照實驗。涉及的通用規範和技術事實附有來源，查核日期 2026-11-12（Asia/Singapore）。文中的監控台案例是虛構場景。</p>
+
+</blockquote><p>我們讓 AI 設計軟體時，經常寫下這樣的要求：</p>
+<p>「請做一個現代、簡潔、專業、有高級感的頁面。」</p>
+<p>生成的結果常有大標題、漸層、卡片、圓角和漂亮的圖表。第一眼不錯，真正使用時才暴露問題：</p>
+<ul>
+<li>最重要的異常藏在摺疊區。</li>
+<li>重新整理後篩選條件丟失。</li>
+<li>查詢失敗顯示成零。</li>
+<li>連續點選按鈕，建立了兩個任務。</li>
+</ul>
+<p>這些問題不需要更複雜的視覺技術，需要更明確的設計判斷。</p>
+<p>本文提出一套可操作的方法：把提示詞寫成一份小型設計任務書，說明誰要完成什麼任務、哪些約束不能違反、哪些狀態必須處理，以及如何檢驗結果。這與提示詞工程的一般建議一致：指令越具體，結果越好，因為模型缺少你的背景和習慣。[12]</p>
+<h2 id="一為什麼高級感無法直接轉換成好設計">一、為什麼「高級感」無法直接轉換成好設計</h2>
+<p>「高級」描述的是感受，沒有指定如何取捨。</p>
+<p>品牌展示頁可能需要大圖和留白。值班人員使用的監控台，更需要資訊密度、異常定位和穩定的佈局。同一種視覺手法，在不同任務裡效果不同。</p>
+<p>只給風格詞時，AI 仍然要決定頁面結構、重點和行為。需求沒有給出判斷依據，這些決定就容易落入常見模板。這是對失敗模式的推測，不是實測結論。</p>
+<p>可以把風格要求轉換成可觀察的結果：</p>
+<table>
+	<thead>
+			<tr>
+					<th>模糊要求</th>
+					<th>更具體的設計要求</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>簡潔</td>
+					<td>首屏突出當前最需要處理的問題，低頻設定收進次級區域</td>
+			</tr>
+			<tr>
+					<td>專業</td>
+					<td>說明資料口徑、單位、時間範圍和更新時間</td>
+			</tr>
+			<tr>
+					<td>現代</td>
+					<td>排版和元件保持一致，操作回饋及時，窄螢幕下可完成主要任務</td>
+			</tr>
+			<tr>
+					<td>高級</td>
+					<td>字型、顏色和間距有明確層級，裝飾不干擾閱讀</td>
+			</tr>
+			<tr>
+					<td>好用</td>
+					<td>使用者能完成關鍵流程，失敗後知道當前狀態和恢復方法</td>
+			</tr>
+	</tbody>
+</table>
+<p>這樣轉換不是消滅審美，而是讓審美有服務對象。</p>
+<p>一個頁面可以很漂亮，同時不適合它的使用者。設計評審要同時回答兩個問題：看起來如何，用起來會發生什麼。</p>
+<h2 id="二設計能力體現在取捨而不是功能數量">二、設計能力體現在取捨，而不是功能數量</h2>
+<p>以一個 ETL 監控頁面為例。需求可能包含任務狀態、延遲、執行記錄、資料量、負責人、告警規則和 SQL 明細。</p>
+<p>把它們平均分成八張卡片，形式上很完整，卻沒有回答值班人員最關心的問題：</p>
+<p><strong>現在是否有異常，影響了什麼，下一步應該檢查哪裡？</strong></p>
+<p>圍繞這個問題組織頁面，結構可以是：</p>
+<ol>
+<li>頂部展示需要處理的異常及影響範圍。</li>
+<li>主列表展示任務狀態、延遲和最近成功時間。</li>
+<li>選擇任務後，檢視執行歷史、失敗明細和恢復操作。</li>
+<li>告警規則、負責人等低頻設定放在獨立入口。</li>
+</ol>
+<p>這是一種任務優先順序判斷，不是唯一正確答案。如果使用者的主要工作是批次設定規則，頁面結構就要調整。</p>
+<p>所以提示詞要先交代使用情境：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>請設計一個 ETL 監控頁面。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>主要使用者是值班資料工程師。他們通常在收到告警後開啟頁面，
+</span></span><span style="display:flex;"><span>需要盡快確認異常是否仍在發生、哪些任務受影響、接下來檢視哪裡。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>優先支援這三項任務：
+</span></span><span style="display:flex;"><span>1. 找到當前需要處理的異常。
+</span></span><span style="display:flex;"><span>2. 檢視異常任務最近一次成功和失敗的記錄。
+</span></span><span style="display:flex;"><span>3. 判斷是否需要重試，並了解重試可能產生的影響。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>請按任務的重要性安排頁面，不要求所有功能都出現在首屏。
+</span></span><span style="display:flex;"><span>說明關鍵內容為什麼放在當前位置，並給出可實作的介面方案。
+</span></span></code></pre></div><p>好的上下文不一定很長，但要包含會改變方案選擇的資訊。</p>
+<h2 id="三把提示詞組織成一份設計任務書">三、把提示詞組織成一份設計任務書</h2>
+<p>一份實用的設計提示詞，可以包含六個部分。</p>
+<table>
+	<thead>
+			<tr>
+					<th>部分</th>
+					<th>要回答的問題</th>
+					<th>寫得不好的例子</th>
+					<th>寫得好的例子</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>使用情境</td>
+					<td>誰在什麼情況下使用</td>
+					<td>後台管理系統</td>
+					<td>值班工程師，收到告警後開啟，時間緊</td>
+			</tr>
+			<tr>
+					<td>核心任務</td>
+					<td>使用者最終要完成什麼</td>
+					<td>展示任務資訊</td>
+					<td>判斷昨晚批處理是否按時完成</td>
+			</tr>
+			<tr>
+					<td>約束</td>
+					<td>哪些邊界不能突破</td>
+					<td>盡量少改</td>
+					<td>沿用現有元件庫，不改後端介面</td>
+			</tr>
+			<tr>
+					<td>取捨規則</td>
+					<td>衝突時優先什麼</td>
+					<td>各方面都做到最好</td>
+					<td>修改資料的操作，優先保證結果可確認</td>
+			</tr>
+			<tr>
+					<td>交付物</td>
+					<td>希望拿到什麼</td>
+					<td>給個方案</td>
+					<td>狀態表加可執行原型</td>
+			</tr>
+			<tr>
+					<td>驗收方式</td>
+					<td>怎樣確認成立</td>
+					<td>體驗流暢</td>
+					<td>查詢失敗後不顯示零值，篩選條件保留</td>
+			</tr>
+	</tbody>
+</table>
+<h3 id="1-使用情境">1. 使用情境</h3>
+<p>「後台管理系統」仍然太寬泛。每天使用八小時的工作台，和每月只開啟一次的設定頁，適合不同的資訊密度和引導方式。</p>
+<p>只寫與當前設計有關的條件：使用者熟悉程度、使用頻率、裝置和時間壓力。</p>
+<h3 id="2-核心任務">2. 核心任務</h3>
+<p>「展示任務資訊」是功能描述。「判斷昨晚批處理是否按時完成」才是使用者任務。</p>
+<p>任務越清楚，越容易判斷哪些元件必要，哪些資訊要突出。</p>
+<h3 id="3-約束">3. 約束</h3>
+<p>例如沿用現有元件庫、不修改後端介面、保持指標口徑、支援現有權限模型。</p>
+<p>約束要具體。不能一邊要求最小改動，一邊預設允許重構整個產品。</p>
+<h3 id="4-取捨規則">4. 取捨規則</h3>
+<p>資訊完整與首屏簡潔、操作速度與誤操作防護、即時性與系統成本，都可能衝突。</p>
+<p>「所有方面都做到最好」無法執行。更明確的寫法是：</p>
+<blockquote>
+  <p>高頻檢視優先減少閱讀負擔；涉及資料修改的操作，優先保證結果可確認、失敗可恢復。</p>
+
+</blockquote><h3 id="5-交付物">5. 交付物</h3>
+<p>方案評審、線框結構、互動說明和可執行程式碼是不同的交付物。沒有指定時，AI 可能交付一份原則說明，而你需要的是可以操作的頁面。</p>
+<h3 id="6-驗收方式">6. 驗收方式</h3>
+<p>「體驗流暢」很難驗證。「查詢失敗後不顯示零值，並保留使用者的篩選條件」可以直接檢查。</p>
+<p>角色設定可以補充專業視角，但無法代替以上資訊。「你是頂級設計師」之後，仍然需要具體任務、約束和驗收標準。</p>
+<h2 id="四優秀的軟體設計必須覆蓋正常流程之外的狀態">四、優秀的軟體設計必須覆蓋正常流程之外的狀態</h2>
+<p>設計稿常展示資料充足、網路正常、操作成功的頁面。這有助於討論佈局，卻不代表完整的軟體行為。</p>
+<p>Nielsen 的可用性啟發式第一條是「系統狀態可見」：設計應透過適當的回饋，隨時讓使用者知道發生了什麼。[1] 下面用查詢按鈕來說明這一條在實作中的含義。</p>
+<h3 id="現象查詢按鈕背後有一串問題">現象：查詢按鈕背後有一串問題</h3>
+<ul>
+<li>發起查詢後，使用者如何知道請求正在執行？</li>
+<li>執行期間能否修改篩選條件？</li>
+<li>前一個請求晚於後一個請求回傳時，展示哪個結果？</li>
+<li>查詢失敗後，是否保留上一次成功的結果？</li>
+<li>保留舊結果時，如何說明它不屬於當前查詢？</li>
+</ul>
+<h3 id="原因舊請求可能覆蓋新結果">原因：舊請求可能覆蓋新結果</h3>
+<p>React 官方文件把這種情況稱為競態條件（race condition）：兩個請求的回傳順序與發出順序不同，較晚回傳的舊回應覆蓋了新結果。文件給出的做法是，在清理函式裡忽略過期的回應。[7] 瀏覽器的 <code>AbortController</code> 可以取消仍在進行的網路請求。[8]</p>
+<p>這兩種做法解決的是「介面展示哪個結果」。它們不改變伺服器端是否已經處理了請求。對讀取類查詢，這通常夠用。對寫入類操作，見下一節。</p>
+<p>最後一個問題也容易遺漏。保留舊資料能避免頁面突然清空，但也可能讓使用者誤以為重新整理已經成功。所以「保留舊資料」不是孤立的最佳化，要和狀態說明一起設計。</p>
+<h3 id="做法用狀態表把要求落實">做法：用狀態表把要求落實</h3>
+<table>
+	<thead>
+			<tr>
+					<th>狀態</th>
+					<th>頁面應表達什麼</th>
+					<th>使用者可以做什麼</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>首次載入</td>
+					<td>正在獲取資料</td>
+					<td>等待；支援時可取消</td>
+			</tr>
+			<tr>
+					<td>有效結果為空</td>
+					<td>查詢成功，當前條件沒有匹配記錄</td>
+					<td>調整或重置篩選</td>
+			</tr>
+			<tr>
+					<td>查詢失敗</td>
+					<td>本次結果未獲取成功</td>
+					<td>檢視原因並重試</td>
+			</tr>
+			<tr>
+					<td>顯示舊結果</td>
+					<td>當前展示的是此前成功查詢的資料</td>
+					<td>檢視結果時間並重新查詢</td>
+			</tr>
+			<tr>
+					<td>權限不足</td>
+					<td>當前帳號無法存取對應資源</td>
+					<td>按產品支援的方式申請權限</td>
+			</tr>
+	</tbody>
+</table>
+<p>空結果、錯誤和沒有權限，不能都用一句「暫無資料」。它們對應不同的事實，也對應不同的下一步。NN/g 討論空狀態時指出，空狀態可以傳達系統狀態，並給出完成關鍵任務的路徑。[2] 錯誤提示則應使用平實的語言，準確指出問題，並給出建設性的解決辦法。[1]</p>
+<p>狀態變化也要能被輔助科技感知。WCAG 2.2 的成功準則 4.1.3 要求，不獲得焦點的狀態訊息（例如「載入完成」「查詢失敗」），可以透過程式被輔助科技讀到。[6]</p>
+<p>提示詞可以這樣寫：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>請補全主要流程之外的狀態設計。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>區分首次載入、查詢成功但為空、查詢失敗、顯示舊結果和權限不足。
+</span></span><span style="display:flex;"><span>為每種狀態說明：頁面文案、保留的內容、可用操作和恢復路徑。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>對可能同時發起的請求，說明如何避免舊請求覆蓋新結果。
+</span></span><span style="display:flex;"><span>不要讓失敗狀態被呈現為有效的零值或空結果。
+</span></span></code></pre></div><h2 id="五從軟體副作用理解更深一層的設計">五、從軟體副作用理解更深一層的設計</h2>
+<p>在程式設計中，副作用通常指執行過程對外部或共享狀態產生的影響，例如寫資料庫、傳送訊息或修改檔案。</p>
+<p>在產品設計討論中，可以把視角擴展到操作的連帶影響：重試是否重複執行、刪除後誰受影響、重新整理是否打斷閱讀、通知是否造成重複打擾。</p>
+<p>兩種討論有關聯，但不是同一個技術概念。產品側提出風險，仍要由工程側明確狀態、協議和一致性保證。</p>
+<h3 id="一個重新執行按鈕為什麼不簡單">一個「重新執行」按鈕為什麼不簡單</h3>
+<p>設想頁面上有一個失敗任務，使用者點選「重新執行」：</p>
+<ol>
+<li>伺服器端已經建立新任務，但回應在回傳途中逾時。</li>
+<li>頁面顯示請求失敗。</li>
+<li>使用者再次點選。</li>
+<li>如果系統沒有去重機制，就可能建立第二個任務。</li>
+</ol>
+<p>此時，「點選後按鈕置灰」只能減少當前介面的重複點選。重新整理頁面、多個瀏覽器視窗、網路重試和其他客戶端呼叫帶來的重複請求，它都擋不住。</p>
+<p>HTTP 規範對此有明確的區分。如果一個方法的多次相同請求與單次請求對伺服器端的預期效果相同，它就是冪等的；規範中的冪等方法是 PUT、DELETE 和安全方法，POST 不在其中。客戶端不應自動重試非冪等的請求，除非它能確認請求語意實際上是冪等的，或者能偵測到原請求從未生效。[9]</p>
+<p>所以「重新執行」這類通常用 POST 實作的操作，需要額外設計去重。常見做法是冪等鍵（idempotency key）。以 Stripe 的公開 API 文件為例：</p>
+<ul>
+<li>它儲存帶某個冪等鍵的首次請求的狀態碼和回應，同鍵的重試會回傳已儲存的回應。</li>
+<li>如果同一個鍵對應的參數與原請求不同，會報錯，防止誤用。</li>
+<li>在 API v1 中，鍵至少儲存 24 小時後才可能被清理。[10]</li>
+</ul>
+<p>這只是一個產品的做法。IETF 有一份 <code>Idempotency-Key</code> 請求標頭的草案，但仍是進行中的工作，尚未成為標準。[11] 採用哪種機制，取決於你的系統。</p>
+<p>完整設計要明確：</p>
+<ul>
+<li>這次操作如何被唯一識別。</li>
+<li>同一次操作重複請求時，是否回傳同一個執行結果。</li>
+<li>同一任務是否允許同時執行多個實例。</li>
+<li>逾時後如何查詢當前狀態。</li>
+<li>失敗後允許重試的是原操作，還是一次新的業務執行。</li>
+</ul>
+<p>冪等鍵、唯一約束或執行互斥都可能參與解決問題。只寫下術語，不等於實作了保證。</p>
+<p>尤其要區分：<strong>同一個請求的重複傳送，與使用者確實希望再次執行任務，是兩種不同的意圖。</strong> 一個可行的約定是：同一次使用者意圖的重試，複用同一個鍵；使用者明確再次發起，生成新的鍵。鍵的有效期也要圍繞業務意圖來定。</p>
+<h3 id="把副作用變成可審查的設計內容">把副作用變成可審查的設計內容</h3>
+<table>
+	<thead>
+			<tr>
+					<th>操作</th>
+					<th>可能的連帶影響</th>
+					<th>需要明確的設計</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>重新執行任務</td>
+					<td>重複寫入、資源競爭</td>
+					<td>冪等範圍、併發策略、執行狀態查詢</td>
+			</tr>
+			<tr>
+					<td>刪除告警規則</td>
+					<td>後續異常不再通知</td>
+					<td>影響範圍、恢復方式、相關權限</td>
+			</tr>
+			<tr>
+					<td>自動重新整理列表</td>
+					<td>閱讀位置或選擇狀態變化</td>
+					<td>重新整理時機、排序穩定性、狀態保留</td>
+			</tr>
+			<tr>
+					<td>匯出資料</td>
+					<td>結果與當前頁面範圍不一致</td>
+					<td>匯出條件、時間點、完成回饋</td>
+			</tr>
+			<tr>
+					<td>修改統計時區</td>
+					<td>日期邊界和對比視窗變化</td>
+					<td>生效範圍、條件展示、結果解釋</td>
+			</tr>
+	</tbody>
+</table>
+<p>不是每個問題都需要確認彈窗。</p>
+<ul>
+<li>低風險操作可以直接完成。</li>
+<li>可逆操作可以提供撤銷。</li>
+<li>影響範圍大的操作才需要更明確的確認。</li>
+</ul>
+<p>這與 Nielsen 的「錯誤預防」一致：要麼消除容易出錯的條件，要麼在使用者提交前提供確認。[1] NN/g 同時提醒，確認框不能濫用，也要寫清後果；更好的做法是讓使用者能夠撤銷。[3] Aza Raskin 的文章對此有更早的論述：能撤銷，就不要彈警告。[4]</p>
+<p>確認框要帶資訊。「確定繼續嗎」無法幫助使用者判斷。「將停用這條規則，之後該範圍內的異常將不再傳送通知」才說明了後果。</p>
+<p>可直接使用的提示詞是：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>請審查這個功能的副作用：[功能描述]。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>檢查重複提交、網路逾時、部分失敗、併發操作、取消和重試。
+</span></span><span style="display:flex;"><span>對每個重要場景說明：
+</span></span><span style="display:flex;"><span>觸發條件、可能改變的狀態、使用者可見結果、恢復方式。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>區分介面可以緩解的問題和必須由伺服器端保證的問題。
+</span></span><span style="display:flex;"><span>對重複請求明確冪等範圍；對重試明確是否會發起新的業務執行。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>按影響程度和出現可能性排序。
+</span></span><span style="display:flex;"><span>優先處理資料正確性和難以恢復的問題，避免為低影響問題增加大量互動。
+</span></span></code></pre></div><h2 id="六資料看板案例從數字展示到判斷支援">六、資料看板案例：從數字展示到判斷支援</h2>
+<p>下面用一個假設場景，把以上原則連起來。</p>
+<p>需求是為資料工程師設計即時業務監控台，展示今日交易筆數、昨日對比、最近完整小時資料、渠道分佈和 ETL 延遲。</p>
+<p>如果直接要求「設計一個精美的資料大螢幕」，很容易得到多張數字卡片和幾張趨勢圖。這些內容是否支援判斷，還取決於口徑和狀態是否清楚。</p>
+<h3 id="第一步定義使用者要做的判斷">第一步：定義使用者要做的判斷</h3>
+<p>使用者先要判斷：業務數值是否值得信任，是否存在需要處理的異常。</p>
+<p>所以資料新鮮度不能埋在頁面底部。上游明顯延遲時，業務指標下降可能只是資料還沒到，不能直接解釋成業務變化。</p>
+<p>頁面可以繼續展示最近可用的結果，但要清楚標註更新時間和延遲狀態。是否禁用某些操作，要看後果，不能預設把整個頁面鎖住。</p>
+<h3 id="第二步明確可比性">第二步：明確可比性</h3>
+<p>「今日與昨日對比」至少有兩種含義：</p>
+<ul>
+<li>今日截至當前時間，對比昨日同期。</li>
+<li>今日截至當前時間，對比昨日全天。</li>
+</ul>
+<p>兩種口徑都有用途，但必須寫清楚。今日上午的資料與昨日全天相比，卻只顯示一個下降箭頭，使用者很容易判斷錯誤。</p>
+<p>「最近一小時」也要區分：滾動 60 分鐘，還是最近一個完整自然小時。時區不同，日期和小時邊界也不同。</p>
+<p>這些不是圖表的附註，而是決定圖表含義的條件。</p>
+<h3 id="第三步讓異常帶著上下文出現">第三步：讓異常帶著上下文出現</h3>
+<p>某渠道交易筆數從 2 筆降到 1 筆，降幅 50%。另一個渠道從 2000 筆降到 1200 筆，降幅 40%。百分比本身不足以決定優先順序。</p>
+<p>頁面可以同時展示當前值、對比值、絕對差和相對差。是否告警，要沿用明確的業務規則。樣本很小時，展示樣本量，通常比製造強烈的視覺警報更有解釋力。</p>
+<p>不要讓 AI 為了讓頁面「完整」而擅自發明生產閾值。</p>
+<h3 id="第四步把設計轉成可以檢查的要求">第四步：把設計轉成可以檢查的要求</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>設計一個即時業務監控台，使用者是值班資料工程師。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>核心任務：先判斷資料是否可信，再定位業務異常，最後檢視渠道明細。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>要求：
+</span></span><span style="display:flex;"><span>1. 明確展示業務時區、資料更新時間和當前查詢條件。
+</span></span><span style="display:flex;"><span>2. 今日對比採用截至當前時間的昨日同期；若介面不支援，說明限制。
+</span></span><span style="display:flex;"><span>3. 最近一小時採用最近一個完整自然小時，並顯示起止時間。
+</span></span><span style="display:flex;"><span>4. 數值為零、查詢失敗和資料延遲使用不同狀態。
+</span></span><span style="display:flex;"><span>5. 變化同時展示絕對差和相對差；分母為零時不偽造百分比。
+</span></span><span style="display:flex;"><span>6. 不改變已有指標口徑，不自行設定生產告警閾值。
+</span></span><span style="display:flex;"><span>7. 重新整理保留篩選條件；舊請求不得覆蓋新條件下的結果。
+</span></span><span style="display:flex;"><span>8. 示範資料明確標註，不暗示已接入真實業務。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>交付頁面結構、關鍵互動、狀態表和可執行原型。
+</span></span><span style="display:flex;"><span>對依賴後端實作的保證單獨註明。
+</span></span></code></pre></div><p>這份提示詞的價值在於，它同時約束了佈局、解釋方式和行為，而不只是指定一種視覺風格。</p>
+<h2 id="七視覺提示詞應該描述系統而不只是裝飾">七、視覺提示詞應該描述系統，而不只是裝飾</h2>
+<p>視覺品質依然重要。層級不清、對齊混亂、密度失衡，都會增加理解成本。</p>
+<p>但「不要用漸層」「不要用圓角」不是通用的設計法則。某種手法是否合適，由內容和場景決定。</p>
+<p>比起限制裝飾清單，更值得明確這幾點：</p>
+<ul>
+<li>字級層級如何區分標題、主要數值和輔助資訊。</li>
+<li>顏色分別表示狀態、分類還是強調，語義是否一致。</li>
+<li>哪些內容可以緊湊展示，哪些位置需要留白。</li>
+<li>長名稱、大數值、空值和錯誤文案是否破壞佈局。</li>
+<li>顏色之外，是否還有文字、符號等識別方式。</li>
+</ul>
+<p>最後一條有規範依據：WCAG 2.2 的成功準則 1.4.1 要求，不能只靠顏色來傳達資訊、指示操作、提示回應或區分視覺元素。[5]</p>
+<p>例如，監控台可以用緊湊的表格承載任務明細，同時為關鍵異常保留更明顯的空間。不必把每個數字都包裝成同樣大小的卡片。</p>
+<p>提示詞可以寫成：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>為這個頁面建立一致的視覺規則。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>根據使用場景確定資訊密度，定義字型層級、間距、對齊和狀態顏色。
+</span></span><span style="display:flex;"><span>解釋主要視覺規則如何幫助使用者識別重點。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>使用長名稱、大數值、空值和錯誤文案檢查佈局。
+</span></span><span style="display:flex;"><span>關鍵狀態不能只依賴顏色區分。
+</span></span><span style="display:flex;"><span>不為裝飾增加無實際資訊的圖表或元件。
+</span></span></code></pre></div><h2 id="八自我審查有價值但不能替代驗證">八、自我審查有價值，但不能替代驗證</h2>
+<p>讓 AI 完成後「找出三個問題並修改」，可以作為第二輪檢查，但數量本身不重要。為了湊滿三個問題而製造無關緊要的修改，同樣會降低效率。</p>
+<p>更有效的審查要明確視角和證據：</p>
+<ul>
+<li>產品視角：使用者能否完成任務。</li>
+<li>互動視角：回饋和恢復是否清楚。</li>
+<li>工程視角：狀態變化與併發是否安全。</li>
+<li>視覺視角：層級與一致性是否成立。</li>
+</ul>
+<p>這些視角可以由同一個 AI 依次執行。「多角色」不等於必須使用多個模型或多個代理。</p>
+<p>更重要的是區分「評審發現」和「已驗證事實」。AI 說介面支援取消，不代表已經執行過取消流程。原型裡按鈕置灰，也不代表伺服器端能防止重複執行。</p>
+<p>建議使用如下驗收表：</p>
+<table>
+	<thead>
+			<tr>
+					<th>檢查項</th>
+					<th>驗證動作</th>
+					<th>通過標準</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>查詢條件保留</td>
+					<td>查詢失敗後重試</td>
+					<td>原篩選條件仍在</td>
+			</tr>
+			<tr>
+					<td>請求先後順序</td>
+					<td>發起 A 後快速發起 B，讓 A 最後回傳</td>
+					<td>頁面最終保持 B 的結果</td>
+			</tr>
+			<tr>
+					<td>錯誤狀態</td>
+					<td>模擬介面失敗</td>
+					<td>明確顯示失敗，不呈現有效零值</td>
+			</tr>
+			<tr>
+					<td>重複操作</td>
+					<td>使用同一操作識別碼重複傳送請求</td>
+					<td>符合約定的冪等行為，需驗證伺服器端</td>
+			</tr>
+			<tr>
+					<td>結果未知</td>
+					<td>模擬請求逾時但伺服器端已接受</td>
+					<td>可以查詢狀態，不直接斷言未執行</td>
+			</tr>
+			<tr>
+					<td>內容極限</td>
+					<td>輸入長名稱和較大數值</td>
+					<td>主要內容可讀，關鍵操作可達</td>
+			</tr>
+	</tbody>
+</table>
+<p>對於可執行的軟體，盡可能實際執行這些場景。對於只交付設計稿的任務，要明確這些是待驗證的要求。</p>
+<h2 id="九把長提示詞拆成幾個有產出的階段">九、把長提示詞拆成幾個有產出的階段</h2>
+<p>一次把所有要求塞進提示詞，重點可能被稀釋。可以讓協作逐步推進，但每一步都要有具體產出。</p>
+<table>
+	<thead>
+			<tr>
+					<th>階段</th>
+					<th>產出</th>
+					<th>注意</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>一、澄清任務</td>
+					<td>主要使用者、核心任務、會改變方案的約束</td>
+					<td>非關鍵的缺失，做合理假設；影響資料口徑、權限或不可逆操作的資訊，要確認</td>
+			</tr>
+			<tr>
+					<td>二、確定方向</td>
+					<td>兩種有真實取捨的方案</td>
+					<td>例如異常優先與任務列表優先，而不是僅更換顏色</td>
+			</tr>
+			<tr>
+					<td>三、完成實作</td>
+					<td>結構、元件、狀態與操作行為</td>
+					<td>把選定方向落實</td>
+			</tr>
+			<tr>
+					<td>四、針對風險驗證</td>
+					<td>驗收表的執行結果</td>
+					<td>先查資料正確性、失敗恢復和高影響操作，再查佈局和視覺細節</td>
+			</tr>
+	</tbody>
+</table>
+<p>小任務可以合併階段。修改一處按鈕間距，不需要重新做一輪產品研究。方法的複雜度要與任務規模匹配。</p>
+<h2 id="十一份可直接複用的綜合提示詞">十、一份可直接複用的綜合提示詞</h2>
+<p>以下模板適合軟體頁面、內部工具和資料看板。使用時刪去無關部分，並補充真實約束。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>請為下面的需求完成設計並交付可評審結果：
+</span></span><span style="display:flex;"><span>[填寫需求]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>【使用情境】
+</span></span><span style="display:flex;"><span>主要使用者：[填寫]
+</span></span><span style="display:flex;"><span>典型場景：[填寫]
+</span></span><span style="display:flex;"><span>最重要的三項任務：[填寫]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>【約束】
+</span></span><span style="display:flex;"><span>必須沿用：[元件、介面、權限或指標口徑]
+</span></span><span style="display:flex;"><span>允許調整：[填寫]
+</span></span><span style="display:flex;"><span>當前交付階段：[方案 / 原型 / 可執行實作]
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>【設計判斷】
+</span></span><span style="display:flex;"><span>先識別最影響使用者完成任務的問題。
+</span></span><span style="display:flex;"><span>需要比較方向時，提出兩種有明確取捨的方案，並推薦一種。
+</span></span><span style="display:flex;"><span>說明選擇依據，只解釋會影響結果的關鍵決定。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>【資訊與視覺】
+</span></span><span style="display:flex;"><span>按任務重要性組織內容，明確主要操作與低頻操作。
+</span></span><span style="display:flex;"><span>建立一致的字型、間距、對齊和狀態顏色規則。
+</span></span><span style="display:flex;"><span>使用長文字、大數值、空值和窄螢幕場景檢查佈局。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>【互動狀態】
+</span></span><span style="display:flex;"><span>覆蓋載入、成功、空結果、失敗、舊結果和權限不足。
+</span></span><span style="display:flex;"><span>說明操作進行中、結果未知和可重試狀態如何區分。
+</span></span><span style="display:flex;"><span>防止舊請求覆蓋新條件下的結果。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>【副作用】
+</span></span><span style="display:flex;"><span>檢查重複提交、部分失敗、併發操作、取消、撤銷和重試。
+</span></span><span style="display:flex;"><span>區分前端緩解措施與伺服器端保證。
+</span></span><span style="display:flex;"><span>明確高影響操作的作用範圍和恢復路徑。
+</span></span><span style="display:flex;"><span>不為低風險操作增加不必要的確認步驟。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>【交付與驗證】
+</span></span><span style="display:flex;"><span>交付與當前階段相符的具體結果，不只羅列設計原則。
+</span></span><span style="display:flex;"><span>給出關鍵驗收場景、驗證動作和通過標準。
+</span></span><span style="display:flex;"><span>明確哪些內容已經驗證，哪些仍是假設或依賴後端。
+</span></span><span style="display:flex;"><span>完成後審查高影響問題並修正，不為湊數量製造修改。
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>缺少非關鍵資料時，做合理假設並繼續。
+</span></span><span style="display:flex;"><span>缺失資訊會改變資料口徑、權限或不可逆操作時，明確指出並確認。
+</span></span></code></pre></div><h2 id="結語讓提示詞承載判斷依據">結語：讓提示詞承載判斷依據</h2>
+<p>優秀的軟體設計常體現在很小的地方：失敗後保留了使用者輸入，逾時後沒有誤導使用者再次執行，舊資料帶著明確的時間標記，異常資訊提供了足夠的判斷依據。</p>
+<p>這些細節很難僅靠「更美觀、更專業」推導出來。它們要被納入任務定義，也要在實作後接受檢查。</p>
+<p>提示詞能改善 AI 得到的上下文、約束和評審標準，卻不能代替真實使用者回饋，也不能憑文字建立工程保證。</p>
+<p>下一次讓 AI 設計軟體時，先寫清楚四件事：<strong>使用者要作出什麼判斷，系統會改變什麼狀態，失敗後如何恢復，以及用什麼證據確認設計有效。</strong> 這四個問題，比繼續疊加風格形容詞，更接近設計工作的核心。</p>
+<h2 id="本文邊界與未驗證項">本文邊界與未驗證項</h2>
+<ol>
+<li>本文的六部分任務書、狀態表、驗收表和提示詞模板，是作者整理的工程判斷，沒有用不同模型做過對照實驗，不保證輸出品質。</li>
+<li>「只給風格詞，AI 容易落入常見模板」是推測，沒有實測資料支援。</li>
+<li>引用的 NN/g、WCAG、React、MDN、RFC 和 Stripe 文件，只用於支援文中對應的具體論點；本文只核對了相關段落，沒有通讀全文。</li>
+<li>Stripe 的冪等行為只是一個產品的例子，不代表通用標準。IETF 的 <code>Idempotency-Key</code> 文件是草案（查核時為第 08 版），可能變動。</li>
+<li>第六節的監控台是虛構場景，數字僅用於說明計算方式。</li>
+</ol>
+<h2 id="參考資料">參考資料</h2>
+<p>以下連結查閱日期 2026-11-12，當日均可開啟（HTTP 200）。</p>
+<ol>
+<li><a href="https://www.nngroup.com/articles/ten-usability-heuristics/">Nielsen Norman Group：10 Usability Heuristics for User Interface Design</a></li>
+<li><a href="https://www.nngroup.com/articles/empty-state-interface-design/">Nielsen Norman Group：Designing Empty States in Complex Applications: 3 Guidelines</a></li>
+<li><a href="https://www.nngroup.com/articles/confirmation-dialog/">Nielsen Norman Group：Confirmation Dialogs Can Prevent User Errors — If Not Overused</a></li>
+<li><a href="https://alistapart.com/article/neveruseawarning/">A List Apart：Never Use a Warning When You Mean Undo（Aza Raskin，2007）</a></li>
+<li><a href="https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html">W3C：Understanding Success Criterion 1.4.1 Use of Color（WCAG 2.2）</a></li>
+<li><a href="https://www.w3.org/WAI/WCAG22/Understanding/status-messages.html">W3C：Understanding Success Criterion 4.1.3 Status Messages（WCAG 2.2）</a></li>
+<li><a href="https://react.dev/learn/you-might-not-need-an-effect">React 文件：You Might Not Need an Effect（含競態條件的說明）</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/API/AbortController">MDN：AbortController</a></li>
+<li><a href="https://www.rfc-editor.org/rfc/rfc9110.html#name-idempotent-methods">RFC 9110：HTTP Semantics，第 9.2.2 節 Idempotent Methods</a></li>
+<li><a href="https://docs.stripe.com/api/idempotent_requests">Stripe API 文件：Idempotent requests</a></li>
+<li><a href="https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/">IETF 草案：The Idempotency-Key HTTP Header Field（draft-ietf-httpapi-idempotency-key-header）</a></li>
+<li><a href="https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices#be-clear-and-direct">Claude 文件：Prompting best practices，Be clear and direct</a></li>
+</ol>
+]]></content:encoded></item><item><title>從一張 Hash 表到一萬臺伺服器：讀李智慧，理解後端技術的第一性原理</title><link>https://d94807974-commits.github.io/posts/li-zhihui-first-principles-architecture/</link><pubDate>Wed, 04 Nov 2026 14:26:02 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/li-zhihui-first-principles-architecture/</guid><description>通讀李智慧的《大型網站技術架構》、《從0開始學大數據》、《後端技術面試38講》和《高併發架構實戰課》，我發現他反覆講的其實是同一件事：技術不是一堆孤立的知識點，而是少數幾條原理在不同尺度上的反覆出現。本文用這條主線串起軟體設計、網站架構、大數據和技術人成長，配上可執行的 Go 程式碼，也談談這些觀點在今天的侷限。</description><content:encoded><![CDATA[<div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>技術世界裡真正需要掌握的原理並不多，它們只是在不同尺度上一遍遍出現。架構師的本事，是在新問題裡認出老原理。</p>
+</div><figure>
+<img src="/images/li-zhihui-first-principles-architecture/servers.jpg" alt="機架伺服器" loading="lazy" width="700">
+<figcaption>圖片：VPSExpertYuri / <a href="https://commons.wikimedia.org/wiki/File:Servers.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>。從一張 Hash 表到一排機架，變的是尺度，不變的是原理。</figcaption>
+</figure>
+<h2 id="寫在前面">寫在前面</h2>
+<p>李智慧這個名字，很多後端工程師最早是在一本書的封面上看到的：2013 年電子工業出版社出版的《大型網站技術架構：核心原理與案例分析》。後來他在極客時間陸續開了《從 0 開始學大數據》《後端技術面試 38 講》和《李智慧 · 高併發架構實戰課》。按極客時間上的介紹，他做過阿里巴巴技術專家、Intel 亞太研發中心架構師、宅米和 WiFi 萬能鑰匙 CTO，後來任同程旅行交通首席架構師，也給 Apache Spark 貢獻過程式碼。</p>
+<p>把這些書和專欄放在一起讀，最強烈的感受是：<strong>他講的東西看起來跨度很大，從 Hash 表、JVM、設計模式，到負載均衡、HDFS、秒殺系統，再到德雷福斯模型，其實一直在用同一種方式拆問題。</strong></p>
+<p>我想用一句話來概括這篇文章的主線：</p>
+<blockquote>
+  <p><strong>技術世界裡真正需要掌握的原理並不多，它們只是在不同尺度上一遍遍出現。架構師的本事，是在新問題裡認出老原理。</strong></p>
+
+</blockquote><p>下面按&quot;方法 → 軟體設計 → 系統架構 → 大數據 → 人&quot;的順序展開，最後談談我認為這些觀點在今天有哪些侷限。</p>
+<h2 id="一方法第一性原理把學習變成驗證">一、方法：第一性原理，把&quot;學習&quot;變成&quot;驗證&quot;</h2>
+<p>《後端技術面試 38 講》的開篇詞就叫《掌握軟體開發技術的第一性原理》。他的出發點是：新技術層出不窮，每次從頭學都很痛苦，以至於行業裡流傳著&quot;35歲以後就不能寫程式碼了&quot;的說法。而他認為&quot;太陽底下沒有新鮮事，絕大多數新技術其實都脫胎於一些既有的技術體系&quot;。</p>
+<p>他對理想狀態的描述，我覺得是整個專欄最有價值的一段：建立了自己的技術思維體系之後，再碰到新技術，&ldquo;這個時候你其實不需要去學習這個新技術了，而是去驗證這個新技術&rdquo;。也就是先根據原理推導它大概會怎麼實現，再去看文件和程式碼，驗證自己猜得對不對。</p>
+<p>落到操作層面，他在《從 0 開始學大數據》的答疑裡給過一個很具體的方法，叫 <strong>5-20-2 法則</strong>：</p>
+<ul>
+<li>用 5 分鐘瞭解新知識的特點、應用場景和要解決的問題；</li>
+<li>用 20 分鐘理解它的主要設計原理、核心思想和思路；</li>
+<li>再花 2 個小時看關鍵設計細節，嘗試使用或者寫個 demo。</li>
+</ul>
+<p>每一步過不去就先放下。順序很重要：**先問它解決什麼問題，最後才看細節。**多數人正好反過來，於是知識永遠是孤立的點。</p>
+<p>他在同一篇答疑裡還有一句話，我把它當作這套方法的目標：要做工具的主人，而不是工具的奴隸，&ldquo;最終的目標是要超越 Hadoop，打造適合自己業務場景的大數據解決方案&rdquo;。</p>
+<h2 id="二軟體設計好程式碼的唯一標準是能扛住變化">二、軟體設計：好程式碼的唯一標準是&quot;能扛住變化&quot;</h2>
+<h3 id="21-糟糕的設計會腐壞">2.1 糟糕的設計會&quot;腐壞&quot;</h3>
+<p>在《軟體設計的目的：糟糕的程式設計師比優秀的程式設計師差在哪裡？》裡，他給出了一個很鋒利的判斷：**好的設計和壞的設計最大的差別，體現在應對需求變更的能力上。**差的程式設計師害怕需求變更，好的程式設計師歡迎需求變更，因為他們一開始就是針對變更去設計的。</p>
+<p>他列了糟糕設計的五個特徵：<strong>僵化性</strong>（改一處牽動一大片）、<strong>脆弱性</strong>（改了這裡，莫名其妙壞了那裡）、<strong>牢固性</strong>（想複用一部分，卻拆不出來）、<strong>粘滯性</strong>（壞的改法比好的改法更容易實施，於是軟體越改越爛）、<strong>晦澀性</strong>（程式碼看不懂，後人只能亂改）。</p>
+<p>他用的例子極其樸素：一個把鍵盤輸入複製到印表機的 <code>copy()</code> 函式。第一次需求變更要支援紙帶機輸入，加了一個布林變數 <code>ptFlag</code>；第二次要支援輸出到紙帶機，又加了 <code>ptFlag2</code>，還配了一行註釋&quot;使用前請重置這些flag&quot;。兩次變更以後，一段清晰的程式碼就同時具備了僵化、脆弱、粘滯、晦澀四種病。</p>
+<p>解法是把輸入和輸出抽象成 <code>Reader</code> 和 <code>Writer</code> 介面，<code>copy</code> 只依賴介面。有意思的是，用 Go 寫這個例子時，<strong>標準庫已經替你做好了這件事</strong>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// copyChars 只依赖抽象：任何 io.Reader 到任何 io.Writer。</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 键盘、文件、网络连接、内存缓冲……都不需要改这一行代码。</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">copyChars</span>(<span style="color:#a6e22e">r</span> <span style="color:#a6e22e">io</span>.<span style="color:#a6e22e">Reader</span>, <span style="color:#a6e22e">w</span> <span style="color:#a6e22e">io</span>.<span style="color:#a6e22e">Writer</span>) <span style="color:#66d9ef">error</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">br</span>, <span style="color:#a6e22e">bw</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">bufio</span>.<span style="color:#a6e22e">NewReader</span>(<span style="color:#a6e22e">r</span>), <span style="color:#a6e22e">bufio</span>.<span style="color:#a6e22e">NewWriter</span>(<span style="color:#a6e22e">w</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">bw</span>.<span style="color:#a6e22e">Flush</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">c</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">br</span>.<span style="color:#a6e22e">ReadByte</span>()
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">==</span> <span style="color:#a6e22e">io</span>.<span style="color:#a6e22e">EOF</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">bw</span>.<span style="color:#a6e22e">WriteByte</span>(<span style="color:#a6e22e">c</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>io.Reader</code>/<code>io.Writer</code> 之所以成為 Go 生態裡最成功的兩個介面，原因和李智慧講的完全一樣：它們把&quot;變化的東西&quot;（裝置）和&quot;不變的東西&quot;（複製邏輯）隔開了。</p>
+<h3 id="22-物件導向的本質是多型框架的本質是依賴倒置">2.2 物件導向的本質是多型，框架的本質是依賴倒置</h3>
+<p>我認為《後端技術面試 38 講》裡寫得最透的是第 12 篇和第 16 篇。</p>
+<p>第 16 篇指出，C 語言用結構體和函式指標也能實現封裝、繼承和多型，只是沒有語法和編譯上的約束，很危險。所以他的結論是：<strong>多型才是物件導向程式設計的本質，設計模式的精髓就是對多型的靈活應用。</strong></p>
+<p>第 12 篇講依賴倒置原則，最有價值的一點是他強調了一個很多人忽略的細節：**依賴倒置的關鍵不是&quot;依賴介面&quot;，而是&quot;介面歸誰所有&quot;。**Service 層依賴 DAO 層定義的介面，這不叫依賴倒置；只有介面由高層（Service）定義、低層（DAO）去實現，才算倒置。他的 <code>Button</code>/<code>Lamp</code> 例子裡，抽象介面叫 <code>ButtonServer</code>，歸高層的 Button 所有，&ldquo;我們從命名上也能看的出來，這正是依賴倒置原則的精髓所在&rdquo;。</p>
+<p>由此他回答了一個看似神奇的問題：為什麼我們的程式不呼叫 Tomcat、Spring 的程式碼，卻能用上它們的功能？因為框架遵循的是好萊塢原則，&ldquo;Don&rsquo;t call me, I will call you&rdquo;：應用實現框架定義的介面（比如 <code>Servlet</code>），由框架來呼叫應用。</p>
+<p>第 17 篇順勢給出了框架和工具的區別：**框架呼叫你的程式碼，工具被你的程式碼呼叫。**Tomcat 是框架，Log4J 是工具。</p>
+<p>這裡我想補充一個他在第 7 篇裡沒有展開的觀察。他在講程式語言演化時，把 Go 的隱式介面當作&quot;物件的邊界和封裝性開始模糊&quot;的例子。但從依賴倒置的角度看，<strong>Go 的隱式介面反而讓&quot;介面歸高層所有&quot;變得最自然</strong>：呼叫方可以在自己的包裡宣告一個只含所需方法的小介面，被呼叫方完全不需要知道它的存在，也不用 import 它。Go 社群&quot;在使用方定義介面&quot;的慣例，本質上就是第 12 篇講的介面所有權倒置。同一個原理，在不同的語言裡有不同的落地方式。</p>
+<h2 id="三系統架構高併發是根源三板斧是手段">三、系統架構：高併發是根源，三板斧是手段</h2>
+<h3 id="31-大型網站是演化出來的">3.1 大型網站是演化出來的</h3>
+<p>《大型網站技術架構》第一章畫了一條演化路徑：從單機網站開始，經過應用與資料分離、快取、叢集、讀寫分離、CDN、分散式儲存、業務拆分，最終走到分散式服務。</p>
+<p>比路徑本身更重要的是這一章的&quot;價值觀&quot;和&quot;誤區&quot;兩節。價值觀有兩條：**大型網站架構技術的核心價值是隨網站所需靈活應對；驅動大型網站技術發展的主要力量是網站的業務發展。**誤區有三條：**一味追隨大公司的解決方案、為了技術而技術、企圖用技術解決所有問題。**據讀者整理的讀書筆記，這本書的後記還有一句很有名的話：大型網站不是設計出來的，而是逐步演化出來的。</p>
+<p>這和第二節講的軟體設計是同一個道理：<strong>不要試圖一次性預測所有變化，而是讓系統在每一個階段都保留應對下一次變化的能力。</strong></p>
+<h3 id="32-五個要素以及它們之間的關係">3.2 五個要素，以及它們之間的關係</h3>
+<p>書中第三章提出，除了功能需求，軟體架構還要關注<strong>效能、可用性、伸縮性、擴充性、安全性</strong>五個要素，&ldquo;架構設計過程中需要平衡這 5 個要素之間的關係&rdquo;。幾個定義很值得記住：</p>
+<ul>
+<li><strong>可用性</strong>的前提是伺服器必然會宕機，主要手段是冗餘。</li>
+<li><strong>伸縮性</strong>指通過往集群裡加伺服器來應對增長；快取叢集加機器可能導致路由失效，需要改進路由演算法。</li>
+<li><strong>擴充性</strong>直接關注功能需求，主要手段是事件驅動架構和分散式服務。</li>
+</ul>
+<p>我的理解是：**伸縮性是對&quot;量&quot;的變化開放，擴充性是對&quot;功能&quot;的變化開放。**後者本質上就是開閉原則在系統層面的版本。</p>
+<p>到了《高併發架構實戰課》，他進一步釐清了&quot;三高&quot;的關係：**高併發、高效能、高可用並不是平行的，高併發是根源和核心。**大量使用者同時請求導致資源快速消耗、響應變慢，這是效能問題；效能繼續惡化導致資源耗盡、系統崩潰，這就是可用性問題。</p>
+<h3 id="33-水平伸縮與三板斧">3.3 水平伸縮與&quot;三板斧&quot;</h3>
+<p>應對高併發，他把方案分成兩類：<strong>垂直伸縮</strong>（換更強的機器）和<strong>水平伸縮</strong>（用更多機器組成叢集）。網際網路走的是後一條路，因為它有天然的彈性，可以&quot;一臺伺服器一臺伺服器地新增資源&quot;，而網際網路應用很難提前估計會有多少使用者、在什麼時候來訪問。</p>
+<p>在《高效能架構的三板斧》裡，他先給出一個簡單的關係：<strong>吞吐量 = 併發數 ÷ 響應時間</strong>。隨著併發增加，系統依次經歷效能測試區間（吞吐量上升、響應時間基本不變）、負載測試區間（吞吐量見頂後下降、響應時間上升）和壓力測試區間（直到崩潰，吞吐量為 0）。</p>
+<p>架構層面的三板斧是：</p>
+<table>
+	<thead>
+			<tr>
+					<th>手段</th>
+					<th>解決什麼壓力</th>
+					<th>關鍵點</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>負載均衡</td>
+					<td>單臺伺服器的併發壓力</td>
+					<td>應用層負載均衡會成為瓶頸；大規模叢集多用鏈路層負載均衡，響應不再經過負載均衡伺服器</td>
+			</tr>
+			<tr>
+					<td>分散式快取</td>
+					<td>讀壓力</td>
+					<td>包括 CDN、反向代理、分散式物件快取；快取只能改善讀，不能改善寫</td>
+			</tr>
+			<tr>
+					<td>訊息佇列</td>
+					<td>寫壓力</td>
+					<td>寫操作非同步化，&ldquo;削峰填谷&rdquo;</td>
+			</tr>
+	</tbody>
+</table>
+<p>但他馬上補了一句，我認為比三板斧本身更重要：&ldquo;不問青紅皂白，不管三七二十一，上來就是三板斧，那做架構師也未免太容易了些。&ldquo;效能最佳化要從效能測試開始：測出指標，分析瓶頸，最佳化，再測試驗證。</p>
+<h3 id="34-限流器一個看得見原理的小例子">3.4 限流器：一個看得見原理的小例子</h3>
+<p>《限流器設計》這一講以一個叫 Diana 的限流器元件為例，講了四種演算法：固定視窗、滑動視窗、漏桶、令牌桶。他特別指出了固定視窗的缺陷：在視窗邊界前後各來一波請求，短時間內通過的請求數可能是限額的兩倍。</p>
+<p>他給的令牌桶虛擬碼有一個很巧妙的地方：**不需要後臺執行緒往桶裡放令牌，取令牌時按時間差&quot;補算&quot;即可。**下面用 Go 實現這兩種演算法，並把&quot;邊界突發&quot;場景跑一遍：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// 固定窗口：窗口切换时计数器清零</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">f</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">FixedWindow</span>) <span style="color:#a6e22e">Allow</span>(<span style="color:#a6e22e">now</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Time</span>) <span style="color:#66d9ef">bool</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">mu</span>.<span style="color:#a6e22e">Lock</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">mu</span>.<span style="color:#a6e22e">Unlock</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">now</span>.<span style="color:#a6e22e">Sub</span>(<span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">winStart</span>) <span style="color:#f92672">&gt;=</span> <span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">size</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">winStart</span> = <span style="color:#a6e22e">now</span>.<span style="color:#a6e22e">Truncate</span>(<span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">size</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">count</span> = <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">count</span> <span style="color:#f92672">&gt;=</span> <span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">limit</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">count</span><span style="color:#f92672">++</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 令牌桶：按距离上次计算的时间差补发令牌，上限为桶容量</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">b</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">TokenBucket</span>) <span style="color:#a6e22e">Allow</span>(<span style="color:#a6e22e">now</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Time</span>) <span style="color:#66d9ef">bool</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">mu</span>.<span style="color:#a6e22e">Lock</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">mu</span>.<span style="color:#a6e22e">Unlock</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">tokens</span> <span style="color:#f92672">+=</span> <span style="color:#a6e22e">now</span>.<span style="color:#a6e22e">Sub</span>(<span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">last</span>).<span style="color:#a6e22e">Seconds</span>() <span style="color:#f92672">*</span> <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">rate</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">tokens</span> &gt; <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">capacity</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">tokens</span> = <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">capacity</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">last</span> = <span style="color:#a6e22e">now</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">tokens</span> &lt; <span style="color:#ae81ff">1</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">tokens</span><span style="color:#f92672">--</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>限額都設為每秒 100 個請求，在第 0.99 秒和第 1.00 秒各湧入 100 個請求，執行結果是：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>fixed window, 10ms 內放行: 200
+</span></span><span style="display:flex;"><span>token bucket, 10ms 內放行: 101
+</span></span></code></pre></div><p>固定視窗在 10 毫秒裡放行了 200 個，正是限額的兩倍；令牌桶放行了滿桶的 100 個，加上這 10 毫秒裡新補的 1 個。這也解釋了為什麼他建議&quot;通常場景中優先使用&quot;令牌桶，Diana 的預設演算法也是令牌桶。</p>
+<h3 id="35-秒殺用架構繞開問題而不是硬扛問題">3.5 秒殺：用架構繞開問題，而不是硬扛問題</h3>
+<p>秒殺系統 Apollo 的設計，我最欣賞的是它處處體現&quot;不硬扛&rdquo;：</p>
+<ul>
+<li>秒殺<strong>獨立部署</strong>，甚至使用獨立域名；</li>
+<li>頁面走<strong>多級快取</strong>（瀏覽器、CDN、伺服器），重新整理基本打不到伺服器；</li>
+<li>用一個<strong>不被快取的小 JavaScript 檔案</strong>控制按鈕是否點亮，並下發帶隨機數的下單 URL；</li>
+<li>每臺下單伺服器只放行少量請求，其餘直接進入秒殺結束頁。</li>
+</ul>
+<p>秒殺的核心不是&quot;如何處理一百萬個請求&rdquo;，而是&quot;如何讓一百萬個請求根本不需要被處理&quot;。</p>
+<p>這一講的結尾講了一個故事：某大廠要臨時做一場秒殺，時間太短、併發太高，參會的架構師面面相覷，最後一位架構師站出來接下專案並完成了任務，幾年後晉升為集團副總裁。他的點評是：&ldquo;對一個架構師而言，精通技術是重要的，而用技術建立起自己的信心，在關鍵時刻有勇氣面對挑戰更重要。&rdquo;</p>
+<h2 id="四大數據同一個原理換了一個尺度">四、大數據：同一個原理，換了一個尺度</h2>
+<p>如果說前面講的是&quot;用更多機器處理更多請求&quot;，那麼大數據講的就是&quot;用更多機器處理更多資料&quot;。他在《後端技術面試 38 講》第 31 篇裡說得很直接：大數據技術是分散式技術在資料處理領域的創新性應用，本質和此前講的分散式技術&quot;一脈相承&quot;。</p>
+<h3 id="41-從-raid-到-hdfs垂直伸縮到水平伸縮">4.1 從 RAID 到 HDFS：垂直伸縮到水平伸縮</h3>
+<p>《從 0 開始學大數據》第 5 講用 RAID 作為引子：大規模儲存要解決容量、讀寫速度、可靠性三個問題。RAID 在一臺伺服器的多塊磁碟上通過分片併發讀寫和冗餘校驗解決它們，是<strong>垂直伸縮</strong>；把同樣的思想搬到伺服器叢集上，就是 HDFS，是<strong>水平伸縮</strong>。&ldquo;垂直伸縮總有盡頭，水平伸縮理論上是沒有止境的。&rdquo;</p>
+<h3 id="42-移動計算比行動數據更划算">4.2 移動計算比行動數據更划算</h3>
+<p>第 4 講的核心思想是：程式比資料小得多，所以把程式分發到資料所在的伺服器上執行，而不是把 PB 級的資料搬到程式那裡。各節點的任務程序下載程式包，通過反射載入，再讀取本機的資料分片進行計算。</p>
+<p>而第 7 講的標題本身就是一個洞見：**MapReduce 既是程式設計模型，又是計算框架。**開發者只寫 <code>map</code> 和 <code>reduce</code> 兩個函式，切分、排程、shuffle、容錯都交給框架。</p>
+<p>讀到這裡我意識到，**這其實就是第二節講的依賴倒置和好萊塢原則，只是尺度從一個程序變成了一萬臺伺服器。**你不呼叫 Hadoop，Hadoop 呼叫你。下面這個幾十行的 Go 程式把這層關係剝離出來：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">MapFunc</span> <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">line</span> <span style="color:#66d9ef">string</span>) []<span style="color:#a6e22e">KV</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">ReduceFunc</span> <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">key</span> <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">values</span> []<span style="color:#66d9ef">int</span>) <span style="color:#a6e22e">KV</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// &#34;框架&#34;掌握主流程：map -&gt; shuffle -&gt; reduce，用户只提供两个函数</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">Run</span>(<span style="color:#a6e22e">splits</span> [][]<span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">m</span> <span style="color:#a6e22e">MapFunc</span>, <span style="color:#a6e22e">r</span> <span style="color:#a6e22e">ReduceFunc</span>) []<span style="color:#a6e22e">KV</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">mapped</span> []<span style="color:#a6e22e">KV</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">split</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">splits</span> { <span style="color:#75715e">// 真实系统中，每个分片在数据所在的节点上计算</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">line</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">split</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">mapped</span> = append(<span style="color:#a6e22e">mapped</span>, <span style="color:#a6e22e">m</span>(<span style="color:#a6e22e">line</span>)<span style="color:#f92672">...</span>)
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">groups</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">map</span>[<span style="color:#66d9ef">string</span>][]<span style="color:#66d9ef">int</span>{} <span style="color:#75715e">// shuffle：相同 key 汇聚到一起</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">kv</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">mapped</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">groups</span>[<span style="color:#a6e22e">kv</span>.<span style="color:#a6e22e">Key</span>] = append(<span style="color:#a6e22e">groups</span>[<span style="color:#a6e22e">kv</span>.<span style="color:#a6e22e">Key</span>], <span style="color:#a6e22e">kv</span>.<span style="color:#a6e22e">Value</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">out</span> []<span style="color:#a6e22e">KV</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">k</span>, <span style="color:#a6e22e">vs</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">groups</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">out</span> = append(<span style="color:#a6e22e">out</span>, <span style="color:#a6e22e">r</span>(<span style="color:#a6e22e">k</span>, <span style="color:#a6e22e">vs</span>))
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">sort</span>.<span style="color:#a6e22e">Slice</span>(<span style="color:#a6e22e">out</span>, <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">i</span>, <span style="color:#a6e22e">j</span> <span style="color:#66d9ef">int</span>) <span style="color:#66d9ef">bool</span> { <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">out</span>[<span style="color:#a6e22e">i</span>].<span style="color:#a6e22e">Key</span> &lt; <span style="color:#a6e22e">out</span>[<span style="color:#a6e22e">j</span>].<span style="color:#a6e22e">Key</span> })
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">out</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>對兩個資料塊執行 WordCount，輸出 <code>[{hadoop 1} {hello 3} {spark 1} {world 1}]</code>。真實的 MapReduce 複雜得多，但控制權的結構一樣。</p>
+<p>而 shuffle 那一步裡的 <code>map[string][]int</code>，又回到了他面試過上千人的那道題：Hash 表為什麼是 O(1)。同一個&quot;按 key 分組&quot;的思想，一個在記憶體裡，一個跨越整個叢集。</p>
+<h3 id="43-spark同樣的本質更好的實現">4.3 Spark：同樣的本質，更好的實現</h3>
+<p>第 13 講的標題是《同樣的本質，為何Spark可以更高效？》。他的回答是：Spark &ldquo;可以算作是一種MapReduce計算模型的不同實現&rdquo;，以 shuffle 為界把計算切成多個階段並組織成 DAG，把前一個 Reduce 和後一個 Map 連起來連續計算，並且優先用記憶體儲存中間結果。他還指出，Spark 在 2012 年左右流行，是因為記憶體成本降低了一個數量級，而機器學習又需要大量迭代計算。</p>
+<p><strong>新技術往往不是推翻舊原理，而是在新的約束條件下換一種方式實現它。</strong></p>
+<h3 id="44-兩種架構模式的對照">4.4 兩種架構模式的對照</h3>
+<p>在 Hadoop 模組的答疑裡，他指出 HDFS（NameNode/DataNode）、MapReduce 1（JobTracker/TaskTracker）、Yarn（ResourceManager/NodeManager）都是一主多從，並總結出大數據領域的架構模式：&ldquo;集中管理，分佈儲存與計算&rdquo;。原因是大數據要對資料和任務統一管理；而線上應用的每個請求都相互獨立，為了高效能和便於伸縮，&ldquo;會盡量避免有全域管理者&rdquo;。</p>
+<p>同樣是分散式，<strong>有沒有全域管理者，取決於任務之間有沒有關聯</strong>。</p>
+<h2 id="五人從高階新手到專家">五、人：從高階新手到專家</h2>
+<p>《技術修煉之道》借用了<strong>德雷福斯模型</strong>：新手、高階新手、勝任者、精通者、專家五個階段。最扎心的結論是：新手會自然進入高階新手階段，但高階新手不會自然進入後面的階段；超過半數的人終其一生都停留在高階新手階段，而&quot;其中一個重要的原因是：高階新手不知道自己是高階新手&quot;。高階新手把規則當作普適真理，精通者則明白&quot;所有的規則都只在特定的場景中才會有效&quot;。他給了三條建議：<strong>勇於承擔責任、在實踐中保持技能（摘&quot;跳起來能夠得著&quot;的蘋果）、關注問題場景。</strong></p>
+<p>《技術落地之道》講了一個隧道車燈的故事：入口立牌&quot;請開啟車燈&quot;，帶來了遊客忘關燈的新問題，幾輪修補之後，最後的解法是在出口寫一句&quot;你的燈亮著嗎？&quot;，**提醒問題的存在，讓該解決問題的人自己去解決。**他還給了一個公式：<strong>問題 = 期望 − 體驗</strong>。</p>
+<p>《技術進階之道》畫了一個按二八定律劃分的影響力金字塔，從團隊、公司、全國、全球影響者一路到行業開創者。他提到寫部落格、演講、出書可以作為獲得全國影響力的&quot;捷徑&quot;，但也強調&quot;技術影響力的前提是真正的技術實力&quot;。</p>
+<p>《高併發架構實戰課》的結束語寫了一個架構師的一天，總結是：&ldquo;架構師最核心的事情是要控制技術局面，讓事情有節奏地推進&rdquo;，而&quot;做事情要想看起來毫不費力，必須要在看不到的地方費很大力氣&quot;。</p>
+<h2 id="六我的反思這些觀點的邊界在哪裡">六、我的反思：這些觀點的邊界在哪裡</h2>
+<p>以下是我自己的看法。</p>
+<p>**1. 案例帶有鮮明的時代印記。**書中的大量例子來自 Java Web 和 Hadoop 1.x 時代：Servlet、繼承 <code>TestCase</code> 的 JUnit 3、JobTracker。原理沒有過時，但需要讀者自己&quot;翻譯&quot;。比如今天很多批處理跑在存算分離的架構上，網路頻寬大幅提升之後，&ldquo;移動計算比行動數據更划算&quot;不再是一條鐵律，而成了一個需要重新計算的權衡。不過這恰恰印證了他自己的方法：Spark 勝出是因為記憶體變便宜了，存算分離興起是因為網路變快了，<strong>變的是約束條件，不變的是&quot;在約束下做權衡&quot;這件事。</strong></p>
+<p>**2. 有些經驗法則需要還原到場景中。**比如單一職責原則在專欄裡被通俗化為&quot;類檔案儘量不要太大，最好不要超過一屏&rdquo;，Hash 表也被當作面試的&quot;分水嶺&quot;。作為教學，這些簡化很有效（他自己也承認&quot;O(1)&ldquo;這個說法並不嚴謹，極端情況下會退化為連結串列）。但按他自己的德雷福斯模型，把規則當作普適真理正是高階新手的特徵。真正值得學的不是&quot;一屏&quot;這個數字，而是&quot;一個類只應有一個引起它變化的原因&quot;背後的耦合觀。</p>
+<p>**3. 漏桶並非總不推薦。**他認為漏桶&quot;即使系統資源很空閒&quot;也會一個接一個慢慢處理請求，因此&quot;除非有特別的場景需求&quot;否則不推薦。這個判斷站在&quot;保護自身、最大化利用資源&quot;的視角是對的。但如果你是呼叫方，下游第三方介面要求嚴格平滑的呼叫速率，漏桶的&quot;整形&quot;特性恰恰就是你需要的。**令牌桶限的是總量、允許突發；漏桶限的是速率、消除突發。**選哪個，取決於你在保護誰。</p>
+<p><strong>4. 影響力金字塔有幸存者偏差的風險。</strong>&ldquo;寫部落格成為全國影響者&quot;的路徑確實存在，但他自己也提醒要有眼光。對大多數人來說，先在團隊內成為出了重要問題會被想到的人，比追求外部影響力更現實。</p>
+<p><strong>5. &ldquo;演化&quot;不等於&quot;不設計&rdquo;。</strong>&ldquo;大型網站是演化出來的&quot;常被誤讀為&quot;不需要前期設計&rdquo;。但他在《高併發架構實戰課》裡反覆做的恰恰是前期估算，並說&quot;技術指標估算能力是架構師的一個重要能力&rdquo;。我的理解是：**演化論反對的是過度設計，不反對估算。**知道系統大概會長成什麼樣，才能在當前階段留出恰當的擴充點。</p>
+<h2 id="七可以馬上開始做的幾件事">七、可以馬上開始做的幾件事</h2>
+<ol>
+<li>**用 5-20-2 法則重學一門你&quot;會用&quot;的技術。**先用一句話寫下它解決的問題，再寫出它的核心原理，最後才去看細節。寫不出第一句，說明你只會 API。</li>
+<li>**用五個特徵給一段改過多次的程式碼&quot;體檢&rdquo;。**看到 <code>xxxFlag</code> 時，想想 <code>copy()</code> 的故事。</li>
+<li>**檢查一個介面歸誰所有。**挑一個 Service 和 DAO 之間的介面，問問它應該放在哪個包裡。在 Go 裡試著把介面挪到使用方。</li>
+<li>**給你的系統畫一條效能特性曲線。**壓測出吞吐量和響應時間隨併發變化的拐點，再決定要不要上&quot;三板斧&quot;，以及先上哪一斧。</li>
+<li><strong>為入口加上一個令牌桶限流器，並寫清降級策略</strong>，比如 Redis 不可用時降級為本地限流。</li>
+<li><strong>開需求會時先問&quot;我們要解決的問題是什麼&quot;</strong>，用&quot;問題 = 期望 − 體驗&quot;檢驗它。</li>
+<li>**每季度問自己：我在德雷福斯模型的哪一級？**如果今年和去年做的事幾乎一樣，答案多半是高階新手。</li>
+</ol>
+<h2 id="結語">結語</h2>
+<p>從一張 Hash 表的按 key 定位，到 MapReduce 的按 key shuffle；從 <code>copy()</code> 依賴 <code>Reader</code> 介面，到 Tomcat 呼叫你的 <code>Servlet</code>，再到 Hadoop 把你的 <code>map</code> 函式分發到一萬臺機器上；從 RAID 的多盤併發，到 HDFS 的多機併發。李智慧的寫作反覆示範的，是同一個動作：<strong>把新問題還原成老原理。</strong></p>
+<p>他在開篇詞裡說，如果具體的技術是一朵花，那麼技術思維體系就是一棵樹。對我來說，這篇文章就是給自己的那棵樹修一次枝。</p>
+<h2 id="參考資料">參考資料</h2>
+<ul>
+<li>李智慧.《大型網站技術架構：核心原理與案例分析》，電子工業出版社，2013（目錄與簡介見 <a href="https://baike.baidu.com/item/%E5%A4%A7%E5%9E%8B%E7%BD%91%E7%AB%99%E6%8A%80%E6%9C%AF%E6%9E%B6%E6%9E%84%EF%BC%9A%E6%A0%B8%E5%BF%83%E5%8E%9F%E7%90%86%E4%B8%8E%E6%A1%88%E4%BE%8B%E5%88%86%E6%9E%90">百度百科</a>）</li>
+<li>李智慧.《這幾個問題解決了，大型網站架構設計不再是困難》（&ldquo;什麼是架構&quot;與&quot;軟體架構的五要素&rdquo;，節選自上書；<a href="https://blog.51cto.com/u_16099270/13027287">51CTO 轉載</a>）</li>
+<li>極客時間專欄 <a href="https://time.geekbang.org/column/intro/100040201">《後端技術面試 38 講》</a>：開篇詞、02 Hash 表、07 程式語言原理、10 軟體設計的目的、12 依賴倒置原則、16 設計模式基礎、17 程式設計框架中的設計模式、31 大數據架構、34 技術修煉之道、35 技術進階之道、36 技術落地之道（文本見 <a href="https://learn.lianglianglee.com/%E4%B8%93%E6%A0%8F/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF%E9%9D%A2%E8%AF%9538%E8%AE%B2/">lianglianglee 存檔</a>）</li>
+<li>極客時間專欄《從 0 開始學大數據》：<a href="https://time.geekbang.org/column/article/65106">04 移動計算比行動數據更划算</a>、05 從 RAID 看垂直伸縮到水平伸縮的演化、07 MapReduce 既是程式設計模型又是計算框架、10 模組答疑：我們能從 Hadoop 學到什麼、13 同樣的本質，為何 Spark 可以更高效（文本見 <a href="https://learn.lianglianglee.com/%E4%B8%93%E6%A0%8F/%E4%BB%8E0%E5%BC%80%E5%A7%8B%E5%AD%A6%E5%A4%A7%E6%95%B0%E6%8D%AE/">lianglianglee 存檔</a>）</li>
+<li>極客時間專欄 <a href="https://time.geekbang.org/column/intro/100105701">《李智慧 · 高併發架構實戰課》</a>：<a href="https://time.geekbang.org/column/article/486682">開篇詞</a>、02 高併發架構設計方法、08 秒殺系統設計、12 高效能架構的三板斧、15 限流器設計、結束語 一個架構師的一天（文本見 <a href="https://learn.lianglianglee.com/%E4%B8%93%E6%A0%8F/%E6%9D%8E%E6%99%BA%E6%85%A7%20%C2%B7%20%E9%AB%98%E5%B9%B6%E5%8F%91%E6%9E%B6%E6%9E%84%E5%AE%9E%E6%88%98%E8%AF%BE/">lianglianglee 存檔</a>）</li>
+<li>文中 Go 程式碼均為本文作者根據上述文章思路編寫，已在本地編譯執行。</li>
+</ul>
+]]></content:encoded></item></channel></rss>

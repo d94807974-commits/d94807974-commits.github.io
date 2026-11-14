@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>大乙方 on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/%E5%A4%A7%E4%B9%99%E6%96%B9/</link><description>Recent content in 大乙方 on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Tue, 10 Nov 2026 12:10:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/%E5%A4%A7%E4%B9%99%E6%96%B9/index.xml" rel="self" type="application/rss+xml"/><item><title>工程師視角讀劉潤〈如何成為一個大乙方〉：專業價值不是服從，也不是一律拒絕</title><link>https://d94807974-commits.github.io/posts/liu-run-big-vendor-professional-value-engineer-review/</link><pubDate>Tue, 10 Nov 2026 12:10:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/liu-run-big-vendor-professional-value-engineer-review/</guid><description>分析劉潤 2021 年的文章〈所有的合作，都要有專業的價值：如何成為一個大乙方？〉：小乙方靠服從、大乙方靠專業，專業包括能力（了解自己、理解他人）與態度（有原則的堅定）。本文逐條核對文中案例與數字的出處，指出成立與被簡化的部分，再落到乙方交付、外包與供應商、內部平臺團隊、顧問與架構師、何時說不、需求澄清與範圍管理、SLA 與責任邊界等工程場景，給出可執行做法與檢查清單。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/liu-run-big-vendor-professional-value-engineer-review.html">小乙方與大乙方的回覆差異、說不的判斷與交付流程</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>劉潤「小乙方靠服從，大乙方靠專業」的判斷方向是對的：把對方的問題當成需求照單全收，是交付失敗的常見起點。但專業價值不等於敢拒絕；工程上要做的是把問題還原成目標、給出帶成本的選項與建議、主動列出風險，只在底線問題上堅持，並用合約、SLA 與決策紀錄把責任邊界寫清楚。</p>
+</div><blockquote>
+  <p>原文：〈所有的合作，都要有專業的價值：如何成為一個大乙方？〉，劉潤口述、蕉皮編輯，微信公眾號「劉潤」第 1268 篇原創，2021-08-25 首發。微信原文連結未能在搜尋中取得；本文依官方帳號「劉潤商學」2026-06-29 在騰訊新聞的重發版（標註「本文首發於2021年8月」）與搜狐 2021-08-25 的轉載版閱讀全文。下文引用原文只取短句並轉為繁體，標註「原文」。查核日期：2026-11-10（Asia/Singapore）。</p>
+
+</blockquote><h2 id="一原文在講什麼">一、原文在講什麼</h2>
+<p>原文分三段，每段一個故事：</p>
+<table>
+	<thead>
+			<tr>
+					<th>段落</th>
+					<th>故事</th>
+					<th>原文短句</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>小乙方與大乙方</td>
+					<td>作者看演講場地時提了三個問題，第一家供應商都回「好的，可以」並記下；第二家給出判斷、A/B 方案、成本與建議，還主動提醒十幾處要注意的細節</td>
+					<td>「小乙方，靠『服從性』；大乙方，靠『專業性』。」</td>
+			</tr>
+			<tr>
+					<td>專業的能力</td>
+					<td>了解自己：作者的公司能提供知識、流量、信用三樣東西。理解他人：品牌方的 brief 連每段比例都規定好，作者改用自己的文章結構，理由是要同時照顧讀者</td>
+					<td>「因為我為你的目標和需求負責。」</td>
+			</tr>
+			<tr>
+					<td>專業的態度</td>
+					<td>「Assertive，有原則的堅定」：拒絕在推廣文裡加入攻擊競品的話，並按合約退款；拒絕替別人「論證」既定結論</td>
+					<td>「每一段文字，每一篇文章，都完全代表自己的真實觀點。」</td>
+			</tr>
+	</tbody>
+</table>
+<p>結尾的結論是：甲方是客戶與合作夥伴，不是「爸爸」。</p>
+<h2 id="二事實與說法核對">二、事實與說法核對</h2>
+<p>原文是個人經驗文，沒有引用外部研究。能核對的是案例的一致性與數字的出處。</p>
+<table>
+	<thead>
+			<tr>
+					<th>說法</th>
+					<th>核對結果</th>
+					<th>判斷</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>「10 月份辦演講」看場地的對話</td>
+					<td>2026 年官方重發版改寫為「每年10月份」。2023 年劉潤公眾號第 1991 篇〈重要時刻，不要輸在同理心上〉用了幾乎相同的對話結構，但場景換成藝術展覽，提醒事項從「10幾處」變成「大概有20項」（轉載站目前回應 500，依搜尋快取讀取）</td>
+					<td>適合當示意性的故事，不宜當成可查證的事件紀錄</td>
+			</tr>
+			<tr>
+					<td>公眾號讀者「差不多有180萬」</td>
+					<td>2021 版寫 180 萬；2026 重發版改為「440多萬」；另一篇談 To B 合作的文章寫 220 萬。都是作者自述</td>
+					<td>未驗證；重發時數字被更新，說明這是寫作當下的自述</td>
+			</tr>
+			<tr>
+					<td>拒絕加入攻擊競品內容、按合約退款</td>
+					<td>只有作者單方敘述，沒有對方說法</td>
+					<td>無法核實；但「按合約退款」這個細節本身是可複製的機制</td>
+			</tr>
+			<tr>
+					<td>小乙方「沒做過什麼大的項目，也沒有很強的專業能力」所以靠服從</td>
+					<td>因果被簡化。服從也可能是議價力弱的結果：小供應商拒絕一次，可能就失去這個客戶</td>
+					<td>值得商榷</td>
+			</tr>
+			<tr>
+					<td>第一家供應商「把問題當成要求」</td>
+					<td>只有甲方視角。對方把問題記下、回去評估，也是一種常見做法；文章沒有給對方的說法</td>
+					<td>結論可能成立，證據只有一面</td>
+			</tr>
+			<tr>
+					<td>「Assertive，有原則的堅定」</td>
+					<td>原文強調「堅定」。工程組織常見的版本是 Amazon 領導力準則 &ldquo;Have Backbone; Disagree and Commit&rdquo;：反對時要 &ldquo;respectfully challenge&rdquo;，決定後要 &ldquo;commit wholly&rdquo;</td>
+					<td>成立但只講了一半：少了「尊重地反對」與「決定後全力執行」</td>
+			</tr>
+	</tbody>
+</table>
+<h2 id="三哪些觀點成立">三、哪些觀點成立</h2>
+<p><strong>1. 問題不等於需求。</strong> 原文最有價值的一句是「他把我的問題和建議，當成了要求」（原文）。軟體圈有個對應的名詞叫 XY 問題：對方問的是自己想到的解法（Y），而不是真正的問題（X）。照著 Y 做，常常白做。</p>
+<p><strong>2. 回覆要帶選項、成本與建議。</strong> 第二家供應商的回覆有四個部分：判斷（椅子要撤、螢幕要換）、兩個方案的優劣、成本、明確建議。這與架構決策紀錄（ADR，Architecture Decision Record）的結構一致：背景、選項、決定、後果。</p>
+<p><strong>3. 主動提醒風險是專業的一部分。</strong> 「還有如下這麼10幾處，是咱們必須重點關注的」（原文）。ACM 職業道德守則 2.5 條要求對系統及其影響做全面評估，「including analysis of possible risks」。不說出來的風險，出事時就變成責任糾紛。</p>
+<p><strong>4. 了解自己，不承諾做不到的事。</strong> 原文說了解自己才「不會承諾自己做不到的事情」（原文）。ACM 守則 1.3 條要求誠實說明能力的限制，2.6 條要求只在能力範圍內接案，發現能力不足時要告知客戶。</p>
+<p><strong>5. 底線要靠機制守住。</strong> 原文拒稿後「按照合同，把錢退給了」對方（原文）。這一步比「堅定」兩個字更重要：事先寫好的條款，讓拒絕有成本上限，也讓對方知道規則。</p>
+<h2 id="四哪些地方要打折">四、哪些地方要打折</h2>
+<p><strong>1. 說不的底氣，部分來自議價力。</strong> 作者能拒絕 brief、拒絕改稿，背後是幾百萬讀者帶來的稀缺性。新團隊、新供應商照搬「我寫不了」，結果可能只是失去合作。工程上的替代做法是：先用證據說服（數據、過往案例、風險），把拒絕留給底線問題。</p>
+<p><strong>2. 原則和偏好要分開。</strong> 原文的三個拒絕案例都是誠信問題（攻擊對手、論證既定結論、粉飾財務危機）。但 brief 的段落比例屬於表達方式的偏好。把偏好包裝成原則，會讓合作方覺得你難以合作。</p>
+<p><strong>3. 專業判斷也會錯。</strong> 原文承認「我們的觀點，當然也是會錯的」（原文），但沒有說錯了怎麼辦。Amazon 的 &ldquo;Are Right, A Lot&rdquo; 準則要求主動尋找反證（&ldquo;work to disconfirm their beliefs&rdquo;）。工程上對應的是：建議要附上前提與驗證方式，前提不成立時能回頭修改。</p>
+<p><strong>4. 甲方保有決定權。</strong> 大乙方給建議，甲方做決定。對方在知情的情況下選了你不推薦的方案，只要不碰底線，就照做，並把決定記下來。這就是 disagree and commit。</p>
+<h2 id="五落到工程場景">五、落到工程場景</h2>
+<h3 id="1-乙方交付外包與供應商">1. 乙方交付、外包與供應商</h3>
+<p><strong>現象</strong>：需求文件寫得很細，交付時才發現做出來的東西不能用；雙方互指「這是你要求的」。</p>
+<p><strong>原因</strong>：雙方都把文件當成目標，沒有人負責確認文件背後的業務目標。</p>
+<p><strong>做法</strong>：</p>
+<ol>
+<li>開工前做一次「目標回述」：用自己的話寫下對方要達成的業務結果與驗收方式，請對方確認。</li>
+<li>每個需求標註來源：是對方的問題、對方提出的解法，還是我方建議。</li>
+<li>對方提出的解法，先問「這要解決什麼問題」，再決定是否照做。</li>
+</ol>
+<h3 id="2-內部平臺團隊對業務方">2. 內部平臺團隊對業務方</h3>
+<p><strong>現象</strong>：業務方提出「幫我開一個資料庫帳號，給全部權限」。平臺團隊照做最快，但會留下安全與穩定性問題。</p>
+<p><strong>原因</strong>：平臺團隊的角色被看成「工單處理者」，而不是有自己服務邊界的提供者。</p>
+<p><strong>做法</strong>：</p>
+<ol>
+<li>公開服務目錄：能提供什麼、交付時間、SLO、不提供什麼。這就是平臺版的「了解自己」。</li>
+<li>對超出目錄的請求，用固定格式回覆：還原目標、給出目錄內的替代方案、說明例外流程與核准人。</li>
+<li>權限、資料、安全相關的請求，預設走最小權限，例外要有到期日。</li>
+</ol>
+<h3 id="3-顧問與架構師">3. 顧問與架構師</h3>
+<p><strong>現象</strong>：被請來「背書」既定方案；或只給結論，不給理由。</p>
+<p><strong>原因</strong>：把專業價值當成頭銜，而不是可檢驗的判斷。</p>
+<p><strong>做法</strong>：</p>
+<ol>
+<li>評估報告分三段：事實（量測或文件依據）、判斷（含前提）、建議（含替代方案與成本）。</li>
+<li>被要求論證既定結論時，改為提供獨立評估；評估結果與對方預期不同，照實寫。這與原文拒絕「論證五大戰略先進性」是同一件事。</li>
+<li>重要建議寫成 ADR，記錄當時的選項與取捨，方便日後回頭檢查。</li>
+</ol>
+<h3 id="4-何時該說不">4. 何時該說不</h3>
+<table>
+	<thead>
+			<tr>
+					<th>情境</th>
+					<th>屬於</th>
+					<th>做法</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>要求跳過安全審查、關閉稽核日誌、共用高權限帳號</td>
+					<td>底線</td>
+					<td>拒絕，並提供合規的替代方案</td>
+			</tr>
+			<tr>
+					<td>要求報告裡隱藏已知缺陷、修改量測數據</td>
+					<td>底線</td>
+					<td>拒絕；ACM 守則 1.3 條明列偽造資料違反守則</td>
+			</tr>
+			<tr>
+					<td>要求承諾做不到的時程或可用性</td>
+					<td>底線</td>
+					<td>說明做不到的原因，給出做得到的範圍與條件</td>
+			</tr>
+			<tr>
+					<td>指定不推薦的技術方案</td>
+					<td>偏好或取捨</td>
+					<td>說明風險與成本，對方知情決定後照做並記錄</td>
+			</tr>
+			<tr>
+					<td>文件格式、命名、介面樣式</td>
+					<td>偏好</td>
+					<td>照對方習慣做</td>
+			</tr>
+	</tbody>
+</table>
+<h3 id="5-需求澄清與範圍管理">5. 需求澄清與範圍管理</h3>
+<p><strong>現象</strong>：每次會議都多出「順便」的需求，交付日不變。</p>
+<p><strong>原因</strong>：沒有把範圍變更和時程、成本連在一起。</p>
+<p><strong>做法</strong>：</p>
+<ol>
+<li>每個新需求都回答三個問題：要解決什麼問題、不做會怎樣、要拿掉什麼或延後多久。</li>
+<li>範圍變更用書面確認，附上對時程與成本的影響。</li>
+<li>把「不做什麼」也寫進範圍說明，避免被當成隱含承諾。</li>
+</ol>
+<h3 id="6-sla-與責任邊界">6. SLA 與責任邊界</h3>
+<p><strong>現象</strong>：事故發生後，雙方對「誰該負責」各說各話。</p>
+<p><strong>原因</strong>：責任只在口頭上，沒有量化的承諾與後果。</p>
+<p><strong>做法</strong>：</p>
+<ol>
+<li>區分 SLO 與 SLA。Google SRE 書的定義是：SLA 是與使用者之間包含後果的明示或默示合約；沒有明確後果的，多半只是 SLO。</li>
+<li>SLA 寫清楚量測方式、排除條件、依賴方責任、未達標的後果。</li>
+<li>把底線條款與退出條款寫進合約。原文「按照合同退款」的做法，就是事先約定好的退出機制。</li>
+</ol>
+<h2 id="六可以直接用的回覆格式">六、可以直接用的回覆格式</h2>
+<p>收到對方的問題或指定解法時，用四段回覆：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>1. Restate: what problem are we solving, and how will we know it is solved?
+</span></span><span style="display:flex;"><span>2. Options: A / B (and &#34;do nothing&#34;), each with trade-offs, cost, and risk.
+</span></span><span style="display:flex;"><span>3. Recommendation: which option, why, and the assumptions behind it.
+</span></span><span style="display:flex;"><span>4. Also note: other risks or details you may not have asked about.
+</span></span></code></pre></div><p>這四段分別對應原文第二家供應商的回覆：確認問題、A/B 方案與成本、明確建議、主動提醒十幾處細節。</p>
+<h2 id="七檢查清單">七、檢查清單</h2>
+<ul>
+<li><input disabled="" type="checkbox"> 我寫下了對方的業務目標與驗收方式，並請對方確認。</li>
+<li><input disabled="" type="checkbox"> 每個需求都標了來源：問題、對方的解法，或我方建議。</li>
+<li><input disabled="" type="checkbox"> 重要決定附有選項、成本、風險與建議，並記錄在 ADR 或決策紀錄裡。</li>
+<li><input disabled="" type="checkbox"> 我主動列出了對方沒問到的風險。</li>
+<li><input disabled="" type="checkbox"> 我公開了自己的服務範圍、不提供的項目與 SLO。</li>
+<li><input disabled="" type="checkbox"> 我沒有承諾做不到的時程或可用性。</li>
+<li><input disabled="" type="checkbox"> 我分清了底線與偏好；只在底線上拒絕。</li>
+<li><input disabled="" type="checkbox"> 對方在知情下做了不同決定時，我照做並記錄。</li>
+<li><input disabled="" type="checkbox"> 合約或服務協議寫明了 SLA、責任邊界、底線條款與退出方式。</li>
+</ul>
+<h2 id="八邊界與限制">八、邊界與限制</h2>
+<ol>
+<li>原文是個人經驗文，案例只有作者單方敘述，本文無法核實其中任何一個事件。</li>
+<li>原文的情境是內容合作與活動供應商，搬到軟體交付時，「專業判斷」需要更多可量測的證據支撐。</li>
+<li>本文的工程做法來自公開的工程實踐與職業守則，沒有實測資料。</li>
+<li>劉潤其他談 To B 合作與同理心的文章，本文只用來核對案例與數字的一致性，沒有展開分析。</li>
+</ol>
+<h2 id="參考">參考</h2>
+<p>原文與相關文章：</p>
+<ul>
+<li>劉潤，〈所有的合作，都要有專業的價值：如何成為一個大乙方？〉，劉潤商學 2026-06-29 重發（騰訊新聞）：<a href="https://news.qq.com/rain/a/20260629A02DK900">https://news.qq.com/rain/a/20260629A02DK900</a></li>
+<li>同文 2021-08-25 轉載（搜狐，來源：劉潤）：<a href="https://www.sohu.com/a/485561310_117018">https://www.sohu.com/a/485561310_117018</a></li>
+<li>同文轉載（MBA 智庫資訊，2021-09-03）：<a href="https://news.mbalib.com/story/252277">https://news.mbalib.com/story/252277</a></li>
+<li>同文轉載（天九雲，標題改為〈在演講現場，與合作夥伴聊了聊後，我決定不合作了〉）：<a href="https://www.tojoyun.com/news/zixun/61270e4edecd2229720a6247">https://www.tojoyun.com/news/zixun/61270e4edecd2229720a6247</a></li>
+<li>劉潤，〈To B合作，要更有專業精神和價值〉（轉載）：<a href="https://www.growthhk.cn/quan/50898.html">https://www.growthhk.cn/quan/50898.html</a></li>
+<li>劉潤，〈重要時刻，不要輸在同理心上〉，公眾號第 1991 篇（轉載，查核時回應 500）：<a href="http://www.yinhang.mbahome.com/depth/2023/0826/5499.html">http://www.yinhang.mbahome.com/depth/2023/0826/5499.html</a></li>
+</ul>
+<p>工程與職業實踐：</p>
+<ul>
+<li>Amazon Leadership Principles（Have Backbone; Disagree and Commit；Are Right, A Lot）：<a href="https://www.amazon.jobs/content/en/our-workplace/leadership-principles">https://www.amazon.jobs/content/en/our-workplace/leadership-principles</a></li>
+<li>ACM Code of Ethics and Professional Conduct（1.3、2.5、2.6）：<a href="https://www.acm.org/code-of-ethics">https://www.acm.org/code-of-ethics</a></li>
+<li>The XY Problem：<a href="https://xyproblem.info/">https://xyproblem.info/</a></li>
+<li>Google SRE Book, Service Level Objectives：<a href="https://sre.google/sre-book/service-level-objectives/">https://sre.google/sre-book/service-level-objectives/</a></li>
+<li>Michael Nygard, Documenting Architecture Decisions：<a href="https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions">https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions</a></li>
+</ul>
+]]></content:encoded></item></channel></rss>

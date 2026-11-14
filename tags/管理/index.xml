@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>管理 on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/%E7%AE%A1%E7%90%86/</link><description>Recent content in 管理 on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Thu, 05 Nov 2026 13:25:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/%E7%AE%A1%E7%90%86/index.xml" rel="self" type="application/rss+xml"/><item><title>《讓別人贏》讀書筆記：重新定義「贏」，以及它在工程團隊裡的邊界</title><link>https://d94807974-commits.github.io/posts/let-others-win-reading-notes/</link><pubDate>Wed, 04 Nov 2026 14:42:09 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/let-others-win-reading-notes/</guid><description>黃冠華《讓別人贏》（商業週刊出版 2022 / 廣東人民出版社 2024）讀書筆記：結合繁體書摘、作者商周專欄、《經理人》《商業週刊》《理財週刊》報道與臺灣 Podcast，梳理旭榮的經營現場、「贏」與「贏得」、布袋戲、高鐵與火車、五步驟、Backseat Driver、兩清、ATOS、讓客戶贏等觀點，以及在工程團隊裡的應用與侷限。</description><content:encoded><![CDATA[<div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>《讓別人贏》的中心句是「唯有真心利他，才能真正利己」。放到工程團隊裡，可以讓的是功勞與偏好之爭；正確性、安全與資料一致性的問題必須堅持。</p>
+</div><blockquote>
+  <p>素材說明：我沒有拿到全書正文。這篇筆記依據的材料分四類：</p>
+<ol>
+<li><strong>出版方資料</strong>：出版社簡介、完整目錄、作者自序和推薦序。</li>
+<li><strong>公開書摘與專欄</strong>：金石堂、《經理人》、《商業週刊》刊出的書摘，以及作者在《商業週刊》的專欄文章，共九篇：
+<ul>
+<li>〈火車還是高鐵？〉</li>
+<li>〈Backseat Driver〉</li>
+<li>〈讓別人贏！〉</li>
+<li>〈讓孩子贏〉</li>
+<li>〈交代事情的五個步驟〉</li>
+<li>〈你可以選老闆，但不需要挑同事〉</li>
+<li>〈前一天偷竊被抓的同事，今天來擁抱我〉</li>
+<li>〈最有溫度的問候：您會不會對酒精過敏？〉</li>
+<li>〈All the other shits〉（後者付費牆內只讀到開頭）</li>
+</ul>
+</li>
+<li><strong>報道與訪談</strong>：《經理人》（2019）、《商業週刊》（2022）、《理財週刊》（2025，經濟日報轉載）、TVBS（2022）對作者和旭榮的報道，以及四檔臺灣 Podcast 的節目簡介。</li>
+<li><strong>讀者評論</strong>：豆瓣上的評分和短評。</li>
+</ol>
+<p>引用規則：</p>
+<ul>
+<li>引號裡的話都抄自這些公開來源，繁體原文保留繁體字。</li>
+<li>Podcast 我只讀到節目頁的重點列表，沒有聽全集，所以只引用列表裡的字句。</li>
+<li>其他章節只看得到標題，我不推測內容。</li>
+</ul>
+<p>所以這是一篇基於全書主要觀點的讀書筆記。本文首發後，補充了繁體中文資料並重寫。</p>
+
+</blockquote><figure>
+<img src="/images/let-others-win-reading-notes/handshake.jpg" alt="握手" loading="lazy" width="800">
+<figcaption>圖片：USMC photo by Cpl. Paula M. Fitzgerald / <a href="https://commons.wikimedia.org/wiki/File:Handshake.jpg">Wikimedia Commons</a>，公有領域。本地託管。</figcaption>
+</figure>
+<h2 id="一書籍資訊一本書兩個版本">一、書籍資訊：一本書，兩個版本</h2>
+<p>書名叫《讓別人贏》的書裡，最常被提到的是臺灣企業家**黃冠華（Sunny Huang）**這一本。它用中文寫成，不是譯作，有繁體、簡體兩個版本：</p>
+<table>
+	<thead>
+			<tr>
+					<th></th>
+					<th>繁體原版</th>
+					<th>簡體版</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>書名</td>
+					<td>《讓別人贏：在人生多重角色中，55個修煉與覺察的智慧》</td>
+					<td>《讓別人贏》（商品頁副題：弱者拆臺，強者補臺，智者搭臺，讓別人贏，不代表讓自己輸）</td>
+			</tr>
+			<tr>
+					<td>出版</td>
+					<td>商業週刊出版（臺北，城邦集團旗下），紅沙龍書系第58號</td>
+					<td>廣東人民出版社，紫圖圖書出品</td>
+			</tr>
+			<tr>
+					<td>時間</td>
+					<td>2022-05-12 初版</td>
+					<td>2024-01-01</td>
+			</tr>
+			<tr>
+					<td>規格</td>
+					<td>256 頁（圖書館著錄 254 面），NT$380，ISBN 9786267099308</td>
+					<td>216 頁（豆瓣），定價 55 元，ISBN 9787218169842</td>
+			</tr>
+			<tr>
+					<td>篇數</td>
+					<td>55 篇</td>
+					<td>54 篇</td>
+			</tr>
+	</tbody>
+</table>
+<p>據 TVBS 2022 年 5 月的報道，繁體版由 YouTube 共同創辦人陳士駿和臺灣數位企業總會創會理事長陳來助作序。書出版後，商周集團陸續做了幾件推廣：執行長郭奕伶寫了專欄，開了一門線上導讀課〈讓別人贏！百億跨國企業家的利他領導學〉，又在「商週讀書會」做了一集黃冠華與劉軒的對談。</p>
+<p><strong>作者是誰。</strong> 商周專欄的作者簡介寫道：黃冠華畢業於師大附中、輔大織品服裝系、英國愛丁堡大學訓練與發展管理研究所，臺大與復旦雙 EMBA。</p>
+<ul>
+<li>2002 年加入家族企業旭榮集團，「以『共治』取代『接班』」。</li>
+<li>與父母一起治理一家員工過萬、橫跨 14 個國籍與文化區域的紡織企業。</li>
+<li>2015 年創辦創業者社群 WorkFace Taipei，2017 年創辦識富天使會。</li>
+<li>在臺大、政大、中山、東海等校的 EMBA 講授接班傳承和天使投資。</li>
+</ul>
+<p>自序裡他自己說：&ldquo;這本書的內容大部分取之於我在商周開設的專欄&rdquo;。所以這是一本<strong>專欄文集</strong>，每篇幾頁紙，篇末常帶一段幽默的 PS。</p>
+<p>兩個版本有幾處不同，對照目錄能看出來：</p>
+<ul>
+<li><strong>篇章順序</strong>：繁體版依次是經營管理、天使投資、思維轉換、為人父母；簡體版把&quot;思維轉換篇&quot;挪到最前面。</li>
+<li><strong>篇目增刪</strong>：簡體版去掉了〈修行〉和〈疫情第三級後的領導思維〉，加了〈面對挑戰，才能激發無限可能〉。</li>
+<li><strong>改名</strong>：〈Backseat Driver〉在簡體版叫〈縮小自己，別做指手畫腳的人〉。</li>
+</ul>
+<h2 id="二書背後的經營現場旭榮是一傢什麼公司">二、書背後的經營現場：旭榮是一傢什麼公司</h2>
+<p>這本書的說服力，很大程度上來自作者經營的那家公司。所以先補上繁體媒體對旭榮的報道。</p>
+<ul>
+<li><strong>規模</strong>：《經理人》2019 年的報道稱，旭榮是&quot;臺灣最大針織布一條龍整合廠&quot;，客戶包括 Adidas 和 PVH 集團。1975 年由黃信峰、黃莊芳容夫婦創立。2002 年集團營收約 30 億元新臺幣時，27 歲的黃冠華回到家族企業，與父母「共治」。2018 年營收達 257 億元新臺幣。《商業週刊》第 1803 期則把他的成績單寫成：&ldquo;與父母二代共治20年，帶領集團年營收從30億元成長至300億元，疫情期間營收連年創新高&rdquo;。</li>
+<li><strong>非洲</strong>：外界稱讚旭榮 2002 年進軍非洲&quot;高瞻遠矚&quot;。作者對《經理人》坦白，真相是&quot;被代工廠倒帳&quot;之後硬著頭皮下的決定：&ldquo;你說，那是高瞻遠矚嗎？&ldquo;他的總結是：「領導者要學習與變動共處，與不夠完美、不滿意的事情共處。」</li>
+<li><strong>預算歸零</strong>：旭榮不按慣例每年 12 月照抄去年的預算，而是&quot;每年預算重新歸零，從頭檢視該花什麼、該整治什麼&rdquo;。</li>
+<li><strong>拒絕跟風</strong>：幾年前編織鞋流行，國際大廠找上門，作者拒絕了，理由是「那 know-how 不是我的」。後來接單的同行因為更大的競爭者搶單而掉單，買來的機臺成了損失。作者的說法是：「我看見流行，但不從眾」。</li>
+<li><strong>人才觀</strong>：《理財週刊》2025 年的報道（經濟日報轉載）引作者的話，&ldquo;人才不是資產而是資源&rdquo;：資產是死的、拿來交易的，資源是活的、有發展潛能的。文中還寫到，越南&quot;513 大暴動&quot;時，鄰近工廠被燒燬，旭榮的越南員工&quot;手牽著手形成人牆保護工廠&rdquo;。</li>
+</ul>
+<p>這些報道讓我更清楚地看到書裡觀點的來處：「讓別人贏」不只是一句處世格言，也是一家跨國製造企業在實際運營中反覆用到的管理選擇。</p>
+<h2 id="三核心命題與結構">三、核心命題與結構</h2>
+<p>全書的中心句，作者在自序裡寫得很直白：</p>
+<blockquote>
+  <p>&ldquo;為什麼要「讓別人贏」？因為唯有真心利他，才能真正利己！&rdquo;</p>
+
+</blockquote><p>這句話在四種身份裡分別落地，對應書的四篇：</p>
+<ol>
+<li><strong>經營管理篇·成長的飛輪</strong>：經營者讓員工和客戶贏。目錄導語是&quot;我以高鐵為師，期許每一位員工都是公司成長的飛輪&quot;。</li>
+<li><strong>天使投資篇·錢也是有情懷的</strong>：投資人讓創業者贏。</li>
+<li><strong>思維轉換篇·你輸我贏？</strong>：個人在日常關係裡讓別人贏。</li>
+<li><strong>為人父母篇·別教孩子&quot;乖&quot;</strong>：父母讓孩子贏。</li>
+</ol>
+<p>貫穿全書的概念是<strong>重新定義&quot;贏&quot;</strong>。郭奕伶轉述作者在新書釋出會上的話：讓別人贏，不是要大家與世無爭，&ldquo;而是要隨時定義，對自己來說，什麼是真正的贏？&ldquo;出版社簡介把它濃縮成一個比喻：西方人玩撲克，比的是牌的大小；亞洲人打麻將，本質是&quot;和諧的組成&rdquo;，&ldquo;贏的關鍵，不是因為你最強大，而是因為你們的「局」最和諧&rdquo;。</p>
+<p>「商週讀書會」那一集的重點列表裡，有一句更簡潔的版本：「『讓』只是手段、重點是『贏』」。《理財週刊》的採訪裡，作者又補了一個區分：</p>
+<blockquote>
+  <p>「贏」和「贏得」概念不同，我讓你贏，但我贏得更多，例如，夫妻吵架，我先認輸，表面上是輸了，實質上贏得更長久的關係。</p>
+
+</blockquote><p>我覺得這組區分是理解全書的鑰匙。<strong>&ldquo;贏&quot;是一個回合的結果，&ldquo;贏得&quot;是一段關係的存量。</strong> 讓出前者，是為了積累後者。</p>
+<h2 id="四關鍵觀點與例子">四、關鍵觀點與例子</h2>
+<h3 id="1-布袋戲的故事贏的成本由誰付">1. 布袋戲的故事：贏的成本由誰付</h3>
+<p>書名來自〈讓別人贏！〉這一篇。</p>
+<p>作者的父親邀母親去看黃俊雄布袋戲，母親不想去，父親就和朋友去了。回來他對兒子大讚&quot;有史以來最棒的表演&rdquo;。晚餐時母親問起，他卻淡淡地說：&ldquo;你真是有先見之明，還好你沒去看，表演就一般般。&rdquo;</p>
+<p>事後父親解釋：&ldquo;你要懂得讓別人贏呀！&ldquo;已經發生的事&quot;不需要再去炒冷飯&rdquo;，戲他已經看到了，&ldquo;已經賺到了&rdquo;。Podcast《腦闆想什麼？》那一集的節目簡介說，「讓別人贏」不只是書名，&ldquo;還意味著對爸爸智慧的欽佩&rdquo;，像是作者&quot;榮耀爸爸的一個告白&rdquo;。</p>
+<p>接著作者把自己從小到大的好勝心理一層層攤開：</p>
+<ul>
+<li>小時候打架，一定要打最後一下；</li>
+<li>吵架，一定要說&quot;最後那一句最傷人的話&rdquo;；</li>
+<li>每一句的結尾都是&quot;因為要贏&rdquo;。</li>
+</ul>
+<p>我覺得這是全書最有力量的一段。它點出的是：很多&quot;贏&quot;，贏到的只是情緒上的那一下，代價卻由關係來付。</p>
+<h3 id="2-把對讓出去領導者的格局">2. 把&quot;對&quot;讓出去：領導者的格局</h3>
+<p>金惟純的推薦序舉了劉備的例子。據說劉備常說三句話：&ldquo;你說的有道理！這件事很重要！我怎麼沒想到！&rdquo;</p>
+<ul>
+<li>第一句，把&quot;對&quot;讓給別人；</li>
+<li>第二句，把&quot;成就&quot;讓給別人；</li>
+<li>第三句，把&quot;贏&quot;讓給別人。</li>
+</ul>
+<p>他接著點破難處：&quot;「對」和「贏」，正是小我最難割捨的執著！&ldquo;一個組織裡人人都想證明自己對，&ldquo;消耗的能量、減損的效能，可想而知&rdquo;。</p>
+<h3 id="3-火車還是高鐵讓一線贏">3. 火車還是高鐵：讓一線贏</h3>
+<p>2020 年初疫情暴發時，旭榮原定辦一場千人規模的 45 週年慶和全球策略大會，最後宴會取消，會議改為線上。作者特別寫到，工作團隊&quot;皆在我下達指令前，都預先擬好方案，再呈交決策&rdquo;。</p>
+<p>篇末的 PS 給出比喻：一般火車&quot;只有車頭有動力&quot;，高鐵&quot;每節車廂都有動力&quot;。《商業週刊》第 1803 期的報道說得更直白：旭榮在疫情期間營收屢創新高，&ldquo;關鍵竟是把權力「讓」出去&rdquo;。郭奕伶在專欄裡還轉述了他後來的做法：把權力下放給各國分公司，&ldquo;要讓聽得見炮聲的人做決策！&rdquo;</p>
+<h3 id="4-交代事情的五個步驟用提問培養人">4. 交代事情的五個步驟：用提問培養人</h3>
+<p>這是全書最像方法論的一篇，作者也承認這個方法源自日本人的領導哲學。核心是&quot;一次說明加四個問題&quot;：</p>
+<ol>
+<li>清楚說明要交付什麼事；</li>
+<li>問對方&quot;剛剛交付的是什麼事情？&quot;；</li>
+<li>問對方是否明白這件事的目的；</li>
+<li>問執行中可能出現的意外，以及應對方案；</li>
+<li>問對方有沒有讓事情&quot;更最佳化&quot;的建議。</li>
+</ol>
+<p>他的結論是&quot;教練之道無他，提問而已！&ldquo;PS 裡還自嘲這套方法的缺點：&ldquo;就是人家嫌你囉唆&rdquo;。《羿起創業》Podcast 那一集的重點列表裡，也有「當大家的教練」「不要跟自己的專業談戀愛」兩條。</p>
+<h3 id="5-backseat-driver縮小自己">5. Backseat Driver：縮小自己</h3>
+<p>在投資篇裡，作者用&quot;後座司機&quot;形容那些好為人師的創業導師：手上沒握方向盤，卻老對司機下指導棋。他認為根源在於&quot;我們常常過度放大了自己的重要性&rdquo;。很多時候&quot;「聽」比「說」來的更重要&quot;，創業者要的&quot;只是精神陪伴與資源支援&quot;。識富天使會的投資心法是&quot;別領我行、別跟我走、在我身旁、做我摯友&quot;。</p>
+<p>《理財週刊》的報道補充了他的做法。作者常問創業者：&ldquo;我能幫助你什麼，多過我能給你多少錢&rdquo;。他認為過去的老經驗反而會掐死新創思維，所以要扮演&quot;只給問題不給答案的教練角色&quot;。</p>
+<h3 id="6-管理邏輯常識偷竊工人的擁抱">6. 管理＝邏輯＋常識：偷竊工人的擁抱</h3>
+<p>〈前一天偷竊被抓的同事，今天來擁抱我〉（商周專欄，2022-05-25）是我讀到的最好的一篇。</p>
+<p>作者到非洲巡廠，正好撞上一個工人偷竊，按廠規罰了款。第二天一早，這個工人衝過來喊&quot;Good morning Sir&quot;，還要擁抱他。作者問他怎麼回事，工人用英文回答：</p>
+<blockquote>
+  <p>「Boss，你昨天抓到我偷東西，也處罰我了對不對？我們應該是兩清了，Today is a whole new day，你為什麼還一直活在過去呢？」</p>
+
+</blockquote><p>作者坦言&quot;當下我真的是被教育到了&quot;。他由此對比儒家式的&quot;帶罪之身&quot;與西方的&quot;合約精神&quot;。後來旭榮&quot;有計畫地讓非洲的管理當地化&quot;，到現在當地幾乎沒有臺灣主管了。</p>
+<p>這篇的結論是：</p>
+<blockquote>
+  <p>「領導與管理，其實就是邏輯加常識……貫穿這一切的，其實就是人跟人的基本尊重，你尊重別人，別人就會尊重你。」</p>
+
+</blockquote><h3 id="7-讓客戶贏一句您會不會對酒精過敏">7. 讓客戶贏：一句&quot;您會不會對酒精過敏？&quot;</h3>
+<p>〈最有溫度的問候〉（商周專欄，2022-05-31）講的是一家美甲店在疫情中的做法：</p>
+<ul>
+<li>不靠打折，而是在量體溫、噴酒精時多問一句&quot;您會不會酒精過敏？&quot;；</li>
+<li>做只送不賣的「口罩暫存夾」；</li>
+<li>拍影片時以專家身份告訴顧客該注意什麼，而不是自誇裝置。</li>
+</ul>
+<p>作者把它歸結為「讓客戶贏」：</p>
+<blockquote>
+  <p>「當你把思維的重心放在自己身上，服務現場所呈現的，就會是那些『嫌惡』或是『自我保護』的用語和畫面。」</p>
+
+</blockquote><h3 id="8-圓環與紅綠燈選老闆不挑同事">8. 圓環與紅綠燈、選老闆不挑同事</h3>
+<p>據媒體報道，作者用兩個交通比喻對比兩種管理方式：</p>
+<ul>
+<li><strong>紅綠燈</strong>：靠制度和績效管人，大家都加速、都理直氣壯，一不小心就會對撞；</li>
+<li><strong>圓環</strong>：靠文化和默契協作。</li>
+</ul>
+<p>〈你可以選老闆，但不需要挑同事〉講了一個勸阻離職的故事。一位新創團隊的骨幹因為和某位同事處不來要走，作者用一句話點醒他：職場像一趟火車旅程，&ldquo;只有極少數人會和你一起從頭坐到尾&rdquo;。這句心法也來自他父親，做法是把思考的時間軸拉長，&ldquo;用五年後的你，甚至十年後的你的心態來回頭看現在&rdquo;。</p>
+<h3 id="9-atos所有沒人管的事">9. ATOS：所有沒人管的事</h3>
+<p>〈All the other shits〉（商周第 1813 期，2022-08-11）是書出版後的一篇專欄。作者解釋，他當年為什麼選人力資源作為回家族企業的切入點：</p>
+<blockquote>
+  <p>「『All the other shits』，就是所有的三不管、垃圾，大家不喜歡、不歡迎的事情，全都會到你這邊來。」</p>
+
+</blockquote><p>公司小，老闆自己就是 ATOS 部門；公司大了，ATOS 部門通常是 HR，&ldquo;因為不論什麼事，都跟人脫不了關係&rdquo;。他列出的第一個原因是&quot;你具有解決事情的能力&quot;。後文在付費牆內，我沒讀到。</p>
+<h3 id="10-讓孩子贏把人生的所有權還給孩子">10. 讓孩子贏：把人生的所有權還給孩子</h3>
+<p>〈讓孩子贏〉裡，作者引用小野的說法：父親要&quot;像山一樣的存在&quot;。他也轉述嚴長壽的觀點：孩子將來真正需要的是三種能力，與人相處、解決問題、面對挫折。</p>
+<p>最後落到一句：&ldquo;一個稱職的父母，並不是要去掌握他、控制他，而是要引導他、帶領他，讓孩子贏！因為人生是他的。&rdquo;</p>
+<h2 id="五我的思考放到工程團隊裡">五、我的思考：放到工程團隊裡</h2>
+<h3 id="對工程師和技術負責人的啟發">對工程師和技術負責人的啟發</h3>
+<p><strong>Code Review 裡的&quot;把對讓出去&quot;。</strong> 評審中最常見的內耗，是在命名、風格這類無關正確性的問題上爭到最後一句。可以借金惟純的框架給評論分級：</p>
+<ul>
+<li>涉及正確性、安全、資料一致性的問題，必須堅持；</li>
+<li>屬於偏好的，標成 nit，讓作者決定。</li>
+</ul>
+<p>&ldquo;你說的有道理&quot;這句話的價值，在於把爭論的焦點從&quot;誰對&quot;轉到&quot;系統怎樣更好&rdquo;。用作者的區分來說，評審裡要&quot;贏得&quot;的是程式碼庫的長期品質，不是這一輪討論的&quot;贏&quot;。</p>
+<p><strong>高鐵式團隊與事故響應。</strong> 線上事故里，&ldquo;聽得見炮聲的人&quot;就是值班工程師。把回滾、降級、擴容的決策權預先授權給他們，Leader 負責兜底和對外溝通，這正是&quot;我來背責任&quot;的工程版本。</p>
+<p>授權的前提，是作者在〈火車還是高鐵？〉裡說的&quot;承平時期的演練、緊急溝通架構的提前建立&rdquo;。換到工程裡，就是 Runbook、演練和清晰的升級路徑。</p>
+<p><strong>&ldquo;Today is a whole new day&quot;與無責復盤。</strong> 非洲工人那句話，幾乎就是 blameless postmortem 的精神。事故處理完、改進項落地，就算兩清，不讓當事人一直揹著&quot;帶罪之身&rdquo;。復盤的產出應該是機制改進，而不是一個長期被提起的名字。</p>
+<p><strong>五步驟幾乎就是一份好的任務卡模板。</strong></p>
+<ul>
+<li>第二步複述，對應驗收標準的對齊；</li>
+<li>第三步講目的，對應&quot;為什麼做&quot;，有了它，執行者在細節上才能自己做取捨；</li>
+<li>第四步講意外，對應風險與回滾方案；</li>
+<li>第五步徵求最佳化建議，讓執行者&quot;躬身入局&quot;。</li>
+</ul>
+<p>我的經驗是，第三步最常被省略，而它恰恰決定了下屬遇到文件沒寫到的情況時能不能做對決定。</p>
+<p><strong>別做架構評審裡的 Backseat Driver。</strong> 資深工程師最容易變成後座司機：在別人的設計裡逐行指揮，甚至直接搶過鍵盤。</p>
+<p>更好的做法是只指出不可逆的風險，比如資料模型、對外介面、安全邊界，其餘交給方案作者試錯；指導新人時多問&quot;我能幫你什麼&quot;，少給現成答案。&ldquo;讓創業者贏&quot;放到技術團隊裡，就是讓方案的主人贏。</p>
+<p><strong>預算歸零與&quot;不從眾&rdquo;，對應技術債和技術選型。</strong> 旭榮的預算每年歸零，工程團隊可以每年對告警規則、定時任務、第三方依賴、權限做一次&quot;歸零審視&quot;：不是在去年的清單上微調，而是逐項問&quot;今天還需不需要&quot;。</p>
+<p>編織鞋的故事則提醒我們：一個技術很熱門，不等於你該接。作者的判斷標準是&quot;那 know-how 不是我的&quot;，換成工程語言就是：這個能力能否成為我們的長期優勢，還是只是&quot;買機臺就能做&quot;的跟風。</p>
+<p><strong>ATOS 與平臺團隊。</strong> 很多公司的 ATOS 部門其實是基礎架構或平臺團隊：構建、權限、環境、&ldquo;這個告警歸誰&rdquo;。作者把這當成切入點而不是負擔：誰能接住三不管的事，誰就最先建立信任。但我會加一條：接住之後，要把它們變成有 owner、有文件的服務，否則 ATOS 會把團隊壓垮。</p>
+<p><strong>讓使用者贏：從錯誤提示開始。</strong> 美甲店那句&quot;您會不會酒精過敏？&ldquo;放到軟體裡，就是錯誤提示、限流頁面和故障公告的措辭。是&quot;自我保護&quot;式地甩出一個錯誤碼，還是告訴使用者發生了什麼、他能做什麼？這是&quot;讓客戶贏&quot;最便宜的落地方式。</p>
+<p><strong>圓環與紅綠燈，也是流程與文化之爭。</strong></p>
+<ul>
+<li>審批流程、強制門禁像紅綠燈：能兜底，但會讓人只對規則負責。</li>
+<li>團隊之間的默契像圓環：效率更高，但需要共同的上下文。</li>
+</ul>
+<p>成熟的團隊往往兩者並用：在高風險路口裝紅綠燈，比如生產變更、權限發放；其餘地方用圓環。</p>
+<h3 id="這本書的不足">這本書的不足</h3>
+<p><strong>第一，&ldquo;讓&quot;有前提，書裡很少討論這個前提。</strong> 豆瓣上一篇書評的標題說得很尖銳：&ldquo;有實力的人談&quot;讓&quot;叫格局，沒實力的人談&quot;讓&quot;叫認命&rdquo;。</p>
+<p>作者是年營收數百億元新臺幣集團的接班人，&ldquo;讓一時&quot;的成本遠低於普通員工。柬埔寨合資建廠時，旭榮出資 70%，卻承擔了全部技術人員的出差費，《理財週刊》稱之為&quot;大股東不計較小錢&rdquo;。這個例子恰恰說明：先有&quot;大股東&quot;的位置，才談得上&quot;不計較&rdquo;。對資源有限的人來說，什麼時候該讓、什麼時候必須爭，書裡給的判斷標準不夠。</p>
+<p><strong>第二，布袋戲式的&quot;讓&quot;不能照搬到工程裡。</strong> 在家庭裡，用一句善意的淡化換來和氣，無可厚非。但在技術團隊裡，為了讓對方&quot;贏&quot;而淡化事實，就是在積累技術債和信任債，比如：</p>
+<ul>
+<li>對一個有缺陷的方案說&quot;還好&rdquo;；</li>
+<li>在復盤裡替別人遮掩。</li>
+</ul>
+<p>工程場景裡的&quot;讓&quot;，應該是讓出功勞和麵子，而不是讓出事實。</p>
+<p><strong>第三，成功敘事裡的後見之明。</strong> 作者自己就提供了一個反例：被外界稱為&quot;高瞻遠矚&quot;的非洲佈局，起點其實是被倒帳。這份坦白很難得，也提醒讀者：書裡很多&quot;因為讓別人贏，所以成功&quot;的因果鏈，同樣可能是事後整理出來的。旭榮的增長還有紡織業週期、FTA 佈局、客戶結構等因素，書和報道都只講了其中一部分。</p>
+<p><strong>第四，專欄結集帶來碎片感。</strong> 每篇只有幾頁，適合啟發，不適合建立體系；從書名看，部分篇目和&quot;讓別人贏&quot;的主題關係也不緊密。截至我查閱時，簡體版在豆瓣上是 5.0 分（52 人評價），有讀者批評&quot;就是雞湯文啊&quot;，也有人說&quot;文不對名&quot;。</p>
+<p>我的看法是：這本書的價值不在理論深度，而在一位跨國經營者的現場觀察，以及幾個能直接拿來用的小工具，比如五步驟和後座司機的自我提醒。</p>
+<p><strong>第五，比喻有邊界。</strong> 現實中的圓環在車流量大時同樣會堵死。靠默契的協作也一樣，團隊一擴張就會失靈，這時就需要把默契寫成機制。書裡對&quot;文化&quot;著墨多，對&quot;文化如何規模化&quot;著墨少。報導裡旭榮的答案是&quot;不是人在管理公司，而是文化在管理公司&quot;，但具體怎樣寫成制度，公開材料裡講得不多。</p>
+<h2 id="六可執行的清單">六、可執行的清單</h2>
+<ol>
+<li><strong>吵架前問一句</strong>：我現在想贏的，是問題本身，還是最後那句話？我要&quot;贏&quot;這一回合，還是&quot;贏得&quot;這段合作？</li>
+<li><strong>給評論分級</strong>：Code Review 中，只在正確性、安全、可維護性問題上堅持到底，偏好類問題標 nit。</li>
+<li><strong>交代任務用五步驟</strong>：至少做到讓對方複述、講清目的、預想意外三步，把它寫進任務模板。</li>
+<li><strong>預先授權</strong>：為值班和一線制定明確的&quot;可自行決定&quot;清單，並在平時演練。</li>
+<li><strong>復盤後兩清</strong>：改進項落地後，不再翻舊帳；復盤文件寫機制，不寫罪名。</li>
+<li><strong>評審時剋制</strong>：別人的設計只指出不可逆風險，其餘讓作者決定，說的話不超過聽的話。</li>
+<li><strong>每年歸零一次</strong>：告警、定時任務、依賴、權限逐項重審，不照抄去年的清單。</li>
+<li><strong>選型不從眾</strong>：引入熱門技術前先問，這是不是我們的 know-how，還是&quot;買機臺就能做&quot;的跟風？</li>
+<li><strong>接住 ATOS，再把它產品化</strong>：三不管的事先接下來建立信任，再給它們明確 owner 和文件。</li>
+<li><strong>讓使用者贏</strong>：重寫一條最常見的錯誤提示，讓它告訴使用者下一步能做什麼。</li>
+<li><strong>拉長時間軸</strong>：想因為人際衝突離開時，用&quot;五年後的自己&quot;回看一次。</li>
+<li><strong>把功勞讓出去，事實不讓</strong>：在週報、復盤和晉升材料裡具體寫出隊友的貢獻；面子和功勞可以讓，事實、風險和線上品質不讓。</li>
+</ol>
+<h2 id="參考資料">參考資料</h2>
+<p><strong>書目與書摘</strong></p>
+<ol>
+<li>城邦讀書花園：《讓別人贏：在人生多重角色中，55個修煉與覺察的智慧》書目、目錄、推薦序與自序 <a href="https://www.cite.com.tw/book?id=92063">https://www.cite.com.tw/book?id=92063</a></li>
+<li>金石堂試閱（〈火車還是高鐵？〉〈Backseat Driver〉〈讓別人贏！〉〈讓孩子贏〉） <a href="https://www.kingstone.com.tw/basic/freeread/2011920759198/">https://www.kingstone.com.tw/basic/freeread/2011920759198/</a></li>
+<li>經理人：〈事情交給部屬就怕搞砸？教練型主管的 1 指令+4 提問〉（書摘） <a href="https://www.managertoday.com.tw/books/view/65221">https://www.managertoday.com.tw/books/view/65221</a></li>
+<li>商業週刊：〈「你可以選老闆，但不需要挑同事！」〉（書摘） <a href="https://www.businessweekly.com.tw/careers/blog/3009951">https://www.businessweekly.com.tw/careers/blog/3009951</a></li>
+<li>Readmoo 讀墨：繁體電子書資訊與作者簡介 <a href="https://readmoo.com/book/210228221000101">https://readmoo.com/book/210228221000101</a></li>
+</ol>
+<p><strong>黃冠華的商業週刊專欄</strong></p>
+<ol start="6">
+<li>黃冠華：〈前一天偷竊被抓的同事，今天來擁抱我…黃冠華：管理＝邏輯＋常識〉，商周專欄，2022-05-25 <a href="https://www.businessweekly.com.tw/management/blog/3009832">https://www.businessweekly.com.tw/management/blog/3009832</a></li>
+<li>黃冠華：〈疫情期間，美甲店的獲客關鍵》最有溫度的問候：您會不會對酒精過敏？〉，商周專欄，2022-05-31 <a href="https://www.businessweekly.com.tw/management/blog/3009878">https://www.businessweekly.com.tw/management/blog/3009878</a></li>
+<li>黃冠華：〈讓別人贏！〉，商業週刊第 1801 期 <a href="https://www.businessweekly.com.tw/archive/article?strid=7005893">https://www.businessweekly.com.tw/archive/article?strid=7005893</a></li>
+<li>黃冠華：〈All the other shits〉，商業週刊第 1813 期，2022-08-11 <a href="https://www.businessweekly.com.tw/archive/article?strid=7006378">https://www.businessweekly.com.tw/archive/article?strid=7006378</a></li>
+</ol>
+<p><strong>媒體報道與訪談</strong></p>
+<ol start="10">
+<li>郭奕伶專欄：〈讓別人贏，不代表自己輸〉 <a href="https://www.businessweekly.com.tw/business/blog/3009848">https://www.businessweekly.com.tw/business/blog/3009848</a></li>
+<li>商業週刊第 1803 期：〈最快樂二代企業家黃冠華：讓別人贏，不代表讓自己輸〉 <a href="https://www.businessweekly.com.tw/archive/article?strid=7006007">https://www.businessweekly.com.tw/archive/article?strid=7006007</a></li>
+<li>商業週刊線上課程：〈讓別人贏！百億跨國企業家的利他領導學〉 <a href="https://campaign.businessweekly.com.tw/bw/309">https://campaign.businessweekly.com.tw/bw/309</a></li>
+<li>經理人：〈從 30 億成長到 300 億！連 17 年營收成長，紡織大廠旭榮的兩大成功關鍵〉，2019-11-13 <a href="https://www.managertoday.com.tw/articles/view/58698">https://www.managertoday.com.tw/articles/view/58698</a></li>
+<li>理財週刊（經濟日報轉載）：〈20多歲擺攤遇流氓，讓他領略跨國生意之道！紡織業隱形冠軍 旭榮「讓別人贏」營收成長10倍〉，2025-04-05 <a href="https://money.udn.com/money/story/5612/8647716">https://money.udn.com/money/story/5612/8647716</a></li>
+<li>TVBS：〈企二代黃冠華出書「讓別人贏」 以正能量迎接挑戰〉，2022-05-25 <a href="https://news.tvbs.com.tw/life/1802084">https://news.tvbs.com.tw/life/1802084</a></li>
+<li>品觀點：〈旭榮執董黃冠華形容做生意像打麻將 關鍵是和諧而非輸贏〉 <a href="https://www.pinview.com.tw/News/634.html">https://www.pinview.com.tw/News/634.html</a></li>
+<li>識富天使會：〈黃冠華《讓別人贏》成人達己的天使投資〉 <a href="https://angel-investor.org/information/%e9%bb%83%e5%86%a0%e8%8f%af%e3%80%8a%e8%ae%93%e5%88%a5%e4%ba%ba%e8%b4%8f%e3%80%8b%e6%88%90%e4%ba%ba%e9%81%94%e5%b7%b1%e7%9a%84%e5%a4%a9%e4%bd%bf%e6%8a%95%e8%b3%87%ef%bc%8c%e9%8c%a2%e4%b9%9f%e6%98%af/">https://angel-investor.org/information/%e9%bb%83%e5%86%a0%e8%8f%af%e3%80%8a%e8%ae%93%e5%88%a5%e4%ba%ba%e8%b4%8f%e3%80%8b%e6%88%90%e4%ba%ba%e9%81%94%e5%b7%b1%e7%9a%84%e5%a4%a9%e4%bd%bf%e6%8a%95%e8%b3%87%ef%bc%8c%e9%8c%a2%e4%b9%9f%e6%98%af/</a></li>
+</ol>
+<p><strong>Podcast（僅節目頁簡介）</strong></p>
+<ol start="18">
+<li>商週Bar【商週讀書會】：〈斜槓企業家黃冠華ft.心理學家劉軒：「讓別人贏」的人生智慧，真正懂利他才能利己〉，2022-07-08 <a href="https://www.himalaya.com/episode/ft-bar-177184903">https://www.himalaya.com/episode/ft-bar-177184903</a></li>
+<li>腦闆想什麼？EP70：〈讓別人贏！營收三百億的搞笑藝人 ft.黃冠華 Sunny（下）〉，2022-09-22 <a href="https://castro.fm/episode/qmSX8G">https://castro.fm/episode/qmSX8G</a></li>
+<li>羿起創業 EP07：〈不是接班而是共治！讓別人贏，成為公司的教練！ ft. 黃冠華Sunny〉，2023-10-23 <a href="https://castro.fm/episode/U06Fkl">https://castro.fm/episode/U06Fkl</a></li>
+<li>哈佛商業評論全球繁體中文版 Podcast：〈黃冠華：拿掉世代刻板印象，「讓別人贏」創造跨世代的共好〉 <a href="https://www.hbrtaiwan.com/podcast/21593/sunny-huang">https://www.hbrtaiwan.com/podcast/21593/sunny-huang</a></li>
+</ol>
+<p><strong>簡體版與讀者評論</strong></p>
+<ol start="22">
+<li>豆瓣讀書：《讓別人贏》（簡體版資訊、評分與書評） <a href="https://book.douban.com/subject/36708761/">https://book.douban.com/subject/36708761/</a></li>
+<li>豆瓣讀書短評 <a href="https://book.douban.com/subject/36708761/comments/">https://book.douban.com/subject/36708761/comments/</a></li>
+<li>豆瓣閱讀：簡體版試讀（自序） <a href="https://read.douban.com/reader/ebook/458444686">https://read.douban.com/reader/ebook/458444686</a></li>
+<li>讀書網：簡體版目錄與內容簡介 <a href="https://www.dushu.com/book/14151411/">https://www.dushu.com/book/14151411/</a></li>
+<li>三民網路書店：簡體版商品資訊 <a href="https://www.sanmin.com.tw/product/index/013087382">https://www.sanmin.com.tw/product/index/013087382</a></li>
+</ol>
+]]></content:encoded></item></channel></rss>

@@ -1,0 +1,663 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Binlog on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/binlog/</link><description>Recent content in Binlog on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Mon, 09 Nov 2026 15:00:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/binlog/index.xml" rel="self" type="application/rss+xml"/><item><title>用 Debezium 把多個 MySQL 的行級變更同步到 Kafka：場景、部署與工程問題</title><link>https://d94807974-commits.github.io/posts/debezium-mysql-multi-source-kafka/</link><pubDate>Mon, 09 Nov 2026 15:00:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/debezium-mysql-multi-source-kafka/</guid><description>把多個 MySQL 的每一行變更（INSERT/UPDATE/DELETE）即時推到 Kafka：為什麼用 binlog CDC、為什麼選零程式碼的 Debezium、Kafka Connect 分散式部署的完整步驟（MySQL 參數、最小權限、內部 topic、外掛、密碼不落明文、systemd、多源 connector、表到 topic 路由），以及上線後真正會遇到的工程問題：重複與冪等、順序與分區、快照壓力、binlog 過期、新增表、schema history、型別精度與時區、server_id 衝突、主從切換。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/debezium-mysql-multi-source-kafka.html">架構圖、事件流、部署形態對比與工程問題清單</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>把多個 MySQL 的行級變更推到 Kafka，優先選 Kafka Connect（分散式模式）加 Debezium：純設定、按 GTID 記位點、多源統一管理。真正的難點不在部署，而在消費端冪等、保序、快照與 binlog 保留。</p>
+</div><blockquote>
+  <p>文中的主機、密碼、庫表一律是佔位符或通用範例（<code>&lt;mysql1-host&gt;</code>、<code>&lt;kafka&gt;:9092</code>、<code>&lt;內網IP&gt;</code>、<code>&lt;強密碼&gt;</code>、<code>shop.orders</code>），版本號請按實際情況調整。設定項名稱以 Debezium 2.x/3.x 官方文件為準。</p>
+
+</blockquote><h2 id="一場景為什麼需要行級-cdc">一、場景：為什麼需要行級 CDC</h2>
+<h3 id="11-典型用途">1.1 典型用途</h3>
+<p>「把資料庫的每一行變更變成一條訊息」這件事，在很多架構裡都會出現：</p>
+<table>
+	<thead>
+			<tr>
+					<th>場景</th>
+					<th>需要什麼</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>即時資料倉儲 / 湖倉入湖</td>
+					<td>業務庫的增刪改以秒級延遲進入 OLAP（Doris、ClickHouse、Iceberg 等）</td>
+			</tr>
+			<tr>
+					<td>搜尋索引同步</td>
+					<td>商品、訂單變更後，Elasticsearch / OpenSearch 中的文件跟著更新或刪除</td>
+			</tr>
+			<tr>
+					<td>快取失效</td>
+					<td>行變更後精確刪除對應的快取 key，而不是靠 TTL 碰運氣</td>
+			</tr>
+			<tr>
+					<td>多庫匯聚</td>
+					<td>分庫分表、多個業務系統的同類資料匯聚到一個 topic 或一張寬表</td>
+			</tr>
+			<tr>
+					<td>審計與回溯</td>
+					<td>保留「誰在什麼時候把哪一行從什麼改成了什麼」（before / after）</td>
+			</tr>
+			<tr>
+					<td>微服務事件</td>
+					<td>用 outbox 表或業務表變更驅動下游服務，避免雙寫</td>
+			</tr>
+	</tbody>
+</table>
+<h3 id="12-定時拉取的問題">1.2 定時拉取的問題</h3>
+<p>最樸素的做法是定時 <code>SELECT ... WHERE updated_at &gt; ?</code>。它能跑，但有幾個繞不過去的問題：</p>
+<ul>
+<li><strong>延遲和壓力是一對矛盾</strong>：拉得勤，源庫壓力大；拉得慢，延遲高。</li>
+<li><strong>感知不到刪除</strong>：物理刪除的行查不出來，只能改成邏輯刪除，要動業務表結構。</li>
+<li><strong>依賴 <code>updated_at</code> 的紀律</strong>：有人直接改庫、批次 SQL 忘了更新時間戳，資料就漏了。</li>
+<li><strong>丟失中間狀態</strong>：兩次拉取之間一行被改了三次，只能看到最後一次。</li>
+<li><strong>一條 SQL 改 1000 行</strong>，你很難知道到底改了哪 1000 行。</li>
+</ul>
+<h3 id="13-為什麼是-binlog">1.3 為什麼是 binlog</h3>
+<p>MySQL 的 binlog 在 <code>ROW</code> 格式下記錄了每一行的前後映像，而且是<strong>交易提交後</strong>才寫入的。基於 binlog 的 CDC 相當於把自己偽裝成一個從庫：</p>
+<ul>
+<li>每一行變更都有一條記錄，刪除也有；</li>
+<li>回滾的交易不會出現；</li>
+<li>對源庫只是一個複製連線，壓力遠小於頻繁掃表；</li>
+<li>帶有位點（file/pos 或 GTID），可以斷點續傳。</li>
+</ul>
+<p>代價是：需要開啟並保留 binlog、需要複製權限、需要處理表結構變更（DDL）。這些都放到後面的工程問題裡講。</p>
+<h2 id="二選型思路">二、選型思路</h2>
+<p>我在選型時給自己定了幾條硬標準：</p>
+<ol>
+<li><strong>維護活躍</strong>：近一年有持續的釋出和提交，issue 有人回覆。</li>
+<li><strong>零程式碼或接近零程式碼</strong>：同步任務以後要交給別人維護，設定比程式碼好交接。</li>
+<li><strong>支援 GTID</strong>：位點按 GTID 記錄，主從切換後能接著同步。</li>
+<li><strong>多源與表級路由</strong>：同時接多個 MySQL，能指定哪些表、發到哪個 topic。</li>
+<li><strong>密碼不落明文</strong>：設定檔、程序命令列、日誌、管理介面裡都看不到密碼。</li>
+</ol>
+<p>按這幾條比較了三類方案（結論來自一次單機實測加官方文件，數值不代表生產）：</p>
+<table>
+	<thead>
+			<tr>
+					<th>方案</th>
+					<th>需要寫的程式碼</th>
+					<th>GTID</th>
+					<th>評價</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td><strong>Debezium</strong></td>
+					<td>0 行，純設定</td>
+					<td>位點中帶 GTID 集合，主從切換可續傳</td>
+					<td>社群最活躍、文件最全；設定項多，需要懂 JVM 和 Kafka Connect</td>
+			</tr>
+			<tr>
+					<td><strong>Maxwell</strong></td>
+					<td>0 行；自訂 topic 對映需要幾行 JS</td>
+					<td>需手動設定 <code>gtid_mode=true</code>，預設按 file/pos</td>
+					<td>輕量、JSON 簡單；但 <code>ignore_producer_error</code> 預設為 <code>true</code>（Kafka 傳送失敗只記日誌），生產必須改成 <code>false</code>；UPDATE 的 <code>old</code> 只包含被修改的列；位點存在源庫的 <code>maxwell</code> 庫，需要寫權限</td>
+			</tr>
+			<tr>
+					<td><strong>自研</strong>（go-mysql、python-mysql-replication 等庫）</td>
+					<td>數百行起</td>
+					<td>庫支援，需自己實現</td>
+					<td>靈活、吞吐可以很高；但位點一致性、型別對映、DDL、快照、高可用、監控全部要自己長期維護，交接成本最高</td>
+			</tr>
+	</tbody>
+</table>
+<p>實測裡還有幾條對所有方案都成立的結論：</p>
+<ul>
+<li>程序被 <code>kill -9</code> 後重啟，都<strong>不丟資料但會有重複</strong>——這是至少一次（at-least-once）語義的正常表現。</li>
+<li>一條 <code>UPDATE</code> 命中 1000 行，會產生 1000 條訊息；<code>ROLLBACK</code> 的交易不產生訊息。</li>
+<li>「白名單之外的表不產生任何訊息」「指定表到指定 topic」「多源互不串位點」都能用設定實現。</li>
+</ul>
+<p>所以結論是：<strong>生產首選 Debezium</strong>；如果只要最輕量的 JSON、能接受上面幾條需要手動調整的預設值，Maxwell 也可以；自研只在有特殊客製需求時作為起點。</p>
+<h2 id="三兩種部署形態">三、兩種部署形態</h2>
+<p>Debezium 的 MySQL Connector 有兩種常見跑法：</p>
+<table>
+	<thead>
+			<tr>
+					<th></th>
+					<th>Kafka Connect（分散式模式）</th>
+					<th>Debezium Server</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>程序模型</td>
+					<td>一個 Connect 叢集執行多個 connector，每個源一個 connector</td>
+					<td>一個程序只跑一個源</td>
+			</tr>
+			<tr>
+					<td>管理方式</td>
+					<td>REST API 增刪改查、暫停恢復、檢視狀態</td>
+					<td>改 <code>application.properties</code> 後重啟</td>
+			</tr>
+			<tr>
+					<td>位點儲存</td>
+					<td>Kafka 內部 topic（<code>connect-offsets</code>）</td>
+					<td>預設本地檔案（也可設定到 Kafka 等）</td>
+			</tr>
+			<tr>
+					<td>高可用</td>
+					<td>多個 worker 用同一個 <code>group.id</code> 組成叢集，task 自動漂移</td>
+					<td>需要外部程序管理和持久卷</td>
+			</tr>
+			<tr>
+					<td>適合</td>
+					<td>多個源、需要統一維運</td>
+					<td>單源、輕量、或者不想維護 Connect 叢集</td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>多源的場景推薦 Kafka Connect</strong>：源越多，統一的 REST 管理和集中存放的位點就越省心，接手的人也只需要掌握一套操作。下面的部署流程以它為主，Debezium Server 的單源設定放在附錄。</p>
+<p>整體架構（圖形版見<a href="/visual/debezium-mysql-multi-source-kafka.html">圖解版</a>的「整體架構」面板）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>  +-----------+    +-----------+    +-----------+
+</span></span><span style="display:flex;"><span>  |  MySQL 1  |    |  MySQL 2  |    |  MySQL N  |
+</span></span><span style="display:flex;"><span>  | (binlog,  |    | (binlog,  |    | (binlog,  |
+</span></span><span style="display:flex;"><span>  |  GTID on) |    |  GTID on) |    |  GTID on) |
+</span></span><span style="display:flex;"><span>  +-----+-----+    +-----+-----+    +-----+-----+
+</span></span><span style="display:flex;"><span>        |                |                |
+</span></span><span style="display:flex;"><span>        | replication protocol (one connector per source)
+</span></span><span style="display:flex;"><span>        v                v                v
+</span></span><span style="display:flex;"><span>  +---------------------------------------------------+
+</span></span><span style="display:flex;"><span>  |   Kafka Connect cluster (group.id=cdc-connect)    |
+</span></span><span style="display:flex;"><span>  |   worker A  &lt;-- tasks rebalance --&gt;  worker B     |
+</span></span><span style="display:flex;"><span>  |   connectors: mysql-src1 | mysql-src2 | ...       |
+</span></span><span style="display:flex;"><span>  |   SMT: RegexRouter / ExtractNewRecordState        |
+</span></span><span style="display:flex;"><span>  +-------------------------+-------------------------+
+</span></span><span style="display:flex;"><span>                            |
+</span></span><span style="display:flex;"><span>                            v
+</span></span><span style="display:flex;"><span>  +---------------------------------------------------+
+</span></span><span style="display:flex;"><span>  | Kafka                                             |
+</span></span><span style="display:flex;"><span>  |  cdc.shop.orders  cdc.shop.users  cdc.crm.*       |
+</span></span><span style="display:flex;"><span>  |  connect-configs / connect-offsets / -status      |
+</span></span><span style="display:flex;"><span>  |  schemahistory.src1 / schemahistory.src2          |
+</span></span><span style="display:flex;"><span>  +-------------------------+-------------------------+
+</span></span><span style="display:flex;"><span>                            |
+</span></span><span style="display:flex;"><span>          +-----------------+-----------------+
+</span></span><span style="display:flex;"><span>          v                 v                 v
+</span></span><span style="display:flex;"><span>     OLAP / lake      search index      cache invalidation
+</span></span><span style="display:flex;"><span>     (idempotent consumers: primary key + GTID/position)
+</span></span></code></pre></div><h2 id="四部署流程">四、部署流程</h2>
+<p>下面以 Linux 主機 + systemd 部署為例；Kubernetes 上可以用 Strimzi 等 Operator，思路相同。</p>
+<h3 id="41-mysql-側準備每個源都要做">4.1 MySQL 側準備（每個源都要做）</h3>
+<p>先確認 binlog 相關參數（以 MySQL 8.0 為例）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">SHOW</span> VARIABLES <span style="color:#66d9ef">WHERE</span> Variable_name <span style="color:#66d9ef">IN</span>
+</span></span><span style="display:flex;"><span> (<span style="color:#e6db74">&#39;log_bin&#39;</span>, <span style="color:#e6db74">&#39;binlog_format&#39;</span>, <span style="color:#e6db74">&#39;binlog_row_image&#39;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#39;gtid_mode&#39;</span>, <span style="color:#e6db74">&#39;enforce_gtid_consistency&#39;</span>, <span style="color:#e6db74">&#39;binlog_expire_logs_seconds&#39;</span>);
+</span></span><span style="display:flex;"><span><span style="color:#75715e">-- expected: log_bin=ON, binlog_format=ROW, binlog_row_image=FULL,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">--           gtid_mode=ON, enforce_gtid_consistency=ON
+</span></span></span></code></pre></div><p>幾點說明：</p>
+<ul>
+<li><code>binlog_format=ROW</code> 和 <code>binlog_row_image=FULL</code> 是行級 CDC 的前提，否則拿不到完整的前後映像。</li>
+<li>開啟 GTID 不是必須的，但強烈建議：位點會帶上 GTID 集合，主從切換後可以續傳。</li>
+<li><code>binlog_expire_logs_seconds</code> 至少保留 <strong>3～7 天</strong>，要大於「同步鏈路最長可能停機時間 + 追平時間」。保留太短，停機一個長假回來位點已經被清理，就只能重新快照。</li>
+<li>如果從<strong>只讀副本</strong>採集（推薦，避開主庫壓力），副本必須開啟 <code>log_replica_updates=ON</code>（8.0.26 之前叫 <code>log_slave_updates</code>），否則副本自己的 binlog 裡沒有複製過來的變更。</li>
+</ul>
+<p>建立專用帳號：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">USER</span> <span style="color:#e6db74">&#39;cdc_min&#39;</span><span style="color:#f92672">@</span><span style="color:#e6db74">&#39;&lt;connect-ip&gt;&#39;</span> IDENTIFIED <span style="color:#66d9ef">BY</span> <span style="color:#e6db74">&#39;&lt;強密碼&gt;&#39;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">GRANT</span> <span style="color:#66d9ef">SELECT</span>, RELOAD, <span style="color:#66d9ef">SHOW</span> DATABASES, REPLICATION SLAVE, REPLICATION CLIENT
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">ON</span> <span style="color:#f92672">*</span>.<span style="color:#f92672">*</span> <span style="color:#66d9ef">TO</span> <span style="color:#e6db74">&#39;cdc_min&#39;</span><span style="color:#f92672">@</span><span style="color:#e6db74">&#39;&lt;connect-ip&gt;&#39;</span>;
+</span></span></code></pre></div><p>各權限的用途：</p>
+<table>
+	<thead>
+			<tr>
+					<th>權限</th>
+					<th>用途</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td><code>REPLICATION SLAVE</code></td>
+					<td>以複製協議讀取 binlog</td>
+			</tr>
+			<tr>
+					<td><code>REPLICATION CLIENT</code></td>
+					<td>執行 <code>SHOW MASTER STATUS</code> / <code>SHOW BINARY LOGS</code> 等查詢位點</td>
+			</tr>
+			<tr>
+					<td><code>SELECT</code></td>
+					<td>快照時讀取表資料</td>
+			</tr>
+			<tr>
+					<td><code>RELOAD</code></td>
+					<td>快照時執行 <code>FLUSH TABLES ... WITH READ LOCK</code> 等全域鎖操作</td>
+			</tr>
+			<tr>
+					<td><code>SHOW DATABASES</code></td>
+					<td>發現庫表</td>
+			</tr>
+	</tbody>
+</table>
+<p>如果不需要全量快照（例如 <code>snapshot.mode=no_data</code> 且 <code>snapshot.locking.mode=none</code>），可以按官方文件進一步收斂：去掉 <code>RELOAD</code>，把 <code>SELECT</code> 收窄到需要的庫。是否需要 <code>LOCK TABLES</code> 等權限，以所用快照模式的文件為準。</p>
+<h3 id="42-kafka-側準備">4.2 Kafka 側準備</h3>
+<p>Kafka Connect 分散式模式依賴三個內部 topic，生產上建議<strong>預先建立</strong>，而不是交給自動建立：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>kafka-topics.sh --bootstrap-server &lt;kafka&gt;:9092 --create --topic connect-configs <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  --partitions <span style="color:#ae81ff">1</span>  --replication-factor <span style="color:#ae81ff">3</span> --config cleanup.policy<span style="color:#f92672">=</span>compact
+</span></span><span style="display:flex;"><span>kafka-topics.sh --bootstrap-server &lt;kafka&gt;:9092 --create --topic connect-offsets <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  --partitions <span style="color:#ae81ff">25</span> --replication-factor <span style="color:#ae81ff">3</span> --config cleanup.policy<span style="color:#f92672">=</span>compact
+</span></span><span style="display:flex;"><span>kafka-topics.sh --bootstrap-server &lt;kafka&gt;:9092 --create --topic connect-status <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  --partitions <span style="color:#ae81ff">5</span>  --replication-factor <span style="color:#ae81ff">3</span> --config cleanup.policy<span style="color:#f92672">=</span>compact
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># schema history topic: one per source, single partition, never expire</span>
+</span></span><span style="display:flex;"><span>kafka-topics.sh --bootstrap-server &lt;kafka&gt;:9092 --create --topic schemahistory.src1 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  --partitions <span style="color:#ae81ff">1</span> --replication-factor <span style="color:#ae81ff">3</span> --config retention.ms<span style="color:#f92672">=</span>-1
+</span></span></code></pre></div><ul>
+<li><code>connect-configs</code> 必須單分區；三個 topic 都必須是 <code>compact</code>。</li>
+<li><strong>schema history topic 必須單分區、永不過期</strong>，原因見第五節。</li>
+<li>業務 topic（如 <code>cdc.shop.orders</code>）也建議預建，自己決定分區數、副本數和保留期。分區數一旦定下，就不要隨意增加（見第五節「順序」）。</li>
+</ul>
+<h3 id="43-安裝-debezium-外掛">4.3 安裝 Debezium 外掛</h3>
+<p>用 Kafka 自帶的 <code>connect-distributed.sh</code> 即可，把 Debezium 外掛解壓到 <code>plugin.path</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>mkdir -p /opt/connect-plugins <span style="color:#f92672">&amp;&amp;</span> cd /opt/connect-plugins
+</span></span><span style="display:flex;"><span>curl -LO https://repo1.maven.org/maven2/io/debezium/debezium-connector-mysql/&lt;version&gt;/debezium-connector-mysql-&lt;version&gt;-plugin.tar.gz
+</span></span><span style="display:flex;"><span>tar xzf debezium-connector-mysql-&lt;version&gt;-plugin.tar.gz
+</span></span></code></pre></div><p>注意 Debezium 版本與 Kafka / Java 版本的相容關係，以釋出說明為準。</p>
+<h3 id="44-worker-設定">4.4 Worker 設定</h3>
+<p><code>/opt/kafka/config/connect-distributed.properties</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-properties" data-lang="properties"><span style="display:flex;"><span><span style="color:#a6e22e">bootstrap.servers</span><span style="color:#f92672">=</span><span style="color:#e6db74">&lt;kafka1&gt;:9092,&lt;kafka2&gt;:9092</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">group.id</span><span style="color:#f92672">=</span><span style="color:#e6db74">cdc-connect</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">plugin.path</span><span style="color:#f92672">=</span><span style="color:#e6db74">/opt/connect-plugins</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">config.storage.topic</span><span style="color:#f92672">=</span><span style="color:#e6db74">connect-configs</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">offset.storage.topic</span><span style="color:#f92672">=</span><span style="color:#e6db74">connect-offsets</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">status.storage.topic</span><span style="color:#f92672">=</span><span style="color:#e6db74">connect-status</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">config.storage.replication.factor</span><span style="color:#f92672">=</span><span style="color:#e6db74">3</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">offset.storage.replication.factor</span><span style="color:#f92672">=</span><span style="color:#e6db74">3</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">status.storage.replication.factor</span><span style="color:#f92672">=</span><span style="color:#e6db74">3</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">key.converter</span><span style="color:#f92672">=</span><span style="color:#e6db74">org.apache.kafka.connect.json.JsonConverter</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">value.converter</span><span style="color:#f92672">=</span><span style="color:#e6db74">org.apache.kafka.connect.json.JsonConverter</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">key.converter.schemas.enable</span><span style="color:#f92672">=</span><span style="color:#e6db74">false</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">value.converter.schemas.enable</span><span style="color:#f92672">=</span><span style="color:#e6db74">false</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># read secrets from files instead of plain text in connector configs</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">config.providers</span><span style="color:#f92672">=</span><span style="color:#e6db74">file</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">config.providers.file.class</span><span style="color:#f92672">=</span><span style="color:#e6db74">org.apache.kafka.common.config.provider.FileConfigProvider</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># REST API on the internal network only</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">listeners</span><span style="color:#f92672">=</span><span style="color:#e6db74">http://&lt;內網IP&gt;:8083</span>
+</span></span></code></pre></div><ul>
+<li><code>schemas.enable=false</code> 讓訊息只包含資料本身，體積小、消費端好處理；如果下游需要 schema，建議用 Avro / Protobuf + Schema Registry，而不是 JSON 內嵌 schema。</li>
+<li>REST 介面<strong>沒有預設鑑權</strong>，任何能訪問 8083 的人都能讀寫 connector 設定，所以只監聽內網，並用防火牆限制來源。</li>
+</ul>
+<h3 id="45-密碼不落明文">4.5 密碼不落明文</h3>
+<p>目標是：connector 設定、程序命令列、日誌、REST 返回結果裡都看不到密碼。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>useradd -r -s /sbin/nologin kafkaconnect
+</span></span><span style="display:flex;"><span>install -d -m <span style="color:#ae81ff">0700</span> -o kafkaconnect /opt/secrets
+</span></span><span style="display:flex;"><span>printf <span style="color:#e6db74">&#39;password=%s\n&#39;</span> <span style="color:#e6db74">&#39;&lt;mysql1密碼&gt;&#39;</span> &gt; /opt/secrets/mysql1.properties
+</span></span><span style="display:flex;"><span>chown kafkaconnect /opt/secrets/*.properties <span style="color:#f92672">&amp;&amp;</span> chmod <span style="color:#ae81ff">0400</span> /opt/secrets/*.properties
+</span></span></code></pre></div><p>connector 設定裡只寫引用：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;database.password&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;${file:/opt/secrets/mysql1.properties:password}&#34;</span>
+</span></span></code></pre></div><ul>
+<li><code>FileConfigProvider</code> 在執行時解析這個佔位符；透過 REST <code>GET /connectors/&lt;name&gt;/config</code> 看到的仍然是佔位符本身，而不是密碼。</li>
+<li>Kubernetes 上，把 Secret 以 volume 方式掛到同一路徑（<code>defaultMode: 0400</code>）即可；也可以換成 Vault 等外部金鑰系統的 config provider。</li>
+<li><strong>為什麼不直接用環境變數</strong>：環境變數對同一使用者和 root 可以透過 <code>/proc/&lt;pid&gt;/environ</code> 讀到，<code>docker inspect</code>、<code>kubectl describe</code> 也可能把它顯示出來。檔案掛載 + 專用帳號 + 最小檔案權限更可控。</li>
+<li>Kafka 側如果開了 SASL，producer / consumer 的 JAAS 密碼同樣用 <code>${file:...}</code> 引用，不要寫進設定。</li>
+</ul>
+<h3 id="46-用-systemd-託管-connect">4.6 用 systemd 託管 Connect</h3>
+<p><code>/etc/systemd/system/kafka-connect.service</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-ini" data-lang="ini"><span style="display:flex;"><span><span style="color:#66d9ef">[Unit]</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Description</span><span style="color:#f92672">=</span><span style="color:#e6db74">Kafka Connect (Debezium)</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">After</span><span style="color:#f92672">=</span><span style="color:#e6db74">network.target</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">[Service]</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">User</span><span style="color:#f92672">=</span><span style="color:#e6db74">kafkaconnect</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Environment</span><span style="color:#f92672">=</span><span style="color:#e6db74">KAFKA_HEAP_OPTS=-Xms2g -Xmx2g</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">ExecStart</span><span style="color:#f92672">=</span><span style="color:#e6db74">/opt/kafka/bin/connect-distributed.sh /opt/kafka/config/connect-distributed.properties</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Restart</span><span style="color:#f92672">=</span><span style="color:#e6db74">always</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">RestartSec</span><span style="color:#f92672">=</span><span style="color:#e6db74">10</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">LimitNOFILE</span><span style="color:#f92672">=</span><span style="color:#e6db74">100000</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">[Install]</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">WantedBy</span><span style="color:#f92672">=</span><span style="color:#e6db74">multi-user.target</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>systemctl daemon-reload <span style="color:#f92672">&amp;&amp;</span> systemctl enable --now kafka-connect
+</span></span><span style="display:flex;"><span>curl -s http://&lt;內網IP&gt;:8083/connector-plugins | grep -i mysql
+</span></span></code></pre></div><p>要高可用，就在兩臺以上的機器上用<strong>同一個 <code>group.id</code></strong> 各起一個 worker，它們會自動組成叢集；某臺機器掛掉時，它上面的 task 會被重新分配到其它 worker。MySQL connector 每個只有一個 task（binlog 是單流），所以「高可用」指的是故障轉移，而不是並行加速。</p>
+<h3 id="47-多個源每個源一個-connector">4.7 多個源：每個源一個 connector</h3>
+<p><code>mysql-src1.json</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;mysql-src1&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;config&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;connector.class&#34;</span>: <span style="color:#e6db74">&#34;io.debezium.connector.mysql.MySqlConnector&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;tasks.max&#34;</span>: <span style="color:#e6db74">&#34;1&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;database.hostname&#34;</span>: <span style="color:#e6db74">&#34;&lt;mysql1-host&gt;&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;database.port&#34;</span>: <span style="color:#e6db74">&#34;3306&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;database.user&#34;</span>: <span style="color:#e6db74">&#34;cdc_min&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;database.password&#34;</span>: <span style="color:#e6db74">&#34;${file:/opt/secrets/mysql1.properties:password}&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;database.server.id&#34;</span>: <span style="color:#e6db74">&#34;9301&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;topic.prefix&#34;</span>: <span style="color:#e6db74">&#34;src1&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;database.include.list&#34;</span>: <span style="color:#e6db74">&#34;shop,crm&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;table.include.list&#34;</span>: <span style="color:#e6db74">&#34;shop\\.orders,shop\\.users,crm\\.customer_.*&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;schema.history.internal.kafka.bootstrap.servers&#34;</span>: <span style="color:#e6db74">&#34;&lt;kafka&gt;:9092&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;schema.history.internal.kafka.topic&#34;</span>: <span style="color:#e6db74">&#34;schemahistory.src1&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;include.schema.changes&#34;</span>: <span style="color:#e6db74">&#34;false&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;decimal.handling.mode&#34;</span>: <span style="color:#e6db74">&#34;string&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;transforms&#34;</span>: <span style="color:#e6db74">&#34;route&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;transforms.route.type&#34;</span>: <span style="color:#e6db74">&#34;org.apache.kafka.connect.transforms.RegexRouter&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;transforms.route.regex&#34;</span>: <span style="color:#e6db74">&#34;src1\\.([^.]+)\\.([^.]+)&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;transforms.route.replacement&#34;</span>: <span style="color:#e6db74">&#34;cdc.$1.$2&#34;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>關鍵項：</p>
+<ul>
+<li><code>database.server.id</code>：這個 connector 偽裝成從庫時使用的 server id，<strong>在整個 MySQL 複製拓撲裡必須全域唯一</strong>，不能和任何真實從庫或其它 CDC 實例重複。</li>
+<li><code>topic.prefix</code>：邏輯名稱，會出現在預設 topic 名（<code>&lt;prefix&gt;.&lt;db&gt;.&lt;table&gt;</code>）、訊息的 <code>source.name</code> 和指標裡。<strong>上線後不要改</strong>，改了會被視為一個新的源。</li>
+<li><code>database.include.list</code> / <code>table.include.list</code>：都是<strong>正規表示式</strong>，按「庫名\.表名」匹配。JSON 裡反斜槓本身要轉義，所以寫成 <code>shop\\.orders</code>，實際生效的正則是 <code>shop\.orders</code>。</li>
+<li>預設 topic 名是 <code>src1.shop.orders</code>，<code>RegexRouter</code> 把它改成 <code>cdc.shop.orders</code>。這裡 <code>$1</code>、<code>$2</code> 是正則捕獲組，不是設定佔位符。</li>
+<li><code>decimal.handling.mode=string</code>：見第五節「型別精度」。</li>
+</ul>
+<p>第二個源複製一份，至少要改：</p>
+<table>
+	<thead>
+			<tr>
+					<th>項</th>
+					<th>src1</th>
+					<th>src2</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td><code>name</code></td>
+					<td><code>mysql-src1</code></td>
+					<td><code>mysql-src2</code></td>
+			</tr>
+			<tr>
+					<td><code>database.hostname</code></td>
+					<td><code>&lt;mysql1-host&gt;</code></td>
+					<td><code>&lt;mysql2-host&gt;</code></td>
+			</tr>
+			<tr>
+					<td><code>database.password</code></td>
+					<td><code>.../mysql1.properties:password</code></td>
+					<td><code>.../mysql2.properties:password</code></td>
+			</tr>
+			<tr>
+					<td><code>database.server.id</code></td>
+					<td><code>9301</code></td>
+					<td><code>9302</code></td>
+			</tr>
+			<tr>
+					<td><code>topic.prefix</code></td>
+					<td><code>src1</code></td>
+					<td><code>src2</code></td>
+			</tr>
+			<tr>
+					<td><code>schema.history.internal.kafka.topic</code></td>
+					<td><code>schemahistory.src1</code></td>
+					<td><code>schemahistory.src2</code></td>
+			</tr>
+			<tr>
+					<td>庫表列表、<code>transforms.route.regex</code></td>
+					<td>按需</td>
+					<td>按需（字首改成 <code>src2</code>）</td>
+			</tr>
+	</tbody>
+</table>
+<p>註冊：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X POST -H <span style="color:#e6db74">&#39;Content-Type: application/json&#39;</span> --data @mysql-src1.json http://&lt;內網IP&gt;:8083/connectors
+</span></span><span style="display:flex;"><span>curl -X POST -H <span style="color:#e6db74">&#39;Content-Type: application/json&#39;</span> --data @mysql-src2.json http://&lt;內網IP&gt;:8083/connectors
+</span></span></code></pre></div><p>各源的位點由 Kafka Connect 按 connector 分別儲存在 <code>connect-offsets</code> 裡，互不影響。</p>
+<h3 id="48-指定表到指定-topic">4.8 指定表到指定 topic</h3>
+<p><strong>單表對映</strong>（多個路由按順序串聯）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;orders,users&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.orders.type&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;org.apache.kafka.connect.transforms.RegexRouter&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.orders.regex&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;src1\\.shop\\.orders&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.orders.replacement&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;topic_orders&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.users.type&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;org.apache.kafka.connect.transforms.RegexRouter&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.users.regex&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;src1\\.shop\\.users&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.users.replacement&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;topic_users&#34;</span>
+</span></span></code></pre></div><p><strong>正則合併</strong>：把按年分表的 <code>orders_2024</code>、<code>orders_2025</code>……合併到一個 topic：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;table.include.list&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;shop\\.orders,shop\\.orders_20[0-9]{2}&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;hist&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.hist.type&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;org.apache.kafka.connect.transforms.RegexRouter&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.hist.regex&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;src1\\.shop\\.orders_20[0-9]{2}&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.hist.replacement&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;topic_orders_history&#34;</span>
+</span></span></code></pre></div><p>注意幾點：</p>
+<ul>
+<li><code>RegexRouter</code> 的正則是<strong>整串匹配</strong>，<code>src1\\.shop\\.orders</code> 不會誤傷 <code>orders_2024</code>。</li>
+<li><code>table.include.list</code> 和 <code>table.exclude.list</code> <strong>不能同時使用</strong>，庫級的 include / exclude 同理。</li>
+<li>合併到同一個 topic 的多張表，key 的結構必須一致（主鍵列相同），否則下游按 key 處理會出問題。Debezium 也提供 <code>io.debezium.transforms.ByLogicalTableRouter</code>，可以在 key 裡額外加上來源表，用於分表合併。</li>
+<li>白名單之外的表不會產生訊息，也不會建立 topic。</li>
+</ul>
+<p><strong>只想要「變更後的行」</strong>：預設訊息是包含 <code>before</code>、<code>after</code>、<code>source</code>、<code>op</code> 的信封結構。下游只關心最新狀態時，可以加 <code>ExtractNewRecordState</code> 把它展平：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;unwrap,route&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.unwrap.type&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;io.debezium.transforms.ExtractNewRecordState&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.unwrap.add.fields&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;op,source.ts_ms,source.gtid&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.unwrap.delete.tombstone.handling.mode&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;rewrite&#34;</span>
+</span></span></code></pre></div><p><code>rewrite</code> 會把刪除事件改寫成帶 <code>__deleted=true</code> 的記錄，下游可以據此刪除；<code>add.fields</code> 把操作型別和 GTID 保留下來，供冪等使用。轉換按 <code>transforms</code> 列出的順序執行。</p>
+<h3 id="49-驗證">4.9 驗證</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># connector and task should both be RUNNING</span>
+</span></span><span style="display:flex;"><span>curl -s http://&lt;內網IP&gt;:8083/connectors/mysql-src1/status
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>kafka-console-consumer.sh --bootstrap-server &lt;kafka&gt;:9092 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  --topic cdc.shop.orders --from-beginning --property print.key<span style="color:#f92672">=</span>true
+</span></span></code></pre></div><p>建議至少驗證這幾項：</p>
+<ol>
+<li>單行 <code>INSERT</code> / <code>UPDATE</code> / <code>DELETE</code> 分別產生 <code>op=c</code> / <code>op=u</code> / <code>op=d</code> 的訊息，UPDATE 帶完整的 <code>before</code> 和 <code>after</code>。</li>
+<li>一條 <code>UPDATE</code> 命中 1000 行，產生 1000 條訊息，主鍵集合與預期一致。</li>
+<li><code>BEGIN; ...; ROLLBACK;</code> 不產生任何訊息。</li>
+<li>白名單外的表寫入後沒有訊息。</li>
+<li>同一主鍵的多次修改落在同一分區且順序正確。</li>
+<li>強制重啟 Connect 程序後，不丟訊息（允許重複）。</li>
+</ol>
+<p>預設情況下，刪除事件後面還會跟一條 value 為 <code>null</code> 的墓碑（tombstone）訊息，用於 compact topic 的清理。消費端要能正確處理 <code>null</code> value。</p>
+<h3 id="附debezium-server-單源設定">附：Debezium Server 單源設定</h3>
+<p>只有一個源、不想維護 Connect 叢集時，可以用 Debezium Server。<code>conf/application.properties</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-properties" data-lang="properties"><span style="display:flex;"><span><span style="color:#a6e22e">debezium.sink.type</span><span style="color:#f92672">=</span><span style="color:#e6db74">kafka</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.sink.kafka.producer.bootstrap.servers</span><span style="color:#f92672">=</span><span style="color:#e6db74">&lt;kafka&gt;:9092</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.sink.kafka.producer.key.serializer</span><span style="color:#f92672">=</span><span style="color:#e6db74">org.apache.kafka.common.serialization.StringSerializer</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.sink.kafka.producer.value.serializer</span><span style="color:#f92672">=</span><span style="color:#e6db74">org.apache.kafka.common.serialization.StringSerializer</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.connector.class</span><span style="color:#f92672">=</span><span style="color:#e6db74">io.debezium.connector.mysql.MySqlConnector</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.database.hostname</span><span style="color:#f92672">=</span><span style="color:#e6db74">&lt;mysql1-host&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.database.port</span><span style="color:#f92672">=</span><span style="color:#e6db74">3306</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.database.user</span><span style="color:#f92672">=</span><span style="color:#e6db74">cdc_min</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.database.password</span><span style="color:#f92672">=</span><span style="color:#e6db74">${MYSQL1_CDC_PASSWORD}</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.database.server.id</span><span style="color:#f92672">=</span><span style="color:#e6db74">9301</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.topic.prefix</span><span style="color:#f92672">=</span><span style="color:#e6db74">src1</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.database.include.list</span><span style="color:#f92672">=</span><span style="color:#e6db74">shop</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.table.include.list</span><span style="color:#f92672">=</span><span style="color:#e6db74">shop\\.orders,shop\\.users</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.decimal.handling.mode</span><span style="color:#f92672">=</span><span style="color:#e6db74">string</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.offset.storage</span><span style="color:#f92672">=</span><span style="color:#e6db74">org.apache.kafka.connect.storage.FileOffsetBackingStore</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.offset.storage.file.filename</span><span style="color:#f92672">=</span><span style="color:#e6db74">/data/src1/offsets.dat</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.offset.flush.interval.ms</span><span style="color:#f92672">=</span><span style="color:#e6db74">10000</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.schema.history.internal</span><span style="color:#f92672">=</span><span style="color:#e6db74">io.debezium.storage.file.history.FileSchemaHistory</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.schema.history.internal.file.filename</span><span style="color:#f92672">=</span><span style="color:#e6db74">/data/src1/schema_history.dat</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.transforms</span><span style="color:#f92672">=</span><span style="color:#e6db74">orders,users</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.transforms.orders.type</span><span style="color:#f92672">=</span><span style="color:#e6db74">org.apache.kafka.connect.transforms.RegexRouter</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.transforms.orders.regex</span><span style="color:#f92672">=</span><span style="color:#e6db74">src1\\.shop\\.orders</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.transforms.orders.replacement</span><span style="color:#f92672">=</span><span style="color:#e6db74">topic_orders</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.transforms.users.type</span><span style="color:#f92672">=</span><span style="color:#e6db74">org.apache.kafka.connect.transforms.RegexRouter</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.transforms.users.regex</span><span style="color:#f92672">=</span><span style="color:#e6db74">src1\\.shop\\.users</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.transforms.users.replacement</span><span style="color:#f92672">=</span><span style="color:#e6db74">topic_users</span>
+</span></span></code></pre></div><ul>
+<li>一個程序一個源；多個源就多個目錄、多個程序，<code>server.id</code>、<code>topic.prefix</code>、offset 檔案、schema history 檔案全部獨立。</li>
+<li><code>${MYSQL1_CDC_PASSWORD}</code> 由 Quarkus 在啟動時從環境變數展開。上面說過環境變數的風險，更穩妥的做法是由啟動指令碼從 0400 的金鑰檔案讀取後再注入，並用專用帳號執行。</li>
+<li>offset 和 schema history 檔案必須放在持久化儲存上，丟了就等於丟了位點。</li>
+</ul>
+<h2 id="五工程問題重點">五、工程問題（重點）</h2>
+<p>部署只是開始。下面這些問題，基本每條鏈路上線後都會遇到。</p>
+<h3 id="51-重複訊息至少一次投遞">5.1 重複訊息：至少一次投遞</h3>
+<ul>
+<li><strong>現象</strong>：Connect 程序被強殺或 worker 重平衡後，消費端看到一段重複的訊息。</li>
+<li><strong>原因</strong>：Debezium 把訊息發到 Kafka 後，位點是<strong>週期性</strong>提交的（<code>offset.flush.interval.ms</code>，預設 60 秒）。崩潰時最後一次提交之後已經發出的訊息，重啟後會再發一遍。這是設計上的 at-least-once。</li>
+<li><strong>做法</strong>：
+<ul>
+<li>消費端必須冪等。最常見的是<strong>按主鍵 upsert</strong>；需要嚴格去重時，用「主鍵 + GTID（或 binlog file/pos/row）」判斷是否處理過。</li>
+<li>落 OLAP 時使用支援主鍵覆蓋的表模型（如 Doris 的 Unique Key、ClickHouse 的 ReplacingMergeTree），天然吸收重複。</li>
+<li>新版 Kafka Connect 支援 source connector 的 exactly-once（<code>exactly.once.source.support</code>），但需要 Kafka 和 connector 兩邊都滿足條件，不要預設依賴它，消費端冪等仍然是底線。</li>
+</ul>
+</li>
+</ul>
+<h3 id="52-順序與分區">5.2 順序與分區</h3>
+<ul>
+<li><strong>現象</strong>：同一行先 UPDATE 後 DELETE，下游卻先收到 DELETE，最後留下一行「復活」的資料。</li>
+<li><strong>原因</strong>：Kafka 只保證<strong>單個分區內</strong>有序。Debezium 預設用主鍵作為訊息 key，同一主鍵會進同一分區，所以同一行的變更是有序的；但：
+<ul>
+<li>中途<strong>增加 topic 分區數</strong>，key 到分區的對映會變，切換前後的訊息可能被不同消費者並行處理；</li>
+<li>無主鍵的表 key 為空，訊息會被分散到各分區，順序無法保證；</li>
+<li>多個源合併到一個 topic 時，不同源裡主鍵相同的行會被當成同一個 key。</li>
+</ul>
+</li>
+<li><strong>做法</strong>：
+<ul>
+<li>業務 topic 預建時就把分區數定好，之後不要隨意增加；確實要擴，就新建 topic 並做一次切換。</li>
+<li>無主鍵的表，用 <code>message.key.columns</code> 指定業務唯一鍵作為 key，或者在源頭補主鍵。</li>
+<li>多源合併到同一個 topic 時，在 key 裡加上來源（例如用 <code>ByLogicalTableRouter</code> 的 key 增強），或者乾脆每個源一個 topic。</li>
+<li>跨表、跨主鍵的全域順序，Kafka 本身不提供，不要在消費端假設它。</li>
+</ul>
+</li>
+</ul>
+<h3 id="53-首次快照對源庫的壓力">5.3 首次快照對源庫的壓力</h3>
+<ul>
+<li><strong>現象</strong>：新建 connector 後，源庫 CPU、IO 飆升，甚至短暫出現鎖等待。</li>
+<li><strong>原因</strong>：預設 <code>snapshot.mode=initial</code> 會先把白名單內的表全量讀一遍，再從快照時刻的位點開始讀 binlog。大表全表掃描、以及部分模式下的全域讀鎖，都會影響源庫。</li>
+<li><strong>做法</strong>：
+<ul>
+<li>從只讀副本採集。</li>
+<li>選擇合適的快照模式：只要增量時用 <code>no_data</code>（舊版本叫 <code>schema_only</code>）；需要全量時用 <code>initial</code>，並在低峰期進行。</li>
+<li>用 <code>snapshot.locking.mode</code> 控制鎖的行為（如 <code>minimal</code>、<code>none</code>），理解它對一致性的影響後再選。</li>
+<li>用 <code>snapshot.fetch.size</code>、<code>snapshot.max.threads</code> 等參數控制節奏；超大表可以先 <code>no_data</code> 啟動增量，再用增量快照（見 5.5）分批補歷史。</li>
+</ul>
+</li>
+</ul>
+<h3 id="54-binlog-被清理位點失效">5.4 binlog 被清理，位點失效</h3>
+<ul>
+<li><strong>現象</strong>：connector 停了幾天，重啟後報錯，大意是需要的 binlog 已經不在伺服器上。</li>
+<li><strong>原因</strong>：<code>binlog_expire_logs_seconds</code> 到期，或者有人手動 <code>PURGE BINARY LOGS</code>，connector 記錄的位點之後的 binlog 已經沒了。</li>
+<li><strong>做法</strong>：
+<ul>
+<li>保證 binlog 保留時長 &gt; 最長停機時間 + 追平時間，並對「connector 停止時長」設定告警。</li>
+<li>萬一發生，只能重新快照：可以用 <code>snapshot.mode=when_needed</code> 讓 connector 在位點失效時自動重新快照，或者人工刪除位點後重建。重新快照意味著下游會收到一遍全量資料，消費端的冪等此時尤為重要。</li>
+</ul>
+</li>
+</ul>
+<h3 id="55-新增表只有增量沒有歷史">5.5 新增表只有增量，沒有歷史</h3>
+<ul>
+<li><strong>現象</strong>：把新表加進 <code>table.include.list</code> 之後，只收到了之後的變更，歷史資料沒有。</li>
+<li><strong>原因</strong>：快照只在 connector 第一次啟動時執行；之後修改白名單，新表預設只同步增量。</li>
+<li><strong>做法</strong>：使用<strong>增量快照（incremental snapshot）</strong>。在源庫建一張 signal 表，設定 <code>signal.data.collection</code>（例如 <code>shop.debezium_signal</code>，並加入 <code>table.include.list</code>），然後插入一條訊號：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">INSERT</span> <span style="color:#66d9ef">INTO</span> shop.debezium_signal (id, <span style="color:#66d9ef">type</span>, <span style="color:#66d9ef">data</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">VALUES</span> (<span style="color:#e6db74">&#39;snapshot-orders-2024&#39;</span>, <span style="color:#e6db74">&#39;execute-snapshot&#39;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#39;{&#34;data-collections&#34;: [&#34;shop.orders_2024&#34;], &#34;type&#34;: &#34;incremental&#34;}&#39;</span>);
+</span></span></code></pre></div><p>增量快照按主鍵分塊讀取，並與 binlog 流交錯去重，不需要長時間鎖表，也不會中斷增量同步。也可以透過 Kafka 訊號 topic 觸發，具體以文件為準。</p>
+<h3 id="56-schema-history-topic-被刪或被清理">5.6 schema history topic 被刪或被清理</h3>
+<ul>
+<li><strong>現象</strong>：connector 無法啟動，報 schema history 缺失或不完整。</li>
+<li><strong>原因</strong>：Debezium 需要按 binlog 位點回放 DDL，才能正確解析某個時間點的行資料。這些 DDL 存在 schema history topic 裡。如果這個 topic 設定了過期時間、被 compact、被多分區化，或者被誤刪，歷史就不完整了。</li>
+<li><strong>做法</strong>：
+<ul>
+<li>每個 connector 獨立一個 schema history topic，單分區、<code>retention.ms=-1</code>、不 compact。</li>
+<li>把它和 <code>connect-*</code> 內部 topic 一起列為「禁止刪除」的資源。</li>
+<li>真的丟了，可以用 <code>snapshot.mode=recovery</code>（舊版叫 <code>schema_only_recovery</code>）從當前表結構重建，前提是丟失期間沒有發生過 DDL；不確定就重新快照。</li>
+<li>可以開啟 <code>schema.history.internal.store.only.captured.tables.ddl=true</code>，只存白名單內表的 DDL，減小體積。</li>
+</ul>
+</li>
+</ul>
+<h3 id="57-型別精度時區和大欄位">5.7 型別精度、時區和大欄位</h3>
+<ul>
+<li><strong>DECIMAL</strong>：預設 <code>decimal.handling.mode=precise</code>，在 JSON 裡會被編碼成 base64 位元組，消費端不好處理；設成 <code>double</code> 會丟精度。金額類欄位建議用 <code>string</code>，消費端按 decimal 解析。</li>
+<li><strong>時間精度</strong>：保持預設的 <code>time.precision.mode=adaptive_time_microseconds</code>。<strong>不要改成 <code>connect</code></strong>，否則 <code>DATETIME(6)</code> 會被截斷到毫秒，實測可復現。</li>
+<li><strong>時區</strong>：<code>DATETIME</code> 沒有時區，Debezium 按「字面值當作 UTC」轉成 epoch 數值；<code>TIMESTAMP</code> 會被轉換成 UTC 的 ISO 字串。消費端要分別處理，不要一律加 8 小時。</li>
+<li><strong>JSON</strong>：以字串輸出，消費端自行解析。</li>
+<li><strong>BLOB / BINARY</strong>：用 <code>binary.handling.mode</code>（<code>bytes</code>、<code>base64</code>、<code>hex</code> 等）選擇編碼；大欄位會讓訊息變大，必要時調大 Kafka 的 <code>max.request.size</code> 和 topic 的 <code>max.message.bytes</code>，或者乾脆排除這些列（<code>column.exclude.list</code>）。</li>
+</ul>
+<h3 id="58-server_id-衝突互相踢下線">5.8 server_id 衝突，互相踢下線</h3>
+<ul>
+<li><strong>現象</strong>：兩個 connector（或 connector 與某個真實從庫）反覆斷開重連，日誌裡出現連線被伺服器關閉的錯誤。</li>
+<li><strong>原因</strong>：MySQL 以 server_id 識別複製客戶端，同一個 server_id 的新連線會把舊連線踢掉。</li>
+<li><strong>做法</strong>：給每個 CDC 實例分配一段專用的 server_id 號段（例如 9301～9399），登記在案；複製 connector 設定時第一件事就是改 <code>database.server.id</code>。</li>
+</ul>
+<h3 id="59-主從切換">5.9 主從切換</h3>
+<ul>
+<li><strong>現象</strong>：源庫發生主從切換後，connector 無法繼續，或者從錯誤的位置開始讀。</li>
+<li><strong>原因</strong>：file/pos 位點只在同一臺伺服器上有意義；換到新主庫後，檔名和偏移量對不上。</li>
+<li><strong>做法</strong>：
+<ul>
+<li>開啟 GTID。Debezium 的位點裡帶有已處理的 GTID 集合，連線到新主庫後會按 GTID 找到續傳位置。</li>
+<li>新主庫必須<strong>仍保留</strong>對應 GTID 之後的 binlog，並且開啟了 <code>log_replica_updates</code>，否則同樣會進入 5.4 的情況。</li>
+<li>連線地址用 VIP 或域名，而不是寫死某臺機器。</li>
+<li>需要過濾某些來源的 GTID 時，可以用 <code>gtid.source.includes</code> / <code>gtid.source.excludes</code>。</li>
+</ul>
+</li>
+</ul>
+<h3 id="510-安全">5.10 安全</h3>
+<ul>
+<li>CDC 帳號只授予必要的權限，按來源 IP 限制。</li>
+<li>所有密碼都透過 config provider 從檔案或金鑰系統讀取，設定、日誌、REST 返回裡只有佔位符。</li>
+<li>Connect 的 REST 介面只對內網開放；需要對外時放在帶鑑權的閘道後面。</li>
+<li>Kafka 使用 SASL_SSL，Connect worker、connector 內部的 producer / consumer、schema history 的 producer / consumer 都要設定認證，密碼同樣用 <code>${file:...}</code>。</li>
+<li>MySQL 連線開啟 TLS（<code>database.ssl.mode</code>）。</li>
+<li>binlog 裡有全量的行資料，CDC topic 的訪問權限應當和源庫同等對待。</li>
+</ul>
+<h2 id="六日常維運">六、日常維運</h2>
+<table>
+	<thead>
+			<tr>
+					<th>操作</th>
+					<th>命令或做法</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>修改設定（熱更新）</td>
+					<td><code>PUT /connectors/&lt;name&gt;/config</code>，提交完整設定；connector 會自動重啟，不需要重啟程序</td>
+			</tr>
+			<tr>
+					<td>暫停 / 恢復</td>
+					<td><code>PUT /connectors/&lt;name&gt;/pause</code>、<code>PUT /connectors/&lt;name&gt;/resume</code></td>
+			</tr>
+			<tr>
+					<td>重啟失敗的 task</td>
+					<td><code>POST /connectors/&lt;name&gt;/restart?includeTasks=true&amp;onlyFailed=true</code></td>
+			</tr>
+			<tr>
+					<td>檢視狀態</td>
+					<td><code>GET /connectors/&lt;name&gt;/status</code>；connector 或 task 為 <code>FAILED</code> 時立即告警</td>
+			</tr>
+			<tr>
+					<td>同步延遲</td>
+					<td>JMX 指標 <code>debezium.mysql:type=connector-metrics,context=streaming,server=&lt;topic.prefix&gt;</code> 中的 <code>MilliSecondsBehindSource</code></td>
+			</tr>
+			<tr>
+					<td>binlog 保留</td>
+					<td>監控源庫最早 binlog 時間與 connector 當前位點的差距</td>
+			</tr>
+			<tr>
+					<td>升級</td>
+					<td>先在測試環境驗證新外掛；生產上逐臺替換 <code>plugin.path</code> 下的外掛並滾動重啟 worker，位點在 Kafka 中，不會丟</td>
+			</tr>
+			<tr>
+					<td>下線一個源</td>
+					<td>刪除 connector 之前先確認下游已消費完；schema history topic 和位點按需保留一段時間</td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>上線順序建議</strong>：</p>
+<ol>
+<li>測試環境用一個源、一兩張表跑通，按 4.9 的清單逐項驗證，包括強殺重啟。</li>
+<li>在接近生產的資料量上觀察首次快照的耗時和對源庫的影響，確定快照策略。</li>
+<li>消費端完成冪等與墓碑訊息處理，並在重複注入的情況下驗證結果正確。</li>
+<li>逐個接入生產源，每接一個觀察一段時間的延遲與錯誤率。</li>
+<li>把 server_id 號段、topic 命名規則、金鑰檔案位置、告警項寫進維運文件，方便交接。</li>
+</ol>
+<h2 id="七小結">七、小結</h2>
+<ul>
+<li>行級 CDC 解決的是「每一行變更都不漏、刪除也能感知、對源庫壓力小」的問題，binlog 是 MySQL 上最可靠的來源。</li>
+<li>多源 MySQL → Kafka，<strong>Kafka Connect + Debezium</strong> 是寫程式碼最少、最好交接的組合：每個源一個 connector，白名單 + <code>RegexRouter</code> 決定哪些表進哪個 topic，<code>FileConfigProvider</code> 讓密碼不出現在設定裡。</li>
+<li>部署按清單走並不難，真正需要提前設計的是：<strong>消費端冪等、按主鍵保序、快照策略、binlog 保留、schema history 保護、型別精度、server_id 管理和 GTID 主從切換</strong>。</li>
+<li>這些問題想清楚之後，加一個新源通常只是「複製一份 JSON、改五六個欄位、POST 一下」。</li>
+</ul>
+<h2 id="參考">參考</h2>
+<ul>
+<li>Debezium MySQL Connector：<a href="https://debezium.io/documentation/reference/stable/connectors/mysql.html">https://debezium.io/documentation/reference/stable/connectors/mysql.html</a></li>
+<li>Debezium Server：<a href="https://debezium.io/documentation/reference/stable/operations/debezium-server.html">https://debezium.io/documentation/reference/stable/operations/debezium-server.html</a></li>
+<li>增量快照與訊號：<a href="https://debezium.io/documentation/reference/stable/configuration/signalling.html">https://debezium.io/documentation/reference/stable/configuration/signalling.html</a></li>
+<li>ExtractNewRecordState：<a href="https://debezium.io/documentation/reference/stable/transformations/event-flattening.html">https://debezium.io/documentation/reference/stable/transformations/event-flattening.html</a></li>
+<li>Topic 路由：<a href="https://debezium.io/documentation/reference/stable/transformations/topic-routing.html">https://debezium.io/documentation/reference/stable/transformations/topic-routing.html</a></li>
+<li>Kafka Connect（分散式模式、RegexRouter、ConfigProvider）：<a href="https://kafka.apache.org/documentation/#connect">https://kafka.apache.org/documentation/#connect</a></li>
+<li>Maxwell 設定與 producer：<a href="https://maxwells-daemon.io/config/">https://maxwells-daemon.io/config/</a>、<a href="https://maxwells-daemon.io/producers/">https://maxwells-daemon.io/producers/</a></li>
+</ul>
+]]></content:encoded></item></channel></rss>

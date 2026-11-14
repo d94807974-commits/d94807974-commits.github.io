@@ -1,0 +1,1787 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>技術管理 on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/%E6%8A%80%E8%A1%93%E7%AE%A1%E7%90%86/</link><description>Recent content in 技術管理 on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Mon, 09 Nov 2026 16:00:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/%E6%8A%80%E8%A1%93%E7%AE%A1%E7%90%86/index.xml" rel="self" type="application/rss+xml"/><item><title>工程師視角讀《向上管理的本質》：預防、迭代、溝通，哪些成立、哪些要打折</title><link>https://d94807974-commits.github.io/posts/managing-up-essay-engineer-review/</link><pubDate>Mon, 09 Nov 2026 16:00:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/managing-up-essay-engineer-review/</guid><description>分析一篇講「向上管理」的公眾號文章：它用扁鵲三兄弟、稻盛和夫重建日航、觸龍說趙太后三個故事，講預防問題、快速迭代、共情溝通三種能力。本文從工程師視角逐條核對史實與資料，指出哪些觀點成立、哪些被簡化或說反了，並把它們落到 SRE、事後復盤、DORA 指標、設計文件等可執行的工程做法上。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/managing-up-essay-engineer-review.html">事實核對、觸龍的說服順序與工程化做法</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>原文的三個觀點（預防勝於救火、小步迭代、先建立信任再說服）方向都對，但三個故事都被簡化過。對工程師有用的是把它們工程化：讓預防可量化、讓回饋迴路變短、讓溝通從對方的目標出發。</p>
+</div><blockquote>
+  <p>原文：〈讓任何領導都喜歡你的秘訣-向上管理的本質〉，微信公眾號 YouCore，2026-11-08 發布，<a href="https://mp.weixin.qq.com/s/_OtDXMfzlvg_MWeymz9O0w">https://mp.weixin.qq.com/s/_OtDXMfzlvg_MWeymz9O0w</a>。下文引用原文只取短句，並標註「原文」。</p>
+
+</blockquote><h2 id="一原文在講什麼">一、原文在講什麼</h2>
+<p>原文篇幅不長，分三節，每節一個故事、一個結論：</p>
+<table>
+	<thead>
+			<tr>
+					<th>節</th>
+					<th>故事</th>
+					<th>原文結論（短句引用）</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>01 解決問題能力</td>
+					<td>扁鵲說自己醫術在三兄弟中最差：大哥在病發作前就治好，二哥在病剛起時治好，自己在病重時才出手</td>
+					<td>「防火，永遠比救火更重要」</td>
+			</tr>
+			<tr>
+					<td>02 學習迭代能力</td>
+					<td>稻盛和夫接手破產的日航，用阿米巴經營把公司切成小單元獨立核算，一年創下最高盈利、三年重新上市</td>
+					<td>「沒有迭代的學習，你就是無效重複」</td>
+			</tr>
+			<tr>
+					<td>03 溝通共情能力</td>
+					<td>觸龍勸趙太后讓長安君去齊國做人質，先聊身體、聊孩子，最後太后同意</td>
+					<td>「溝通的本質，不是用邏輯碾壓對方，而是建立我懂你的連線」</td>
+			</tr>
+	</tbody>
+</table>
+<p>文末是一個「工作 SOP 模板」的推廣入口。標題說的是「向上管理」，但正文講的其實是三種通用職場能力，並沒有直接討論如何與上級對齊目標、管理期望。這一點後面再談。</p>
+<h2 id="二先核對事實">二、先核對事實</h2>
+<p>講道理可以用故事，但故事裡的事實如果錯了，結論就要打折。下面逐條對照原始出處。</p>
+<table>
+	<thead>
+			<tr>
+					<th>原文說法</th>
+					<th>原始出處</th>
+					<th>判斷</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>扁鵲自稱三兄弟中醫術最差，「大家都笑了」</td>
+					<td>《鶡冠子·世賢》：是<strong>魏文侯</strong>問扁鵲「子昆弟三人其孰最善為醫」，扁鵲答「長兄最善，中兄次之，扁鵲最為下」</td>
+					<td>故事主體成立；問話人和場景是改編</td>
+			</tr>
+			<tr>
+					<td>日航「虧損2萬億日元」</td>
+					<td>日航 2010 年 1 月申請重整時的<strong>負債</strong>約 2.3 兆日圓，是戰後日本最大的企業破產</td>
+					<td>把「負債」說成「虧損」，概念錯</td>
+			</tr>
+			<tr>
+					<td>「一個78歲的老人」接手</td>
+					<td>稻盛和夫生於 1932 年 1 月，2010 年 2 月出任日航會長</td>
+					<td>成立</td>
+			</tr>
+			<tr>
+					<td>「僅僅一年，日航就實現了歷史上最高的盈利」</td>
+					<td>重整完成後的會計年度（2010 年 4 月～2011 年 3 月）營業利益 1,884 億日圓；2011 年度再到 2,049 億日圓</td>
+					<td>大致成立</td>
+			</tr>
+			<tr>
+					<td>「僅僅三年，日航重新上市」</td>
+					<td>2012 年 9 月 19 日重新在東證上市，距破產約 2 年 8 個月</td>
+					<td>成立（略有取整）</td>
+			</tr>
+			<tr>
+					<td>「他只做了一件事：阿米巴經營」「切分成3000個小單元」</td>
+					<td>官方資料確實強調導入阿米巴經營和按航線核算損益；但重建同時還有：銀行<strong>債務減免 5,215 億日圓</strong>、企業再生支援機構<strong>注資 3,500 億日圓</strong>、淘汰巨無霸機隊、出售子公司、裁員與減薪、退休金削減</td>
+					<td>「只做了一件事」不成立；「3000個」在所查官方資料中未找到</td>
+			</tr>
+			<tr>
+					<td>稻盛和夫說「答案永遠在現場，但只有願意迭代的人才能看見」</td>
+					<td>「答案在現場」是稻盛常被引用的說法；後半句未找到出處</td>
+					<td>後半句疑為附會</td>
+			</tr>
+			<tr>
+					<td>觸龍「全程走心，不談理」「從頭到尾沒有一句道理」</td>
+					<td>《戰國策·趙策四》：觸龍在建立信任後，明確提出「父母之愛子，則為之計深遠」，並以「位尊而無功，奉厚而無勞」論證長安君必須「有功於國」才能自保</td>
+					<td><strong>說反了</strong>：觸龍的關鍵恰恰是講了道理，只是從對方的利益出發講</td>
+			</tr>
+			<tr>
+					<td>觸龍為兒子求「黑衣衛的閒職」</td>
+					<td>原文是「願令得補黑衣之數，以衛王宮」，黑衣指王宮衛士</td>
+					<td>大意成立</td>
+			</tr>
+	</tbody>
+</table>
+<p>核對結果：<strong>三個故事的骨架都在，但第二、第三個故事的「結論部分」被改寫過</strong>。日航被講成單一方法的勝利，觸龍被講成「只靠共情」。這兩處改寫，正好都是對工程實踐影響最大的地方。</p>
+<h2 id="三觀點一預防勝於救火成立但預防需要被看見">三、觀點一：預防勝於救火——成立，但預防需要被看見</h2>
+<h3 id="31-成立的部分">3.1 成立的部分</h3>
+<p>這一點在工程上幾乎是共識。Google SRE 的做法可以看成「大哥治病」的制度化：</p>
+<ul>
+<li><strong>事後復盤（postmortem）</strong>：不追究個人，追問系統為什麼允許錯誤發生，並產出可追蹤的改進項。</li>
+<li><strong>錯誤預算（error budget）</strong>：用 SLO 把「可以接受多少不穩定」量化，預算快用完時優先做穩定性工作，而不是繼續上新功能。</li>
+<li><strong>消除瑣事（toil）</strong>：把重複的人工救火變成自動化，從根上減少事故來源。</li>
+</ul>
+<h3 id="32-值得商榷的部分">3.2 值得商榷的部分</h3>
+<p>原文說領導更器重「那些平時看起來很閒、卻從不出事的人」。現實往往相反：MIT 的 Repenning 與 Sterman 有一篇論文，標題就是 <em>Nobody Ever Gets Credit for Fixing Problems that Never Happened</em>。預防的成果是「什麼都沒發生」，而「什麼都沒發生」在報告裡是看不見的；救火則有明確的事件、時間線和英雄。</p>
+<p>如果組織只獎勵救火，就會出現：</p>
+<ul>
+<li><strong>能力陷阱</strong>：大家忙著救火，沒時間做預防，於是火越來越多；</li>
+<li><strong>逆向激勵</strong>：預防做得好的人看起來「沒產出」。</li>
+</ul>
+<p>另一個風險是<strong>過度預防</strong>：任何預防都有成本。把每一個低機率風險都做到極致，會拖慢交付，這也是 SRE 用錯誤預算而不是「零故障」作為目標的原因。</p>
+<h3 id="33-工程化做法">3.3 工程化做法</h3>
+<p>讓預防<strong>可量化、可追蹤、可彙報</strong>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span><span style="color:#75715e"># risk register entry (one per prevention item)</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">id</span>: <span style="color:#ae81ff">R-012</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">risk</span>: <span style="color:#e6db74">&#34;binlog retention shorter than max consumer downtime&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">likelihood</span>: <span style="color:#ae81ff">medium       </span> <span style="color:#75715e"># low / medium / high</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">impact</span>: <span style="color:#ae81ff">high             </span> <span style="color:#75715e"># data re-snapshot, hours of catch-up</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">leading_indicator</span>: <span style="color:#e6db74">&#34;binlog_retention_hours - max_lag_hours&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">action</span>: <span style="color:#e6db74">&#34;raise retention to 7d and alert when margin &lt; 24h&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">cost</span>: <span style="color:#e6db74">&#34;0.5 day + extra disk&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">status</span>: <span style="color:#ae81ff">done</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">evidence</span>: <span style="color:#e6db74">&#34;alert fired once in staging, no production incident&#34;</span>
+</span></span></code></pre></div><ul>
+<li>週報裡除了「做了什麼」，加上<strong>領先指標</strong>：SLO 達成率、錯誤預算消耗、告警數趨勢、近失（near-miss）事件。</li>
+<li>每一項預防工作都寫清楚「如果不做，最可能發生什麼、損失多大」，讓「沒發生的事」有一個可比較的反事實。</li>
+<li>同時保留救火能力：值班、runbook、演練。預防不是取消救火，而是讓救火變少、變短。</li>
+</ul>
+<h2 id="四觀點二小單元快反饋成立但別把成功歸因給單一方法">四、觀點二：小單元、快反饋——成立，但別把成功歸因給單一方法</h2>
+<h3 id="41-成立的部分">4.1 成立的部分</h3>
+<p>阿米巴經營的核心，按稻盛和夫官方網站的描述，是把組織分成小的自主單元，每個單元有自己的領導和核算，讓每個人看見自己的投入產出。日航的具體變化之一，是從過去只看全網收支，改成<strong>逐條航線核算盈虧</strong>。</p>
+<p>這和軟體工程的經驗高度一致：</p>
+<ul>
+<li><strong>小批次</strong>：小的變更更容易驗證、出錯時更容易回滾；</li>
+<li><strong>短反饋迴路</strong>：DORA 的四項關鍵指標（部署頻率、變更前置時間、變更失敗率、故障恢復時間）本質上就是在度量反饋迴路的長短；</li>
+<li><strong>成本透明</strong>：雲成本按服務、按團隊分攤（showback），團隊才會主動最佳化。</li>
+</ul>
+<h3 id="42-值得商榷的部分">4.2 值得商榷的部分</h3>
+<ul>
+<li><strong>單因歸因</strong>：日航的重建同時有債務減免、公共資金注資、機隊和航線重整、裁員減薪、退休金削減。這些是重整程式與外部壓力下才能推動的結構性改變。只說「他只做了一件事」，會讓讀者以為換一套核算方法就能起死回生。工程上的類比是：系統性能提升 10 倍，不能只歸功於最後上線的那一個快取。</li>
+<li><strong>區域性最優</strong>：每個小單元獨立核算，容易出現單元之間互相計價、推諉的問題。軟體團隊按指標考核時同樣如此——古德哈特定律：指標一旦成為目標，就不再是好指標。</li>
+<li><strong>倖存者偏差</strong>：成功案例被反覆講，導入同類方法卻失敗的案例很少被講。</li>
+</ul>
+<h3 id="43-工程化做法">4.3 工程化做法</h3>
+<ul>
+<li>先度量回路：從提交到上線要多久？從告警到定位要多久？從需求到使用者反饋要多久？先找最長的那一段。</li>
+<li>每一個考核指標配一個<strong>護欄指標</strong>：追部署頻率，就同時看變更失敗率；追成本下降，就同時看 SLO。</li>
+<li>復盤成功案例時，和復盤事故一樣列出<strong>所有</strong>貢獻因素，而不只是最顯眼的那一個。</li>
+</ul>
+<h2 id="五觀點三先共情再說服成立一半觸龍其實講了道理">五、觀點三：先共情再說服——成立一半，觸龍其實講了道理</h2>
+<h3 id="51-原文說反的地方">5.1 原文說反的地方</h3>
+<p>原文的結論是「觸龍從頭到尾沒有一句道理」。但對照《戰國策》原文，觸龍的說服分成兩段：</p>
+<ol>
+<li><strong>建立信任</strong>：聊身體、聊飲食、為自己的小兒子求職，讓盛怒的太后「色稍解」，並讓太后自己說出「丈夫亦愛憐其少子乎」；</li>
+<li><strong>從對方的目標出發講道理</strong>：先讓太后承認「父母之愛子，則為之計深遠」，再用趙國與諸侯子孫「位尊而無功，奉厚而無勞」的先例，推匯出長安君必須現在「有功於國」，否則太后百年之後無以自保。</li>
+</ol>
+<p>所以觸龍不是不講理，而是<strong>換了講理的出發點</strong>：大臣們講的是「國家需要」，觸龍講的是「你愛兒子，就該這樣做」。共情是讓對方願意聽，道理才是讓對方改變決定的原因。</p>
+<h3 id="52-工程化做法">5.2 工程化做法</h3>
+<p>工程師寫技術方案、向上彙報時，最常見的問題是只講「技術上應該」，不講「這對你的目標意味著什麼」。可以這樣做：</p>
+<ul>
+<li><strong>先寫對方的目標</strong>：設計文件開頭寫清楚背景、目標、非目標，用對方關心的語言（風險、成本、交付時間）描述問題。</li>
+<li><strong>給選項，不給單一答案</strong>：列出兩到三個方案及其取捨，再給出推薦和理由。</li>
+<li><strong>沒有意外（no surprises）</strong>：壞訊息儘早說，並附上影響範圍和應對方案。</li>
+<li><strong>先傾聽再提案</strong>：先問清楚對方擔心什麼，再決定從哪個角度講。</li>
+</ul>
+<h2 id="六標題與內容的落差向上管理到底是什麼">六、標題與內容的落差：向上管理到底是什麼</h2>
+<p>原文標題是「讓任何領導都喜歡你的秘訣」，但「讓領導喜歡」不是向上管理的目標。哈佛商業評論的經典文章 <em>Managing Your Boss</em>（Gabarro 與 Kotter）把它定義為：<strong>有意識地與上級合作，為雙方和組織取得最好的結果</strong>。要點包括：</p>
+<ul>
+<li>瞭解上級的目標、壓力、工作風格與偏好的溝通方式；</li>
+<li>瞭解自己的長處、短處與風格；</li>
+<li>建立一種雙方都適用的關係：期望一致、資訊流通、可靠誠實、善用上級的時間與資源。</li>
+</ul>
+<p>從這個定義看，原文的三種能力都是<strong>基礎</strong>，但還缺少關鍵的一環：<strong>主動對齊目標與期望</strong>。工程師可以落到這幾件事上：</p>
+<table>
+	<thead>
+			<tr>
+					<th>動作</th>
+					<th>頻率</th>
+					<th>產出</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>確認季度目標與優先順序</td>
+					<td>每季度</td>
+					<td>一頁紙：目標、非目標、衡量方式</td>
+			</tr>
+			<tr>
+					<td>一對一</td>
+					<td>每週或每兩週</td>
+					<td>進度、風險、需要的支援</td>
+			</tr>
+			<tr>
+					<td>風險提前通報</td>
+					<td>發現時</td>
+					<td>現象、影響、選項、建議</td>
+			</tr>
+			<tr>
+					<td>預防工作彙報</td>
+					<td>每月</td>
+					<td>領先指標、避免的風險、成本</td>
+			</tr>
+	</tbody>
+</table>
+<h2 id="七小結">七、小結</h2>
+<table>
+	<thead>
+			<tr>
+					<th>原文觀點</th>
+					<th>判斷</th>
+					<th>工程化版本</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>防火比救火重要</td>
+					<td>成立</td>
+					<td>SLO、錯誤預算、事後復盤；讓預防<strong>被看見</strong></td>
+			</tr>
+			<tr>
+					<td>持續迭代</td>
+					<td>成立，但案例歸因過度簡化</td>
+					<td>縮短反饋迴路（DORA）、指標配護欄、完整歸因</td>
+			</tr>
+			<tr>
+					<td>共情溝通</td>
+					<td>只對一半：觸龍也講了道理</td>
+					<td>從對方目標出發寫方案、給選項、沒有意外</td>
+			</tr>
+			<tr>
+					<td>標題：讓領導喜歡你</td>
+					<td>偏離向上管理的本義</td>
+					<td>與上級對齊目標和期望，為組織取得結果</td>
+			</tr>
+	</tbody>
+</table>
+<p>讀這類文章時，工程師的習慣可以派上用場：<strong>故事先查來源，結論先找反例，方法先問成本</strong>。剩下來的部分，往往仍然值得用。</p>
+<h2 id="參考">參考</h2>
+<ul>
+<li>原文：〈讓任何領導都喜歡你的秘訣-向上管理的本質〉，YouCore，<a href="https://mp.weixin.qq.com/s/_OtDXMfzlvg_MWeymz9O0w">https://mp.weixin.qq.com/s/_OtDXMfzlvg_MWeymz9O0w</a></li>
+<li>《鶡冠子·世賢》（扁鵲三兄弟）：<a href="https://ctext.org/he-guan-zi/shi-xian/zh">https://ctext.org/he-guan-zi/shi-xian/zh</a></li>
+<li>《戰國策·趙策四·觸龍說趙太后》：<a href="https://zh.wikisource.org/wiki/%E8%A7%B8%E9%BE%8D%E8%AA%AA%E8%B6%99%E5%A4%AA%E5%90%8E">https://zh.wikisource.org/wiki/%E8%A7%B8%E9%BE%8D%E8%AA%AA%E8%B6%99%E5%A4%AA%E5%90%8E</a></li>
+<li>Kazuo Inamori Archive, <em>Reviving Japan Airlines (2010)</em>：<a href="https://global.kyocera.com/inamori/archive/episode/episode-18.html">https://global.kyocera.com/inamori/archive/episode/episode-18.html</a></li>
+<li>Kazuo Inamori, <em>Amoeba Management</em>：<a href="https://global.kyocera.com/inamori/management/amoeba/">https://global.kyocera.com/inamori/management/amoeba/</a></li>
+<li>Nippon.com, <em>JAL&rsquo;s Bumpy Ride: From Bankruptcy to Relisting</em>（債務減免、注資、裁員與減薪）：<a href="https://www.nippon.com/en/articles/-/14228">https://www.nippon.com/en/articles/-/14228</a></li>
+<li>BBC, <em>JAL profits boosted by cost cuts</em>（2011 年度營業利益）：<a href="https://www.bbc.com/news/business-18056883">https://www.bbc.com/news/business-18056883</a></li>
+<li>Google SRE Book：<a href="https://sre.google/sre-book/postmortem-culture/">Postmortem Culture</a>、<a href="https://sre.google/sre-book/embracing-risk/">Embracing Risk</a>、<a href="https://sre.google/sre-book/eliminating-toil/">Eliminating Toil</a></li>
+<li>DORA 四項關鍵指標：<a href="https://dora.dev/guides/dora-metrics-four-keys/">https://dora.dev/guides/dora-metrics-four-keys/</a></li>
+<li>Repenning &amp; Sterman, <em>Nobody Ever Gets Credit for Fixing Problems that Never Happened</em> (2001)：<a href="https://web.mit.edu/nelsonr/www/Repenning=Sterman_CMR_su01_.pdf">https://web.mit.edu/nelsonr/www/Repenning=Sterman_CMR_su01_.pdf</a></li>
+<li>Gabarro &amp; Kotter, <em>Managing Your Boss</em>, Harvard Business Review：<a href="https://hbr.org/2005/01/managing-your-boss">https://hbr.org/2005/01/managing-your-boss</a></li>
+</ul>
+]]></content:encoded></item><item><title>給企業高管的 AI 風險清單：資安之外，還有十件不能拖的事</title><link>https://d94807974-commits.github.io/posts/ai-enterprise-risks-executive-agenda/</link><pubDate>Mon, 09 Nov 2026 16:00:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/ai-enterprise-risks-executive-agenda/</guid><description>AI 普及後，企業面對的不只是資安事件。本文從工程師視角整理高管需要優先處理的十五個問題：影子 AI、AI 代理越權、深偽詐騙、模型與 MCP 供應鏈、AI 產生的程式碼漏洞，以及治理問責、法規時程、資料與個資、著作權、幻覺、人才斷層、ROI 與成本、供應商鎖定、品牌信任、能源。每個問題按「現象、為什麼重要、怎麼做」寫，並附風險對策矩陣、30/90/180 天行動清單、董事會提問與追蹤指標。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/ai-enterprise-risks-executive-agenda.html">優先順序矩陣、風險地圖、法規時程與行動清單</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>AI 最大的風險不是某種新攻擊，而是企業在沒有盤點、沒有負責人、沒有權限邊界的狀態下，讓 AI 接觸資料並代替人做事。高管 30 天內要先盤點 AI 使用與 AI 代理、為每個 AI 系統指定具名負責人，並把轉帳與對外承諾改成不依賴「看到、聽到」的流程驗證。</p>
+</div><blockquote>
+  <p>查核日期：2026-11-09（Asia/Singapore）。文中數字均附來源；標示「調查」表示問卷或抽樣研究，「文件依據」表示法規或標準原文，「媒體報導」表示新聞或評論，「有爭議」表示結論受到公開質疑。本文沒有實測資料。</p>
+
+</blockquote><h2 id="一高管摘要">一、高管摘要</h2>
+<p>為什麼現在要處理：</p>
+<ol>
+<li><strong>風險已經發生，不是預測</strong>。IBM《2025 資料外洩成本報告》（調查，600 個組織，2024-03 至 2025-02）：13% 的組織回報 AI 模型或應用遭入侵，其中 97% 沒有 AI 存取控制；每 5 個組織就有 1 個因影子 AI 發生外洩；外洩組織中 63% 沒有 AI 治理政策或仍在起草。</li>
+<li><strong>AI 從「回答問題」走向「執行任務」</strong>。AI 代理會呼叫 API、讀寫系統、轉寄郵件。OWASP 在 2025 年 12 月發布《Agentic Applications Top 10》，第一名是「代理目標劫持」（Agent Goal Hijack）。權限給錯一次，損失就不是一則錯誤回答。</li>
+<li><strong>法規有時間表</strong>。EU AI Act 多數條款在 2026-08-02 開始適用，新的深偽相關禁止條款在 2026-12-02 生效；臺灣《人工智慧基本法》在 2026-01-14 公布施行，主管機關有兩年檢討法規。</li>
+<li><strong>投入沒有轉成成果</strong>。Gartner 預測到 2027 年底超過 40% 的代理式 AI 專案會被取消，原因是成本上升、商業價值不明與風險控制不足。</li>
+</ol>
+<h3 id="優先順序總表">優先順序總表</h3>
+<table>
+	<thead>
+			<tr>
+					<th>優先</th>
+					<th>問題</th>
+					<th>類別</th>
+					<th>為什麼排在這裡</th>
+					<th>建議負責人</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>P0</td>
+					<td>影子 AI 與資料外洩</td>
+					<td>資安</td>
+					<td>已有大量事件，成本可量化</td>
+					<td>CISO + CIO</td>
+			</tr>
+			<tr>
+					<td>P0</td>
+					<td>AI 代理越權與提示注入</td>
+					<td>資安</td>
+					<td>代理拿著權限做事，錯一次就是實際損失</td>
+					<td>CISO + 業務系統負責人</td>
+			</tr>
+			<tr>
+					<td>P0</td>
+					<td>深偽詐騙與 AI 加速攻擊</td>
+					<td>資安</td>
+					<td>單一事件可達數千萬美元</td>
+					<td>CFO + CISO</td>
+			</tr>
+			<tr>
+					<td>P0</td>
+					<td>治理與問責</td>
+					<td>治理</td>
+					<td>沒有負責人，其他對策都落不了地</td>
+					<td>CEO + 董事會</td>
+			</tr>
+			<tr>
+					<td>P0</td>
+					<td>法規時程</td>
+					<td>法遵</td>
+					<td>EU AI Act 已開始適用，年底再有新條款</td>
+					<td>法務長</td>
+			</tr>
+			<tr>
+					<td>P1</td>
+					<td>模型、外掛與 MCP 供應鏈</td>
+					<td>資安</td>
+					<td>生態擴張快於安全規範</td>
+					<td>CISO + 架構負責人</td>
+			</tr>
+			<tr>
+					<td>P1</td>
+					<td>AI 產生的程式碼漏洞</td>
+					<td>資安</td>
+					<td>程式碼產量上升，審查量沒跟上</td>
+					<td>CTO</td>
+			</tr>
+			<tr>
+					<td>P1</td>
+					<td>資料治理與個資</td>
+					<td>資料</td>
+					<td>AI 成果與風險都取決於資料品質與權限</td>
+					<td>資料長 / DPO</td>
+			</tr>
+			<tr>
+					<td>P1</td>
+					<td>幻覺與決策品質</td>
+					<td>營運</td>
+					<td>對外回答錯誤，企業要負責</td>
+					<td>業務負責人</td>
+			</tr>
+			<tr>
+					<td>P1</td>
+					<td>ROI 與成本失控</td>
+					<td>財務</td>
+					<td>PoC 多、上線少，Token 費用難預測</td>
+					<td>CFO</td>
+			</tr>
+			<tr>
+					<td>P1</td>
+					<td>人才與組織</td>
+					<td>人資</td>
+					<td>初階職缺減少，未來的中階主管從哪裡來</td>
+					<td>CHRO</td>
+			</tr>
+			<tr>
+					<td>P2</td>
+					<td>智慧財產與著作權</td>
+					<td>法遵</td>
+					<td>訴訟與和解金額已到十億美元級</td>
+					<td>法務長</td>
+			</tr>
+			<tr>
+					<td>P2</td>
+					<td>供應商鎖定與主權</td>
+					<td>策略</td>
+					<td>換供應商的成本隨使用深度上升</td>
+					<td>CIO + 採購</td>
+			</tr>
+			<tr>
+					<td>P2</td>
+					<td>品牌與信任</td>
+					<td>商譽</td>
+					<td>一次 AI 事故可以抵掉多年品牌累積</td>
+					<td>行銷長 + 公關</td>
+			</tr>
+			<tr>
+					<td>P2</td>
+					<td>ESG 與能源</td>
+					<td>永續</td>
+					<td>資料中心用電倍增，影響範疇三揭露</td>
+					<td>永續長</td>
+			</tr>
+	</tbody>
+</table>
+<p>P0 指 30 天內要有負責人和第一版對策；P1 指 90 天內要有制度；P2 指 180 天內要有決策。這個排序是本文的判斷，依據是「事件是否已大量發生」與「是否有明確期限」，各企業應按自身產業調整。</p>
+<h2 id="二資安問題">二、資安問題</h2>
+<h3 id="1-影子-ai-與資料外洩p0">1. 影子 AI 與資料外洩（P0）</h3>
+<p><strong>現象</strong>：員工把程式碼、會議紀錄、客戶資料貼進未經核准的 AI 工具。2023 年三星半導體部門員工把原始碼與會議內容輸入 ChatGPT 後，公司暫停員工使用生成式 AI（媒體報導，The Verge）。2026 年的新變化是員工用 Vibe Coding 自己做應用：iThome 報導資安業者 Red Access 在多個 AI 開發平臺上找到約 5,000 個看似企業用途的公開應用，其中約 40%（約 2,000 個）含有敏感資料卻沒有基本身分驗證（媒體報導）。</p>
+<p><strong>為什麼重要</strong>：IBM 報告指出，高度使用影子 AI 的組織，外洩成本平均多出 67 萬美元；涉及影子 AI 的事件，個資與智慧財產外洩比例都高於平均（調查）。iThome《2026 CIO&amp;CISO 大調查》也提到影子 AI 的問題會在擴大採用階段「再次浮現」（調查）。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>先提供核准的企業版工具，再禁止未核准工具。只禁不給，員工會繞過去。</li>
+<li>用 CASB、SWG 或 DLP 盤點實際使用的 AI 服務，每月更新清單。</li>
+<li>把「員工自建的 AI 應用」納入資產管理：上線前要申請、審查，並規定最低資安標準。</li>
+<li>資料分級後，明定哪一級資料可以進哪一類工具。</li>
+</ol>
+<h3 id="2-ai-代理越權與提示注入p0">2. AI 代理越權與提示注入（P0）</h3>
+<p><strong>現象</strong>：AI 代理會讀郵件、讀文件、呼叫工具。攻擊者不必入侵系統，只要在郵件、網頁或文件裡放一段指令，代理就可能照做。OWASP《LLM Top 10 2025》把提示注入（LLM01）列為第一，並把「過度代理」（Excessive Agency，LLM06）列為獨立風險；《Agentic Top 10 2026》以 EchoLeak 等案例說明代理目標被劫持的後果（文件依據）。</p>
+<p><strong>為什麼重要</strong>：傳統資安假設「有權限的使用者做的事，就是使用者想做的事」。AI 代理打破這個假設：權限是對的，意圖卻被外部內容改掉。IBM 報告中 AI 相關事件有 60% 導致資料外洩、31% 造成營運中斷（調查）。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>每個代理只給完成任務所需的最小權限，用獨立的服務身分，不共用人的帳號。</li>
+<li>付款、刪除、對外寄送、修改權限這類不可逆動作，一律要求人工確認。</li>
+<li>把代理讀到的外部內容視為不可信輸入，與系統指令分開處理。</li>
+<li>保留完整的工具呼叫紀錄，並設定可以立即停用代理的開關。</li>
+</ol>
+<h3 id="3-深偽詐騙與-ai-加速攻擊p0">3. 深偽詐騙與 AI 加速攻擊（P0）</h3>
+<p><strong>現象</strong>：2024 年，工程顧問公司 Arup 香港辦公室的員工在一場視訊會議中，看到「財務長」與多位「同事」，隨後分 15 筆轉出約 2 億港幣（約 2,500 萬美元）。會議中的其他人都是深偽產生的（媒體報導，CNN）。攻擊端也在自動化：Anthropic 在 2025 年 11 月報告，一個國家級團體利用 Claude Code 攻擊約 30 個目標，AI 執行了 80% 至 90% 的戰術操作（廠商報告，<strong>有爭議</strong>：Ars Technica 等報導指出研究人員質疑其自主程度與證據）。</p>
+<p><strong>為什麼重要</strong>：IBM 報告中 16% 的外洩事件涉及攻擊者使用 AI，最常見的是釣魚與深偽冒充（調查）。「看到臉、聽到聲音」已經不能當作身分驗證。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>大額轉帳、變更收款帳戶、緊急採購，一律用事先登記的第二管道回撥確認，不用來電或會議中提供的聯絡方式。</li>
+<li>設定高管與財務人員之間的驗證暗語或內部核准系統，不依賴視訊。</li>
+<li>每年針對財務、採購、人資做深偽情境演練。</li>
+<li>假設攻擊者的速度比去年更快：縮短修補週期，把偵測與回應時間列為指標。</li>
+</ol>
+<h3 id="4-模型外掛與-mcp-供應鏈p1">4. 模型、外掛與 MCP 供應鏈（P1）</h3>
+<p><strong>現象</strong>：企業開始用 MCP（Model Context Protocol）把 AI 代理接到內部系統，也大量下載開源模型與外掛。InfoQ 2026 年 7 月的文章指出，2026 年頭 60 天有超過 30 個 CVE 針對 MCP 部署；作者引用 Adversa AI 的掃描，500 多個 MCP 伺服器中 38% 的關鍵端點沒有驗證（媒體報導，第三方數字未獨立查核）。</p>
+<p><strong>為什麼重要</strong>：MCP 伺服器與外掛是會被執行的程式；部分模型檔案格式（例如 Python pickle）在載入時也能執行程式碼。工具定義在核准後被改掉（rug pull），閘道的驗證不會發現。這與過去的開源套件供應鏈問題相同，只是權限更大。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>建立核准的模型與 MCP 伺服器清單，只允許從內部登錄庫安裝。</li>
+<li>核准時鎖定工具定義的雜湊值，之後有變更就重新審查。</li>
+<li>MCP 伺服器的對外連線用白名單，憑證按工具範圍發放。</li>
+<li>模型與外掛納入 SBOM 與弱點管理流程。</li>
+</ol>
+<h3 id="5-ai-產生的程式碼漏洞p1">5. AI 產生的程式碼漏洞（P1）</h3>
+<p><strong>現象</strong>：Veracode《2025 GenAI 程式碼安全報告》測試多個大型語言模型，45% 的任務產生了含 OWASP Top 10 弱點的程式碼，Java 的比例達 72%（調查）。</p>
+<p><strong>為什麼重要</strong>：AI 讓程式碼產量上升，但審查人力沒有同步增加。弱點的數量會跟著產量上升，而且多數出現在看起來正確、能通過測試的程式碼裡。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>AI 產生的程式碼走同一套 SAST、相依套件掃描與人工審查，不設快速通道。</li>
+<li>在 CI 加入阻擋規則，例如禁止把外部輸入接到 shell 或 <code>eval</code>。</li>
+<li>追蹤「AI 協助的變更」的缺陷率，用資料決定哪些場景可以放寬。</li>
+</ol>
+<h2 id="三資安之外的問題">三、資安之外的問題</h2>
+<h3 id="6-治理與問責p0">6. 治理與問責（P0）</h3>
+<p><strong>現象</strong>：AI 專案分散在各部門，沒有人知道公司總共有多少 AI 系統、誰負責。iThome 調查中 26% 的企業認為最大挑戰是「AI 資安和治理人才不足」（調查）。</p>
+<p><strong>為什麼重要</strong>：沒有清單，就無法評估風險；沒有負責人，事故發生時沒有人能決定停用。《遠見》引述台灣微軟總經理卞志祥的觀察，前瞻企業會成立直屬董事會層級的 AI 治理委員會，由法務、財務、業務、IT 與 HR 共治（媒體報導）。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>建立 AI 系統清單：用途、資料、模型、供應商、負責人、風險等級。</li>
+<li>每個 AI 系統指定一位具名的業務負責人，不是只指定 IT。</li>
+<li>以 NIST AI RMF（治理、對應、量測、管理）或 ISO/IEC 42001（AI 管理系統）當框架，不要從零自創（文件依據）。</li>
+</ol>
+<h3 id="7-法規時程p0">7. 法規時程（P0）</h3>
+<p><strong>現象</strong>：主要法規已經進入適用期。</p>
+<table>
+	<thead>
+			<tr>
+					<th>日期</th>
+					<th>事件</th>
+					<th>依據</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>2025-02-02</td>
+					<td>EU AI Act：禁止的 AI 行為、AI 素養義務開始適用</td>
+					<td>文件依據</td>
+			</tr>
+			<tr>
+					<td>2025-08-02</td>
+					<td>EU AI Act：通用目的 AI 模型義務與治理規定</td>
+					<td>文件依據</td>
+			</tr>
+			<tr>
+					<td>2026-01-14</td>
+					<td>臺灣《人工智慧基本法》公布施行，共 20 條</td>
+					<td>文件依據</td>
+			</tr>
+			<tr>
+					<td>2026-07-27</td>
+					<td>EU「AI Omnibus」簡化修正生效</td>
+					<td>文件依據</td>
+			</tr>
+			<tr>
+					<td>2026-08-02</td>
+					<td>EU AI Act 多數規定適用，含第 50 條透明度義務</td>
+					<td>文件依據</td>
+			</tr>
+			<tr>
+					<td>2026-12-02</td>
+					<td>EU AI Act 新增的深偽相關禁止條款生效</td>
+					<td>文件依據</td>
+			</tr>
+			<tr>
+					<td>2027-12-02</td>
+					<td>EU AI Act 附件三高風險系統規定（就業、教育、生物辨識等）</td>
+					<td>文件依據</td>
+			</tr>
+			<tr>
+					<td>2028-08-02</td>
+					<td>EU AI Act 附件一高風險系統規定（嵌入產品者）</td>
+					<td>文件依據</td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>為什麼重要</strong>：違反 EU AI Act 第 5 條禁止行為，罰款最高 3,500 萬歐元或全球年營業額 7%，取較高者（文件依據，第 99 條）。臺灣基本法本身是原則性立法，但第 18 條要求各主管機關在兩年內檢討法規，金融、醫療、人資等領域的具體要求會陸續出現。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>判斷公司是否在 EU 市場提供或使用 AI 系統，包括透過子公司與客戶。</li>
+<li>把 AI 系統清單對應到 EU AI Act 的風險分類，標出可能的高風險系統。</li>
+<li>對外的 AI 產生內容與聊天機器人，先做到透明度標示。</li>
+<li>指定一人追蹤臺灣各主管機關的子法與指引。</li>
+</ol>
+<h3 id="8-資料治理與個資p1">8. 資料治理與個資（P1）</h3>
+<p><strong>現象</strong>：AI 系統的品質取決於能讀到什麼資料，風險也一樣。iThome 調查中 21% 的企業認為最大挑戰是資料治理成熟度不足（調查）。</p>
+<p><strong>為什麼重要</strong>：企業內部搜尋與 RAG（檢索增強生成）會把「本來找不到」的文件變成「問一句就找到」。原本靠「沒人知道放在哪裡」保護的資料，會直接暴露。個資被用於訓練或推論，也會牽涉蒐集目的與當事人同意。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>先修檔案權限，再接 AI 搜尋。AI 只該看到使用者本來就能看的資料。</li>
+<li>與 AI 供應商的合約寫明：資料是否用於訓練、保存期限、儲存地區、刪除方式。</li>
+<li>對個資做最小化與去識別化，記錄每個 AI 系統的資料流向。</li>
+</ol>
+<h3 id="9-智慧財產與著作權p2">9. 智慧財產與著作權（P2）</h3>
+<p><strong>現象</strong>：2025 年，Anthropic 以 15 億美元和解作家集體訴訟（Bartz v. Anthropic），爭點之一是以盜版來源取得書籍（媒體報導，AP）。</p>
+<p><strong>為什麼重要</strong>：企業有兩種曝險：一是使用的模型或產出侵權，二是自己的營業秘密被輸入外部模型後無法收回。AI 產出的著作權歸屬在各國仍未定案。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>採購時確認供應商是否提供智慧財產賠償條款，以及適用範圍。</li>
+<li>對外發布的 AI 產出（行銷素材、程式碼、文件）保留人工創作與審查紀錄。</li>
+<li>營業秘密等級的資料不進外部模型，除非合約明確排除訓練使用。</li>
+</ol>
+<h3 id="10-幻覺與決策品質p1">10. 幻覺與決策品質（P1）</h3>
+<p><strong>現象</strong>：2024 年加拿大卑詩省民事仲裁庭判決 Air Canada 要為官網聊天機器人提供的錯誤退款資訊負責，金額合計 812.02 加幣（文件依據，2024 BCCRT 149）。金額小，但原則很清楚：企業不能主張「那是機器人說的」。</p>
+<p><strong>為什麼重要</strong>：生成式 AI 會用流暢的語氣給出錯誤答案。用在對外客服，是法律責任；用在內部決策，是判斷品質。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>依影響分級：對外承諾、價格、法律與醫療資訊，必須有人審查或限制在檢索到的原文範圍內回答。</li>
+<li>上線前建立評估集，持續量測錯誤率，不只看使用者滿意度。</li>
+<li>重要決策保留「AI 建議」與「人的最終判斷」兩筆紀錄。</li>
+</ol>
+<h3 id="11-人才與組織p1">11. 人才與組織（P1）</h3>
+<p><strong>現象</strong>：Stanford Digital Economy Lab 的研究發現，在 AI 曝險最高的職業中，22 至 25 歲的就業人數相對下降 13%，年長員工則持平或成長（調查）。WEF《2025 未來就業報告》估計 2025 至 2030 年勞工 39% 的核心技能會改變（調查）。</p>
+<p><strong>為什麼重要</strong>：減少初階職缺短期內省錢，長期會斷掉人才梯隊。《遠見》一篇專欄問得直接：「如果沒有了第一線員工，或是沒有中階主管，那公司未來的高階主管在哪裡？」（媒體報導，作者意見）。另一方面，監督 AI 需要有經驗的人，但經驗正是從被 AI 取代的基礎工作裡累積的。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>保留一定比例的初階招募，把「監督 AI 產出」設計成新人的養成路徑。</li>
+<li>把預算的一部分固定投入培訓與流程重設計。《遠見》引述勤業眾信的說法，全球 93% 的企業把資源重押在技術，僅約 7% 投資在人才與組織（媒體報導，原始調查未查到）。</li>
+<li>用「理解程度」而不只是「產出速度」評估使用 AI 的員工。</li>
+</ol>
+<h3 id="12-roi-與成本失控p1">12. ROI 與成本失控（P1）</h3>
+<p><strong>現象</strong>：PoC 很多，上線很少。MIT NANDA 2025 年報告稱 95% 的生成式 AI 試點沒有產生可量測的損益影響（<strong>有爭議</strong>：研究方法與樣本受到批評，只能當作方向參考）。Gartner 預測超過 40% 的代理式 AI 專案會在 2027 年底前取消（文件依據）。</p>
+<p><strong>為什麼重要</strong>：Token 費用按使用量計價，代理會自己呼叫多輪模型，成本比傳統軟體授權難預測。《遠見》引述卞志祥：「燒Token多僅代表處於未經優化的初期摸索階段，絕對不等於效率」（媒體報導）。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>專案啟動前寫下要改善的營運指標（處理時間、錯誤率、客訴量），不以使用量當成果。</li>
+<li>每個 AI 系統設定 Token 預算上限與用量告警。</li>
+<li>設定 PoC 的退出條件：90 天內沒有達到指標就停，資源轉給有成果的專案。</li>
+</ol>
+<h3 id="13-供應商鎖定與主權p2">13. 供應商鎖定與主權（P2）</h3>
+<p><strong>現象</strong>：提示詞、評估集、代理流程與資料管線都綁在某一家模型或雲端平臺上。</p>
+<p><strong>為什麼重要</strong>：模型更新可能改變行為，價格與服務條款可能調整，部分產業還有資料必須留在境內的要求。使用越深，換供應商的成本越高。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>在應用與模型之間加一層抽象介面，至少讓兩家模型可以替換。</li>
+<li>評估集、提示詞與日誌留在自己的系統裡。</li>
+<li>對關鍵流程準備退場方案：備援模型、本地部署選項、資料匯出格式。</li>
+</ol>
+<h3 id="14-品牌與信任p2">14. 品牌與信任（P2）</h3>
+<p><strong>現象</strong>：AI 客服說錯話、AI 產生的行銷素材出錯、深偽冒充高管發言，都會直接變成新聞。</p>
+<p><strong>為什麼重要</strong>：客戶不區分「AI 的錯」與「公司的錯」。EU AI Act 第 50 條也要求在特定情境揭露使用者正在與 AI 互動，以及標示 AI 產生的內容（文件依據）。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>公開公司的 AI 使用原則與揭露方式。</li>
+<li>準備 AI 事故的對外溝通範本，納入危機處理流程。</li>
+<li>監測社群上冒充公司或高管的深偽內容，建立下架流程。</li>
+</ol>
+<h3 id="15-esg-與能源p2">15. ESG 與能源（P2）</h3>
+<p><strong>現象</strong>：IEA《Energy and AI》預測全球資料中心用電到 2030 年將增加一倍以上，達到約 945 TWh，略高於日本目前全國用電量（文件依據）。</p>
+<p><strong>為什麼重要</strong>：企業使用雲端 AI 的用電，會反映在範疇三排放與供應鏈揭露中。自建 AI 機房則直接受電力供應與電價影響。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>要求 AI 與雲端供應商提供用電與排放資料。</li>
+<li>在專案評估中納入能耗：小模型能完成的任務，不用大模型。</li>
+<li>把 AI 用電納入既有的永續報告範圍。</li>
+</ol>
+<h2 id="四風險與對策矩陣">四、風險與對策矩陣</h2>
+<table>
+	<thead>
+			<tr>
+					<th>風險</th>
+					<th>可能性</th>
+					<th>影響</th>
+					<th>首要對策</th>
+					<th>追蹤指標</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>影子 AI 外洩</td>
+					<td>高</td>
+					<td>高</td>
+					<td>核准工具 + 使用盤點 + DLP</td>
+					<td>未核准 AI 服務數</td>
+			</tr>
+			<tr>
+					<td>代理越權 / 提示注入</td>
+					<td>中</td>
+					<td>高</td>
+					<td>最小權限 + 不可逆動作人工確認</td>
+					<td>具高權限的代理數</td>
+			</tr>
+			<tr>
+					<td>深偽詐騙</td>
+					<td>中</td>
+					<td>高</td>
+					<td>第二管道回撥 + 演練</td>
+					<td>大額轉帳回撥覆蓋率</td>
+			</tr>
+			<tr>
+					<td>MCP / 外掛供應鏈</td>
+					<td>中</td>
+					<td>高</td>
+					<td>內部登錄庫 + 定義鎖定</td>
+					<td>未登錄 MCP 伺服器數</td>
+			</tr>
+			<tr>
+					<td>AI 程式碼漏洞</td>
+					<td>高</td>
+					<td>中</td>
+					<td>同一套掃描與審查</td>
+					<td>AI 協助變更的缺陷率</td>
+			</tr>
+			<tr>
+					<td>治理缺位</td>
+					<td>高</td>
+					<td>高</td>
+					<td>AI 系統清單 + 具名負責人</td>
+					<td>有負責人的系統比例</td>
+			</tr>
+			<tr>
+					<td>法規違反</td>
+					<td>中</td>
+					<td>高</td>
+					<td>風險分類 + 透明度標示</td>
+					<td>完成分類的系統比例</td>
+			</tr>
+			<tr>
+					<td>個資與資料權限</td>
+					<td>高</td>
+					<td>高</td>
+					<td>先修權限再接 AI</td>
+					<td>過度分享檔案數</td>
+			</tr>
+			<tr>
+					<td>著作權</td>
+					<td>低</td>
+					<td>高</td>
+					<td>賠償條款 + 審查紀錄</td>
+					<td>有賠償條款的合約比例</td>
+			</tr>
+			<tr>
+					<td>幻覺</td>
+					<td>高</td>
+					<td>中</td>
+					<td>分級審查 + 評估集</td>
+					<td>評估集錯誤率</td>
+			</tr>
+			<tr>
+					<td>人才斷層</td>
+					<td>中</td>
+					<td>中</td>
+					<td>保留初階招募 + 培訓預算</td>
+					<td>培訓預算佔 AI 總預算比例</td>
+			</tr>
+			<tr>
+					<td>成本失控</td>
+					<td>高</td>
+					<td>中</td>
+					<td>Token 預算 + PoC 退出條件</td>
+					<td>上線專案佔 PoC 比例</td>
+			</tr>
+			<tr>
+					<td>供應商鎖定</td>
+					<td>中</td>
+					<td>中</td>
+					<td>抽象介面 + 退場方案</td>
+					<td>可替換模型的系統比例</td>
+			</tr>
+			<tr>
+					<td>品牌事故</td>
+					<td>中</td>
+					<td>高</td>
+					<td>揭露原則 + 溝通範本</td>
+					<td>AI 相關客訴數</td>
+			</tr>
+			<tr>
+					<td>能源與排放</td>
+					<td>中</td>
+					<td>低</td>
+					<td>供應商揭露 + 模型選型</td>
+					<td>AI 用電估算</td>
+			</tr>
+	</tbody>
+</table>
+<p>可能性與影響是本文的定性判斷，各企業要依產業與 AI 使用程度重新評分。</p>
+<h2 id="五3090180-天行動清單">五、30/90/180 天行動清單</h2>
+<p><strong>30 天（止血）</strong></p>
+<ol>
+<li>指定 AI 治理負責人，向 CEO 與董事會報告。</li>
+<li>完成第一版 AI 系統與 AI 代理清單，包含員工自建應用。</li>
+<li>提供核准的企業版 AI 工具，公布可用與不可用的資料等級。</li>
+<li>財務流程加入第二管道回撥，完成一次深偽情境演練。</li>
+<li>盤點所有具有寫入或對外動作權限的代理，移除不必要權限。</li>
+</ol>
+<p><strong>90 天（建制度）</strong></p>
+<ol>
+<li>選定 NIST AI RMF 或 ISO/IEC 42001 作為框架，完成風險分級。</li>
+<li>完成 EU AI Act 適用性評估，以及臺灣主管機關指引的追蹤機制。</li>
+<li>建立 MCP 伺服器與模型的內部登錄庫和審查流程。</li>
+<li>每個上線的 AI 系統要有評估集、錯誤率與 Token 預算。</li>
+<li>修正企業文件權限，再擴大 AI 搜尋的範圍。</li>
+</ol>
+<p><strong>180 天（常態化）</strong></p>
+<ol>
+<li>AI 風險納入企業風險管理與內部稽核年度計畫。</li>
+<li>重新檢視 PoC 組合：沒有達到營運指標的專案停止。</li>
+<li>完成主要 AI 供應商的合約檢視：訓練使用、資料地區、賠償條款、退場。</li>
+<li>發布人才計畫：初階養成路徑、培訓預算、職能重新設計。</li>
+<li>對外公布 AI 使用原則，並把 AI 用電納入永續揭露。</li>
+</ol>
+<h2 id="六董事會應該問的問題">六、董事會應該問的問題</h2>
+<ol>
+<li>公司目前有多少 AI 系統與 AI 代理？清單上次更新是什麼時候？</li>
+<li>每個 AI 系統的負責人是誰？出事時誰有權停用？</li>
+<li>哪些 AI 代理可以付款、刪除資料、對外寄送或修改權限？誰核准的？</li>
+<li>如果明天有人用深偽冒充 CEO 要求轉帳，流程上哪一步會擋下來？</li>
+<li>哪些系統落在 EU AI Act 或臺灣主管機關的高風險範圍？</li>
+<li>過去一年 AI 投入多少？哪些專案有可量測的營運成果？</li>
+<li>如果主要 AI 供應商漲價或停止服務，我們多久能切換？</li>
+<li>三年後的中階主管，現在在哪裡培養？</li>
+</ol>
+<h2 id="七追蹤指標">七、追蹤指標</h2>
+<table>
+	<thead>
+			<tr>
+					<th>指標</th>
+					<th>說明</th>
+					<th>頻率</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>AI 系統清單覆蓋率</td>
+					<td>已登錄系統 / 盤點發現的系統</td>
+					<td>每月</td>
+			</tr>
+			<tr>
+					<td>未核准 AI 服務數</td>
+					<td>網路與端點偵測到的未核准服務</td>
+					<td>每月</td>
+			</tr>
+			<tr>
+					<td>高權限代理數</td>
+					<td>具有不可逆動作權限的代理</td>
+					<td>每月</td>
+			</tr>
+			<tr>
+					<td>有具名負責人的系統比例</td>
+					<td>目標 100%</td>
+					<td>每季</td>
+			</tr>
+			<tr>
+					<td>AI 相關資安事件數與處理時間</td>
+					<td>含提示注入、資料外洩</td>
+					<td>每月</td>
+			</tr>
+			<tr>
+					<td>評估集錯誤率</td>
+					<td>每個上線系統分別計算</td>
+					<td>每次版本更新</td>
+			</tr>
+			<tr>
+					<td>PoC 上線率</td>
+					<td>上線專案 / 啟動的 PoC</td>
+					<td>每季</td>
+			</tr>
+			<tr>
+					<td>Token 費用與預算偏差</td>
+					<td>實際費用 / 預算</td>
+					<td>每月</td>
+			</tr>
+			<tr>
+					<td>培訓完成率與初階招募數</td>
+					<td>AI 素養與監督能力培訓</td>
+					<td>每季</td>
+			</tr>
+			<tr>
+					<td>法規對應完成度</td>
+					<td>已完成風險分類與揭露的系統比例</td>
+					<td>每季</td>
+			</tr>
+	</tbody>
+</table>
+<h2 id="八邊界與限制">八、邊界與限制</h2>
+<ol>
+<li>本文沒有實測資料。數字來自調查、廠商報告、法規原文與媒體報導，各自的樣本與方法不同，不能直接互相比較。</li>
+<li>調查數字多為 2025 年資料，AI 採用速度快，2026 年的實際情況可能更嚴重。</li>
+<li>優先順序是通用判斷。金融、醫療、製造與網路服務業的排序會不同，例如金融業的法規與深偽詐騙可能都應列為最高。</li>
+<li>法規時程以 2026-11-09 查核的 EU 官方頁面為準，後續仍可能修正。</li>
+</ol>
+<h2 id="參考">參考</h2>
+<p>法規與標準（文件依據）：</p>
+<ul>
+<li>EU AI Act 實施時程（AI Act Service Desk）：<a href="https://ai-act-service-desk.ec.europa.eu/en/ai-act/eu-ai-act-implementation-timeline">https://ai-act-service-desk.ec.europa.eu/en/ai-act/eu-ai-act-implementation-timeline</a></li>
+<li>European Commission, AI Act 政策頁（含 AI Omnibus）：<a href="https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai">https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai</a></li>
+<li>EU AI Act 第 99 條罰則：<a href="https://artificialintelligenceact.eu/article/99/">https://artificialintelligenceact.eu/article/99/</a></li>
+<li>總統府公布《人工智慧基本法》：<a href="https://www.president.gov.tw/Page/294/50131">https://www.president.gov.tw/Page/294/50131</a></li>
+<li>國科會《人工智慧基本法》條文：<a href="https://law.nstc.gov.tw/LawContentSource.aspx?id=GL000592">https://law.nstc.gov.tw/LawContentSource.aspx?id=GL000592</a></li>
+<li>NIST AI Risk Management Framework：<a href="https://www.nist.gov/itl/ai-risk-management-framework">https://www.nist.gov/itl/ai-risk-management-framework</a></li>
+<li>NIST AI 600-1 生成式 AI 剖繪：<a href="https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf">https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf</a></li>
+<li>ISO/IEC 42001:2023：<a href="https://www.iso.org/standard/42001">https://www.iso.org/standard/42001</a></li>
+<li>OWASP Top 10 for LLM Applications 2025：<a href="https://genai.owasp.org/download/43299/">https://genai.owasp.org/download/43299/</a></li>
+<li>OWASP Top 10 for Agentic Applications 2026：<a href="https://genai.owasp.org/download/52117/">https://genai.owasp.org/download/52117/</a>、說明文章 <a href="https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/">https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/</a></li>
+<li>Moffatt v. Air Canada, 2024 BCCRT 149：<a href="https://www.canlii.org/en/bc/bccrt/doc/2024/2024bccrt149/2024bccrt149.pdf">https://www.canlii.org/en/bc/bccrt/doc/2024/2024bccrt149/2024bccrt149.pdf</a></li>
+</ul>
+<p>研究與調查：</p>
+<ul>
+<li>IBM, Cost of a Data Breach 2025 新聞稿：<a href="https://newsroom.ibm.com/2025-07-30-ibm-report-13-of-organizations-reported-breaches-of-ai-models-or-applications,-97-of-which-reported-lacking-proper-ai-access-controls">https://newsroom.ibm.com/2025-07-30-ibm-report-13-of-organizations-reported-breaches-of-ai-models-or-applications,-97-of-which-reported-lacking-proper-ai-access-controls</a></li>
+<li>Gartner, 超過 40% 代理式 AI 專案將被取消：<a href="https://www.gartner.com/en/newsroom/press-releases/2025-06-25-gartner-predicts-over-40-percent-of-agentic-ai-projects-will-be-canceled-by-end-of-2027">https://www.gartner.com/en/newsroom/press-releases/2025-06-25-gartner-predicts-over-40-percent-of-agentic-ai-projects-will-be-canceled-by-end-of-2027</a></li>
+<li>Veracode, 2025 GenAI Code Security Report：<a href="https://www.veracode.com/blog/genai-code-security-report/">https://www.veracode.com/blog/genai-code-security-report/</a></li>
+<li>Anthropic, Disrupting an AI-orchestrated cyber espionage campaign：<a href="https://www.anthropic.com/news/disrupting-AI-espionage">https://www.anthropic.com/news/disrupting-AI-espionage</a></li>
+<li>Stanford Digital Economy Lab, Canaries in the Coal Mine：<a href="https://digitaleconomy.stanford.edu/publication/canaries-in-the-coal-mine-six-facts-about-the-recent-employment-effects-of-artificial-intelligence/">https://digitaleconomy.stanford.edu/publication/canaries-in-the-coal-mine-six-facts-about-the-recent-employment-effects-of-artificial-intelligence/</a></li>
+<li>WEF, Future of Jobs Report 2025：<a href="https://reports.weforum.org/docs/WEF_Future_of_Jobs_Report_2025.pdf">https://reports.weforum.org/docs/WEF_Future_of_Jobs_Report_2025.pdf</a></li>
+<li>IEA, Energy and AI：<a href="https://www.iea.org/reports/energy-and-ai">https://www.iea.org/reports/energy-and-ai</a>、新聞稿 <a href="https://www.iea.org/news/ai-is-set-to-drive-surging-electricity-demand-from-data-centres-while-offering-the-potential-to-transform-how-the-energy-sector-works">https://www.iea.org/news/ai-is-set-to-drive-surging-electricity-demand-from-data-centres-while-offering-the-potential-to-transform-how-the-energy-sector-works</a></li>
+</ul>
+<p>媒體與評論：</p>
+<ul>
+<li>iThome，〈人才和資料治理是AI資安兩大難題〉（2026 企業資安大調查）：<a href="https://www.ithome.com.tw/article/175312">https://www.ithome.com.tw/article/175312</a></li>
+<li>iThome，〈員工自建Vibe Coding應用成影子AI新風險〉：<a href="https://www.ithome.com.tw/news/176269">https://www.ithome.com.tw/news/176269</a></li>
+<li>遠見雜誌，〈AI落地為何總卡關？企業導入AI不可迴避的五個大哉問〉：<a href="https://www.gvm.com.tw/article/132051">https://www.gvm.com.tw/article/132051</a></li>
+<li>遠見雜誌，〈AI資安風險升溫！企業必須守住失控防線〉：<a href="https://www.gvm.com.tw/article/132260">https://www.gvm.com.tw/article/132260</a></li>
+<li>InfoQ, Securing MCP in Production: Defense-in-Depth beyond the Gateway：<a href="https://www.infoq.com/articles/securing-mcp-production-gateway/">https://www.infoq.com/articles/securing-mcp-production-gateway/</a></li>
+<li>CNN, Arup 深偽詐騙：<a href="https://www.cnn.com/2024/05/16/tech/arup-deepfake-scam-loss-hong-kong-intl-hnk">https://www.cnn.com/2024/05/16/tech/arup-deepfake-scam-loss-hong-kong-intl-hnk</a></li>
+<li>The Verge, 三星限制員工使用生成式 AI：<a href="https://www.theverge.com/2023/5/2/23707796/samsung-ban-chatgpt-generative-ai-bing-bard-employees-security-concerns">https://www.theverge.com/2023/5/2/23707796/samsung-ban-chatgpt-generative-ai-bing-bard-employees-security-concerns</a></li>
+<li>AP, Bartz v. Anthropic 和解：<a href="https://apnews.com/article/ai-anthropic-copyright-settlement-claude-books-bartz-74b140444023898aeba8579b6e9f0d63">https://apnews.com/article/ai-anthropic-copyright-settlement-claude-books-bartz-74b140444023898aeba8579b6e9f0d63</a></li>
+<li>Ars Technica, 研究人員質疑 Anthropic 的自主攻擊說法：<a href="https://arstechnica.com/security/2025/11/researchers-question-anthropic-claim-that-ai-assisted-attack-was-90-autonomous/">https://arstechnica.com/security/2025/11/researchers-question-anthropic-claim-that-ai-assisted-attack-was-90-autonomous/</a></li>
+<li>Fortune, MIT NANDA 報告：<a href="https://fortune.com/2025/08/18/mit-report-95-percent-generative-ai-pilots-at-companies-failing-cfo/">https://fortune.com/2025/08/18/mit-report-95-percent-generative-ai-pilots-at-companies-failing-cfo/</a>；批評 <a href="https://newmr.org/blog/myth-number-2-mit-showed-that-95-of-ai-pilots-fail/">https://newmr.org/blog/myth-number-2-mit-showed-that-95-of-ai-pilots-fail/</a></li>
+</ul>
+]]></content:encoded></item><item><title>《間接思考的藝術》×《麻省理工深度思考法》整合讀書筆記：先畫出系統，再繞著走</title><link>https://d94807974-commits.github.io/posts/obliquity-mit-essential-thinking-reading-notes/</link><pubDate>Wed, 04 Nov 2026 19:02:51 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/obliquity-mit-essential-thinking-reading-notes/</guid><description>把約翰·凱的《間接思考的藝術》（Obliquity）和平井孝志的《麻省理工深度思考法》（本質思考）放在一起讀。平井教你用系統動力學畫出現象背後的模型和動力機制，找到槓桿點；凱提醒你模型永遠不完整，複雜目標只能迂迴、漸進地逼近。筆記裡有兩本書的簡體、繁體、原版資訊與譯名對照，凱 2004 年《金融時報》原文裡黃石林火、ICI、波音等案例的核對，書評裡的批評，還有一個「畫圖—找槓桿—迂迴試探」的整合框架、工程師的落地用法、兩本書各自的侷限和一份檢查清單。</description><content:encoded><![CDATA[<div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>平井孝志給你一張地圖，約翰·凱提醒你地圖永遠不完整、路是彎的。目標通常是系統的輸出，而不是能直接擰動的旋鈕，所以要先畫出系統，再迂迴地逼近。</p>
+</div><blockquote>
+  <p>素材說明：兩本書的全文我都沒有讀完。這篇筆記依據的材料有：兩本書的出版社頁面和中、日、英文目錄（中信出版社、中國華僑出版社/後浪、東洋經濟新報社、Profile Books、臺灣商周出版、天下文化），豆瓣條目裡的簡介和讀者摘錄，約翰·凱 2004 年發表在《金融時報》上的長文 <em>Forget how the crow flies</em>（這本書的前身），《獨立報》《新科學家》《泰晤士高等教育》的書評，一位英文讀者整理的章節摘錄，日本書摘服務 flier 的公開部分，以及 Donella Meadows、MIT Sloan 系統動力學組的公開資料。加引號的句子都能在「參考資料」裡找到出處；書中原話只引用出版社或可靠二手來源公開刊出的部分，轉引的會註明是轉引。</p>
+
+</blockquote><figure>
+<img src="/images/obliquity-mit-essential-thinking-reading-notes/winding-road.jpg" alt="蜿蜒道路" loading="lazy" width="800">
+<figcaption>圖片：J Doll / <a href="https://commons.wikimedia.org/wiki/File:The_Winding_Road_(140435981).jpeg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>。複雜目標常常要繞著走。</figcaption>
+</figure>
+<figure>
+<img src="/images/obliquity-mit-essential-thinking-reading-notes/labyrinth.jpg" alt="迷宮俯瞰" loading="lazy" width="640">
+<figcaption>圖片：Wiewanderlust / <a href="https://commons.wikimedia.org/wiki/File:Labyrinth.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>。先看見結構，再談捷徑。</figcaption>
+</figure>
+<h2 id="一兩本書的基本資訊">一、兩本書的基本資訊</h2>
+<p>先說書名。「間接思考的藝術」我只查到一個對應的書：英國經濟學家約翰·凱（John Kay）的 <em>Obliquity</em>。中信出版社 2023 年的簡體版用了這個書名，副標題是「複雜問題解決法」，豆瓣條目標註的原作名也是 <em>Obliquity: Why Our Goals Are Best Achieved Indirectly</em>。我沒有找到同名的其他書，所以就按這本寫。「麻省理工深度思考法」對應的是平井孝志的日文書《本質思考――MIT式課題設定＆問題解決》。</p>
+<table>
+	<thead>
+			<tr>
+					<th></th>
+					<th>《間接思考的藝術》</th>
+					<th>《麻省理工深度思考法》</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>作者</td>
+					<td>約翰·凱（John Kay），英國經濟學家，曾任牛津賽德商學院院長，為《金融時報》寫專欄二十多年</td>
+					<td>平井孝志，東大理學碩士、MIT Sloan MBA，做過貝恩、戴爾、星巴克、羅蘭貝格，2017 年起任筑波大學研究生院教授</td>
+			</tr>
+			<tr>
+					<td>原版</td>
+					<td><em>Obliquity: Why Our Goals Are Best Achieved Indirectly</em>，Profile Books，2010（精裝 224 頁，ISBN 9781846682889）；平裝 2011-02-03；Profile 官網顯示修訂版定於 2026-11-19 出版</td>
+					<td>『本質思考――MIT式課題設定＆問題解決』，東洋經濟新報社，2015-01-23 發售（國會圖書館記為 2015.2），237 頁，ISBN 978-4-492-55756-3</td>
+			</tr>
+			<tr>
+					<td>簡體版</td>
+					<td>《間接思考的藝術：複雜問題解決法》，符李桃 譯，中信出版社，2023（豆瓣記為 2023-5，三民書局記為 2023-07-24），ISBN 9787521755718，定價 69 元，豆瓣 6.7（64 人評價）</td>
+					<td>《麻省理工深度思考法：從模型及動力機制來思考現象》，張玉虹 譯，中國華僑出版社/後浪，2018-5，ISBN 9787511373441，36 元，豆瓣 7.2（738 人評價）</td>
+			</tr>
+			<tr>
+					<td>繁體版</td>
+					<td>《迂迴的力量》，陳琇玲 譯，商周出版，2011-05-13，ISBN 9789861207902，256 頁</td>
+					<td>《本質思考：MIT菁英這樣找到問題根源，解決困境》，吳怡文 譯，天下文化，2016-09-29 初版（ISBN 9789864790821），2024-05-17 新版</td>
+			</tr>
+	</tbody>
+</table>
+<p>兩本書都是三個華文地區先後出版的。幾個關鍵詞在各版本裡的譯法不一樣，對照著看能幫助理解：</p>
+<table>
+	<thead>
+			<tr>
+					<th>原文</th>
+					<th>簡體</th>
+					<th>繁體</th>
+					<th>備註</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>obliquity</td>
+					<td>間接、迂迴</td>
+					<td>迂迴</td>
+					<td>這個詞的本義是「傾斜」，比如地軸傾角</td>
+			</tr>
+			<tr>
+					<td>muddling through（Lindblom）</td>
+					<td>漸進除錯</td>
+					<td>漸進調適</td>
+					<td>繁體的「調適」更接近原意</td>
+			</tr>
+			<tr>
+					<td>The Flickering Lamp of History</td>
+					<td>歷史是搖曳之燈</td>
+					<td>歷史不是一盞明燈</td>
+					<td>簡體直譯，繁體意譯</td>
+			</tr>
+			<tr>
+					<td>モデル</td>
+					<td>模型</td>
+					<td>模式</td>
+					<td>繁體的「模式」容易被誤讀成 pattern</td>
+			</tr>
+			<tr>
+					<td>ダイナミズム</td>
+					<td>動力機制</td>
+					<td>物力論</td>
+					<td>繁體用了 dynamism 的哲學譯名，讀起來比較拗口</td>
+			</tr>
+			<tr>
+					<td>レバレッジポイント</td>
+					<td>改變模型的支點</td>
+					<td>槓桿點</td>
+					<td>也就是 Meadows 說的 leverage point</td>
+			</tr>
+	</tbody>
+</table>
+<h2 id="二兩本書各自講了什麼">二、兩本書各自講了什麼</h2>
+<h3 id="1-凱為什麼好結果往往是繞出來的">1. 凱：為什麼好結果往往是「繞」出來的</h3>
+<p>這本書的核心論點最早見於凱 2004 年 1 月發在 FT.com 上的長文 <em>Forget how the crow flies</em>。文章開頭一句是：</p>
+<blockquote>
+  <p>&ldquo;If you want to go in one direction, the best route may involve going in the other. Paradoxical as it sounds, goals are more likely to be achieved when pursued indirectly.&rdquo;</p>
+
+</blockquote><p>他舉的第一個例子是巴拿馬運河：要從大西洋去太平洋，最短的路線反而是朝東南方向走，到太平洋一側的巴爾博亞港時，人比大西洋入口科隆還偏東約 30 英里。</p>
+<p>全書一共 21 章，分三部分。中信版和商周版的目錄結構一致：</p>
+<ul>
+<li>**第一部分：迂迴的世界（第 2–6 章）。**幸福、利潤、財富這三個悖論，以及「高層目標—中間目標—具體行動」這個分層。</li>
+<li>**第二部分：為什麼很多問題無法直接解決（第 7–12 章）。**原因有六個：漸進除錯、多元主義、相互作用、複雜性、不完整性、抽象性。</li>
+<li>**第三部分：迂迴的應對之道（第 13–20 章）。**依次講以結果論過程的謬誤、斯托克代爾悖論、刺蝟與狐狸、盲眼鐘錶匠、貝克漢姆的射門（意會勝於言傳）、無法設計的制度、因時制宜比前後一致更重要，以及虛假的理性。</li>
+</ul>
+<p>我認為全書最有用的是第二部分，因為它說清了直接法在什麼條件下會失效。2004 年那篇長文的結尾講得很清楚：環境穩定、目標單一且透明、事後能判斷有沒有達成，這時直接法合適；反過來，環境複雜多變、目標多重而且互相沖突、事後都說不清有沒有達成，迂迴就不可避免。我覺得這是全書最該記住的一句話，因為它說明凱並不是一概反對直接法。他在文末還特意補了一個反例：加拿大太平洋鐵路在羅傑斯山口反覆被大雪封路，最後乾脆在麥克唐納山底下打了一條筆直的隧道。</p>
+<h3 id="2-平井現象只是輸出本質是模型和動力機制">2. 平井：現象只是輸出，本質是模型和動力機制</h3>
+<p>平井的書短得多。中文版目錄共七章，第 3 到第 6 章正好對應四個步驟：</p>
+<ol>
+<li><strong>建立模型</strong>：用一張圖把構成要素和它們之間的關係畫出來。</li>
+<li><strong>解讀動力機制</strong>：看這個模型在較長的時間裡會產生什麼變化。</li>
+<li><strong>尋找改變模型的對策</strong>：找到槓桿點。</li>
+<li><strong>行動</strong>：在實踐中獲取反饋，再修正。</li>
+</ol>
+<p>flier 的書摘把全書的立論概括為：輸入和輸出之間那個「黑箱」才是本質。現象背後一定有模型和動力機制，眼前的現象只是它們產生的結果。</p>
+<p>第 1 章列了九種阻礙深度思考的「思考慣性」，這一章是我覺得最該給工程師看的。天下文化版的介紹把它們寫得很具體，我挑幾條：</p>
+<ul>
+<li>「反面結論」：累了就休息，把現象的反面當答案。</li>
+<li>「滿足於一般性解答」：停在人人都會說的答案上。豆瓣簡介裡的「發胖的原因是吃太多和沒運動？」就是在質疑這類答案。</li>
+<li>「依賴架構」：用 SWOT 之類的框架整理完資料，就以為自己思考過了。</li>
+<li>「因為關鍵字而停止思考」：找到一個聽起來很對的詞，就不再往下想。</li>
+</ul>
+<p>後浪版的一條讀者摘錄總結得很好：依賴框架的危險在於，「通過資訊整理本身所獲得的成就感，僅僅來自資訊整理而非思考」。</p>
+<p>flier 的書摘裡有一個容易理解的模型例子：廣告戰。A 公司加大廣告投入搶到份額，B 公司也加大投入搶回來，A 再加碼，雙方的廣告費沿著一條增強迴路一路升級。看清這個結構之後，你會意識到真正的問題不是「下一輪投多少」，而是要不要、怎樣改變這個結構本身。按書裡的說法，從根本上解決問題，就是改變模型。</p>
+<p>平井在序言裡講了自己在 MIT 答錯的一道題。A、B 兩家檢驗儀器廠份額相當，A 的產品裝在漂亮的盒子裡，B 的管線和感測器裸露在外，教授問五年後誰的份額會漲。平井選了 A，正確答案是 B。原因是客戶能看到內部結構，就能按自己的需要改裝；B 再把客戶的改裝吸收進下一代產品，形成良性迴圈。他反省說：「我沒有看到問題的本質，而是被設計這種眼睛看得見的表象所迷惑。」</p>
+<h2 id="三我核對過的幾個關鍵案例">三、我核對過的幾個關鍵案例</h2>
+<p>凱的論證主要靠案例，所以我對照 2004 年的長文核對了幾個最常被轉述的例子。</p>
+<p>**黃石公園的林火。**美國國家公園管理局從 19 世紀末起對火災零容忍，有火必滅，結果火災並沒有減少，反而更多了。原因是大多數林火規模很小，會自己燒完，同時清掉林下的可燃物、形成防火帶。1972 年政策改成「人為火災撲滅、自然火災任其燃燒」，16 年後（1988 年）黃石發生了有記錄以來最大的火災，動用了 25,000 名消防員，花費 1.2 億美元，公園三分之一以上的植被被燒燬。現在的做法是交給護林員判斷。凱從中得出的結論是：保護森林不能靠直接追求「不起火」，而要在多個目標之間做整體的權衡。值得注意的是，這個故事本身就說明鐘擺會往兩邊擺過頭。</p>
+<p>**ICI 和波音。**1987 年的 ICI 把目標表述為「通過創新和負責任地應用化學」服務各方。正是在這個寬泛的使命下，它在二戰後投入製藥，熬了很多年才在 1960 年代做出 β 受體阻斷劑。1991 年 Hanson 入股之後，ICI 把製藥業務拆分成 Zeneca，剩下的部分把使命改成「為股東創造最大價值」。凱寫道，ICI 股價在新戰略宣佈後不久的 1998 年見頂，之後一路下跌，2003 年被踢出富時 100 指數。波音那邊，長期執掌公司的 Bill Allen 說過，人生最大的樂趣來自參與一項艱難而有建設性的事業；747 立項時，有董事問投資回報，得到的回答是做過一些研究，但負責人記不清結果了。1997 年併購麥道之後，CEO Phil Condit 宣佈公司要轉向一個以單位成本、投資回報率和股東回報來衡量的環境，並稱「That&rsquo;s a big shift」。凱給的數字是：Condit 接任時股價 48 美元，他高調錶態擁抱股東價值時漲到 70 美元，到 2003 年 12 月他被迫辭職時跌到 38 美元。</p>
+<p>**默克和輝瑞。**這個例子凱轉引自《基業長青》。喬治·默克說：「We try never to forget that medicine is for the people. It is not for the profits. The profits follow&hellip;」輝瑞的 John McKeen 則說要從做的每件事裡儘可能賺到利潤。</p>
+<p>這些案例都有一個共同的方法論問題：樣本是挑過的，而且是事後講的故事。下文第五節會專門討論。</p>
+<h2 id="四書評裡的批評">四、書評裡的批評</h2>
+<p>這兩本書在中英文書評裡的評價都不算一邊倒的好評。</p>
+<ul>
+<li><strong>對凱。</strong>《新科學家》的 Michael Bond 批評得最直接，說這本書「misrepresents psychology」，而且誇大了出版方宣傳的「brilliant new idea」；凱斷言世界太複雜、決策永遠不可能成為一門科學，Bond 認為這等於把心理學最熱門的研究領域之一一筆帶過（brush aside），並回了一句「Complexity is not immune to analysis」。《泰晤士高等教育》的書評認可它好讀，但指出凱只挑支援自己的例子，把迂迴的定義擴張到了狡詐、李德·哈特的間接路線和橫向思維，而且書裡散落著不少沒有論證的斷言。比較正面的是經濟學家 Diane Coyle 在《獨立報》的書評：她認為最新穎的部分是凱提出的「teleological fallacy」，也就是以為好結果一定來自好決策、壞結果一定來自壞決策，而運氣的作用常常更大。豆瓣讀者也有類似的意見，有人說這本書寫法發散、很難讀，要「大海撈針一樣」才能找到打動自己的點。中信版 6.7 的評分大致說明了這一點。</li>
+<li>**對平井。**豆瓣讀者的意見集中在內容偏薄：有人說「後幾章基本看標題就行了」，案例「舉的真不怎麼樣」；有人說如果只留乾貨，「應該可以少三分之一到一半的篇幅」；還有人說它實用，但「有些地方帶有諮詢師那種帶專業態度掩飾的語焉不詳」。7.2 分大致說明這是一本門檻很低的入門書，好上手，但講得不深。</li>
+</ul>
+<h2 id="五整合地圖與路徑">五、整合：地圖與路徑</h2>
+<p>把兩本書放在一起，我得到的主線是：**平井給你一張地圖，凱告訴你地圖永遠是錯的，而且路是彎的。**兩本書看上去互相矛盾，實際上是互補的。</p>
+<p>平井的立場接近「本質主義」：現象背後有一個可以畫出來的結構，找到槓桿點就能根治。凱的立場是多元主義（第 8 章的標題就叫「多元主義」，第 15 章還借用了 Tetlock 研究預測者時用的「刺蝟與狐狸」之分）：問題的答案不止一個，模型只是對現實不完美的描述（第 12 章），我們對問題本身的瞭解也很不完整（第 11 章）。如果只讀平井，容易高估自己畫出的那張因果圖；如果只讀凱，容易把「迂迴」當成不做分析的藉口。凱自己也說過，迂迴不等於憑直覺、無結構的決策，Lindblom 的「漸進除錯」是一個有紀律的、有序的過程（據 James Stuber 的章節摘錄轉引）。</p>
+<p>兩本書真正交匯的地方在於：**為什麼直接法會失效。**平井說，眼睛看到的只是結果，不是原因，所以把現象倒過來當成答案的「反面結論」必然失敗。凱說，複雜系統會因為我們的介入而改變性質，所以直接瞄準目標常常適得其反。這兩句話說的其實是同一件事：<strong>目標變數通常是系統的輸出，而不是你能直接擰動的旋鈕。</strong></p>
+<p>Meadows 在《槓桿點》一文裡轉述過 Jay Forrester 最喜歡講的一個故事。Forrester 說，大家憑直覺都知道槓桿點在哪裡，問題是所有人都在拼命「push it IN THE WRONG DIRECTION」。黃石公園的零容忍、ICI 的股東價值宣言，都是在正確的槓桿點上用力推錯了方向。</p>
+<pre tabindex="0"><code>          平井：看清結構                         凱：迂迴前進
+  ┌────────────────────────────┐      ┌────────────────────────────┐
+  │ ① 畫模型：要素 + 因果迴路       │      │ 高層目標（模糊、多元、不可度量）  │
+  │ ② 讀動力：存量/流量、延遲、拐點   │ ───▶ │        │ 拆成               │
+  │ ③ 找槓桿點：改結構，不改參數     │      │ 中間目標（可調整、可替換）       │
+  └──────────────┬─────────────┘      │        │ 落到               │
+                 │ 模型 = 假設        │ 具體行動（小步、可逆、可觀察）    │
+                 ▼                    └──────────────┬─────────────┘
+  ┌────────────────────────────┐                     │
+  │ ④ 行動 → 反饋 → 修正模型        │ ◀───────────────────┘
+  │   （平井第 6 章 ≈ 凱第 7 章        │   結果不等於決策品質（目的論謬誤）
+  │     的「漸進除錯」）              │   警惕指標被遊戲（古德哈特定律）
+  └────────────────────────────┘
+</code></pre><table>
+	<thead>
+			<tr>
+					<th>維度</th>
+					<th>平井（本質思考）</th>
+					<th>凱（Obliquity）</th>
+					<th>整合後的做法</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>對世界的假設</td>
+					<td>有可描繪的結構</td>
+					<td>結構永遠不完整，且會因介入而改變</td>
+					<td>把模型當作可證偽的假設，並寫明有效期</td>
+			</tr>
+			<tr>
+					<td>對目標的態度</td>
+					<td>定義清楚課題（課題設定）</td>
+					<td>高層目標本來就模糊，要通過行動逐步發現</td>
+					<td>高層目標保持穩定，中間目標保持靈活</td>
+			</tr>
+			<tr>
+					<td>主要工具</td>
+					<td>因果迴路圖、存量與流量、槓桿點</td>
+					<td>漸進除錯、多元判斷、意會知識</td>
+					<td>先畫圖找候選槓桿點，再用小實驗來驗證</td>
+			</tr>
+			<tr>
+					<td>最大的敵人</td>
+					<td>思考慣性、把現象當原因</td>
+					<td>虛假的理性、以結果論過程</td>
+					<td>兩者都反對「看上去很理性」的直接答案</td>
+			</tr>
+			<tr>
+					<td>失敗模式</td>
+					<td>模型畫得漂亮卻沒人驗證</td>
+					<td>「迂迴」變成拖延和不擔責的藉口</td>
+					<td>給每個迂迴動作都設好觀察指標和止損點</td>
+			</tr>
+	</tbody>
+</table>
+<h2 id="六放到工程團隊裡">六、放到工程團隊裡</h2>
+<h3 id="1-排查故障先問這是誰的輸出">1. 排查故障：先問「這是誰的輸出」</h3>
+<p>線上延遲升高，「反面結論」式的做法是加超時、加重試、加機器。系統動力學式的做法是先畫一個迴路：下游變慢，於是超時，於是重試，於是下游負載更高，於是更慢。這是一條典型的增強迴路，重試本身就是讓問題惡化的那個槓桿點，而且大家正在往錯誤的方向推它。真正的對策是改變結構：加退避和抖動、做重試預算、設熔斷，而不是繼續調參數。平井第 4 章強調「存量和流量要分開看」，對應到工程裡就是：佇列長度是存量，請求速率是流量；只盯著 QPS 看，看不出積壓。</p>
+<h3 id="2-系統設計延遲會造成振盪">2. 系統設計：延遲會造成振盪</h3>
+<p>系統動力學入門書裡常用洗澡調水溫來講延遲：擰了龍頭，水溫不會立即變化，於是你繼續往熱的方向擰，最後燙到受不了，再猛地往回擰。自動擴縮容是同一個結構：指標採集有延遲，擴容生效也有延遲，閾值又設得過於敏感，結果就是機器數量來回抖動。在設計評審裡，我會專門問一句：這條控制迴路上有幾處延遲？任何反饋環都要標出延遲，這是我從兩本書裡提煉出來最直接的一條做法。</p>
+<h3 id="3-黃石的啟示受控的小火">3. 黃石的啟示：受控的小火</h3>
+<p>我認為凱的林火故事是對混沌工程最好的辯護。把每一個小故障都壓下去，比如永遠不讓依賴超時、永遠不演練切換，看上去是在追求穩定，實際上在積累「可燃物」：沒人測過的降級路徑、沒人記得的手動步驟。定期、可控地放一些「小火」，比如故障注入、演練和 GameDay，就是凱說的那種迂迴的方式。同時也要記住黃石的另一半教訓：「任其燃燒」也會走過頭，所以範圍要控制，判斷權要交給離現場最近的人。</p>
+<h3 id="4-復盤別犯目的論謬誤">4. 復盤：別犯目的論謬誤</h3>
+<p>Coyle 書評裡總結的「teleological fallacy」，在復盤中天天都在發生：一次釋出出事了，大家就認定決策糟糕；僥倖沒事，同樣冒險的流程就被當成了最佳實踐。一個好的復盤要分開問兩件事：在當時掌握的資訊下，這個決策合理嗎？結果裡有多少是運氣？無責復盤之所以有效，部分原因就在這裡。</p>
+<h3 id="5-需求澄清高層目標中間目標具體行動">5. 需求澄清：高層目標、中間目標、具體行動</h3>
+<p>凱在第 5 章講的三層結構，可以直接套用在需求澄清上。使用者說「匯出按鈕太慢」，這是具體行動層面的說法；中間目標可能是「月底對帳能按時完成」；高層目標可能是「財務團隊信任這個系統」。如果只最佳化匯出速度，就是在直接追逐表層目標。往上問一層，可能會發現真正該做的是定時生成報表，或者提供一個對帳檢視。這恰好也對應平井說的「忘記思考的目的」這種慣性。</p>
+<h3 id="6-技術決策重寫還是漸進">6. 技術決策：重寫還是漸進</h3>
+<p>凱在長文裡專門批評了《企業再造》（<em>Reengineering the Corporation</em>），說它像勒·柯布西耶一樣，想把舊系統扔掉、從頭設計。軟體界對應的誘惑就是「推倒重寫」。凱的「漸進除錯」加上平井的「先畫模型」，得出的是一種更穩的做法：先畫出現有系統的依賴和資料流，找到耦合最重的那個點，再用絞殺者模式一塊一塊替換，每一步都可以回滾。</p>
+<h3 id="7-指標古德哈特定律">7. 指標：古德哈特定律</h3>
+<p>據讀者摘錄，凱在第 9 章討論了古德哈特定律和平衡計分卡。Coyle 的書評裡提到書中一個例子：英國救護車有「8 分鐘到達」的考核目標，結果絕大多數緊急呼叫的記錄恰好都在 8 分鐘內，幾乎沒有記錄超時的，因為排程員分配車輛的方式變了。工程團隊裡的測試覆蓋率、故事點、MTTR 都可能這樣被「做」出來。按 Coyle 的概括，凱開出的藥方是：一組所有相關的人都內化了的高層目標，加上一些定期調整的中間目標，再加上與之一致的日常行動，因為沒人能時時刻刻想著戰略目標。</p>
+<h2 id="七我的思考兩本書的侷限">七、我的思考：兩本書的侷限</h2>
+<ol>
+<li>**凱的論證依賴倖存者敘事。**ICI、波音、默克這些都是事後挑出來的故事。凱自己在長文裡也承認，平均而言，以利潤為導向的公司可能確實更賺錢，他只是說最出色的成功來自迂迴。這個限定很重要，但在暢銷書式的轉述裡常常被丟掉。《新科學家》的批評也有道理：複雜並不等於無法分析。平井這本書本身就是在示範，複雜系統可以被近似地建模。</li>
+<li>**「迂迴」很難證偽。**任何成功都可以事後解釋成迂迴的勝利，任何失敗都可以說成「迂迴得不夠」。所以我在整合框架裡要求每個迂迴動作都寫下觀察指標和止損點。</li>
+<li>**平井的模型容易被畫成「漂亮的圖」。**一張因果迴路圖很容易畫得自洽，卻從來沒有被資料檢驗過，這正好落入他自己批評的「依賴框架」慣性。Forrester 在 MIT 開創的系統動力學是要做定量模擬的，而這本書基本只講到了定性畫圖那一半。</li>
+<li>**平井的案例偏向商業諮詢。**廣告戰、業務改革、新產品推廣，到了工程語境需要自己翻譯。好在系統動力學的基本元素，比如迴路、延遲、存量，對工程師來說幾乎是母語。</li>
+<li>**兩本書都輕視了「直接」的價值。**凱的羅傑斯山口隧道提醒我們，問題一旦被理解透、條件變得穩定，就該果斷改用直接法：寫成規則、做成自動化、打一條筆直的隧道。迂迴應該是探索階段用的方法，不能當作永久的姿態。</li>
+</ol>
+<h2 id="八可執行清單">八、可執行清單</h2>
+<ul>
+<li><input disabled="" type="checkbox"> 遇到問題時，先寫下「表面答案」，也就是現象反過來是什麼，再刻意把它放到一邊。</li>
+<li><input disabled="" type="checkbox"> 畫一張因果迴路圖，至少標出一條增強迴路、一條調節迴路和所有延遲。</li>
+<li><input disabled="" type="checkbox"> 區分存量和流量：我盯著的指標是積壓量，還是速率？</li>
+<li><input disabled="" type="checkbox"> 問一句：這個槓桿點，大家是不是正在往錯誤的方向推？</li>
+<li><input disabled="" type="checkbox"> 把目標拆成三層：高層（穩定、可以模糊）、中間（可替換）、行動（小步、可逆）。</li>
+<li><input disabled="" type="checkbox"> 判斷這個問題適合直接法還是迂迴法：環境穩定嗎？目標單一嗎？結果可以度量嗎？</li>
+<li><input disabled="" type="checkbox"> 每個迂迴動作都寫下觀察指標、複查時間和止損條件。</li>
+<li><input disabled="" type="checkbox"> 復盤時分開評價「決策品質」和「結果」，標出運氣成分。</li>
+<li><input disabled="" type="checkbox"> 新增考核指標時，先想一想它會被怎樣「遊戲」。</li>
+<li><input disabled="" type="checkbox"> 每季度挑一個「小火」做受控演練，比如故障注入、切換演練或依賴降級。</li>
+<li><input disabled="" type="checkbox"> 問題一旦被理解透，就把它固化成規則或自動化，也就是打一條隧道。</li>
+</ul>
+<h2 id="參考資料">參考資料</h2>
+<p><strong>書目與出版資訊</strong></p>
+<ul>
+<li>豆瓣讀書：《間接思考的藝術：複雜問題解決法》（中信出版社）：https://book.douban.com/subject/36422168/</li>
+<li>豆瓣閱讀：《間接思考的藝術》電子書：https://read.douban.com/ebook/440247607/</li>
+<li>三民網路書店：《間接思考的藝術》簡體書資料：https://www.sanmin.com.tw/product/index/012025866</li>
+<li>買書網：《迂迴的力量》（商周出版，含目錄）：https://www.buybook.tw/book-0010504921.htm</li>
+<li>臺北市立大學圖書館：《迂迴的力量》書目：https://library.utaipei.edu.tw/webpac/bookDetail.do?id=400943</li>
+<li>Profile Books：<em>Obliquity</em>：https://profilebooks.com/work/obliquity/</li>
+<li>豆瓣讀書：《麻省理工深度思考法》（中國華僑出版社/後浪）：https://book.douban.com/subject/30181942/</li>
+<li>東洋經濟 STORE：『本質思考』：https://str.toyokeizai.net/books/9784492557563/</li>
+<li>紀伊國屋書店：『本質思考』（含各章副標題）：https://www.kinokuniya.co.jp/f/dsg-01-9784492557563</li>
+<li>日本國立國會圖書館 NDL Search：『本質思考』：https://ndlsearch.ndl.go.jp/books/R100000002-I026028224</li>
+<li>天下文化：《本質思考》（含目錄、作者序、推薦序）：https://bookzone.cwgv.com.tw/book/BWL047A</li>
+<li>誠品線上：《本質思考》2016 年版：https://www.eslite.com/product/1001122732542222</li>
+</ul>
+<p><strong>作者原文、書評與摘錄</strong></p>
+<ul>
+<li>John Kay, &ldquo;Forget how the crow flies&rdquo;, FT.com, 2004-01-16（引用的是讀者部落格的全文轉載）：http://thinkingmoose.blogspot.com/2007/12/shortest-path-vs-path-of-least.html</li>
+<li>Diane Coyle, &ldquo;Obliquity, By John Kay&rdquo;, <em>The Independent</em>, 2010-04-29：https://www.independent.co.uk/arts-entertainment/books/reviews/obliquity-by-john-kay-1958028.html</li>
+<li>Michael Bond, &ldquo;The indirect pursuit of happiness&rdquo;, <em>New Scientist</em>, 2010-03-31：https://www.newscientist.com/article/1946986-the-indirect-pursuit-of-happiness/</li>
+<li><em>Times Higher Education</em> 書評：<em>Obliquity</em>：https://www.timeshighereducation.com/books/obliquity-why-our-goals-are-best-achieved-indirectly/412407.article</li>
+<li>James Stuber：<em>Obliquity</em> 章節摘錄（英文讀者筆記，二手來源）：https://jamesstuber.com/obliquity/</li>
+<li>flier：『本質思考』書摘（公開部分）：https://www.flierinc.com/summary/435</li>
+</ul>
+<p><strong>系統動力學背景</strong></p>
+<ul>
+<li>Donella Meadows, &ldquo;Leverage Points: Places to Intervene in a System&rdquo;：https://donellameadows.org/archives/leverage-points-places-to-intervene-in-a-system/</li>
+<li>MIT Sloan System Dynamics Group：https://mitsloan.mit.edu/faculty/academic-groups/system-dynamics/about-us</li>
+</ul>
+]]></content:encoded></item><item><title>《混合訊號》×《驅動力》整合讀書筆記：激勵是一種訊號</title><link>https://d94807974-commits.github.io/posts/mixed-signals-drive-incentives-reading-notes/</link><pubDate>Wed, 04 Nov 2026 16:22:59 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/mixed-signals-drive-incentives-reading-notes/</guid><description>把尤里·格尼茨的《混合訊號》（Mixed Signals）和丹尼爾·平克的《驅動力》（Drive）放在一起讀：平克說胡蘿蔔加大棒在創造性工作上會擠出內在動機，格尼茨用「激勵即訊號」解釋它什麼時候、為什麼會失效。內容包括托兒所罰款、「要麼給夠要麼別給」、Deci 1971、蠟燭問題等原始研究的核對，Cameron &amp;amp; Pierce 與 Deci 學派的元分析之爭，臺灣繁體版《誘因設計》《動機，單純的力量》的譯名與書評對照，並附上一個整合框架、一套工程團隊落地方法、兩本書各自的侷限和一份檢查清單。</description><content:encoded><![CDATA[<div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>所有激勵本質上都是訊號，問題出在訊號互相打架。設計獎金、罰款或指標時，先確認它傳遞的訊號與目標一致。</p>
+</div><blockquote>
+  <p>素材說明：兩本書的全文我都沒有讀完。這篇筆記依據的材料有：兩本書的出版社頁面和中英文目錄（耶魯大學出版社、中信出版社、浙江人民出版社/湛廬、臺灣天下文化、大塊文化），平克的官網和他在 TED 的演講（英文原稿，以及 TED 官方的繁體、簡體中文字幕），格尼茨在 Adam Grant 播客《ReThinking》裡的訪談文字稿，幾篇原始論文（格尼茨本人主頁上的 PDF、PubMed 和期刊摘要），還有天下文化與臺灣讀書博主的書評。凡是加引號的句子，都能在下文「參考資料」裡找到出處；書裡的原話我只引用出版社或可靠二手來源公開刊出的部分，沒有憑印象&quot;復原&quot;任何一句。</p>
+
+</blockquote><figure>
+<img src="/images/mixed-signals-drive-incentives-reading-notes/traffic-light.jpg" alt="交通訊號燈" loading="lazy" width="700">
+<figcaption>圖片：Raizkgh / <a href="https://commons.wikimedia.org/wiki/File:Traffic_light.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>。激勵像訊號燈：顏色清楚時有效，互相矛盾時事故就來了。</figcaption>
+</figure>
+<h2 id="一兩本書的基本資訊">一、兩本書的基本資訊</h2>
+<table>
+	<thead>
+			<tr>
+					<th></th>
+					<th>《混合訊號》</th>
+					<th>《驅動力》</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>原書</td>
+					<td><em>Mixed Signals: How Incentives Really Work</em>，Yale University Press，2023（精裝 ISBN 9780300255539；平裝 2024-03-26，ISBN 9780300276749，320 頁）</td>
+					<td><em>Drive: The Surprising Truth About What Motivates Us</em>，Riverhead Books，2009</td>
+			</tr>
+			<tr>
+					<td>作者</td>
+					<td>Uri Gneezy，加州大學聖迭戈分校 Rady 管理學院行為經濟學講席教授，與 John List 合著《隱性動機》（<em>The Why Axis</em>）</td>
+					<td>Daniel H. Pink，美國商業與行為科學暢銷書作家，另著 <em>A Whole New Mind</em>、<em>When</em> 等</td>
+			</tr>
+			<tr>
+					<td>簡體版</td>
+					<td>《混合訊號：激勵是如何發揮作用的》，[美] 尤里·格尼茨著，江生、於華譯，中信出版社 2023-11，ISBN 9787521756319，328 頁</td>
+					<td>《驅動力：在獎勵與懲罰都已失效的當下，如何煥發人的熱情》，[美] 丹尼爾·平克著，龔怡屏譯，湛廬策劃、浙江人民出版社 2018-06（經典版），ISBN 9787213087486，223 頁</td>
+			</tr>
+			<tr>
+					<td>繁體版</td>
+					<td>《誘因設計：精準傳遞訊號，讓人照著你的想法行動》，尤里．葛尼奇著，周宜芳譯，天下文化 2023-10-27，ISBN 9786263554528，352 頁</td>
+					<td>《動機，單純的力量：把工作做得像投入嗜好一樣 有最單純的動機，才有最棒的表現》，丹尼爾．品克著，席玉蘋譯，大塊文化 2010 年初版，ISBN 9789570316445，280 頁</td>
+			</tr>
+			<tr>
+					<td>一句話</td>
+					<td>所有激勵本質上都是訊號，問題出在訊號互相打架</td>
+					<td>驅動力 3.0：自主、專精、目的</td>
+			</tr>
+	</tbody>
+</table>
+<p>簡體版基本直譯原書名，繁體版則改動更大：《誘因設計》的副標題直接點出&quot;訊號&quot;，把全書的核心概念擺上了封面。《驅動力》在臺灣叫《動機，單純的力量》，副標題&quot;把工作做得像投入嗜好一樣&quot;，強調的是&quot;心流&quot;那一面。平克的三要素 autonomy、mastery、purpose，簡體版目錄譯作&quot;自主、專精、目的&quot;，臺灣讀者書評引用的繁體版譯法也是&quot;自主、專精、目的&quot;；TED 官方繁體字幕則譯作&quot;自主性、掌握度、使命感&quot;。同一套概念，中文措辭相差不小。</p>
+<p>另外，《混合訊號》的簡體版和繁體版章節標題並不一一對應。比如簡體第 5 章叫&quot;鼓勵創新卻懲罰失敗&quot;，繁體對應章節叫&quot;鼓勵創新 vs. 迴避風險&quot;。繁體版用&quot;A vs. B&quot;的句式，衝突感更強。</p>
+<h2 id="二兩本書各自講了什麼">二、兩本書各自講了什麼</h2>
+<h3 id="驅動力胡蘿蔔加大棒為什麼過時">《驅動力》：胡蘿蔔加大棒為什麼過時</h3>
+<p>平克把人類動機分為三代。驅動力 1.0 是生物本能（餓了要吃）。驅動力 2.0 是獎懲，也就是&quot;做了 X 就給 Y&quot;的 if-then 獎勵。驅動力 3.0 是內在動機。官網的摘要寫道，數十年的研究表明 if-then 獎勵&quot;can reduce performance, crush creativity, and dampen long-term motivation – especially for complex or creative tasks&quot;。</p>
+<p>全書分三部分：</p>
+<ul>
+<li><strong>第一部分</strong>：驅動力 3.0 時代來臨，包括&quot;獎勵的懲罰，胡蘿蔔大棒失效了&quot;和&quot;做 I 型人還是 X 型人&quot;。</li>
+<li><strong>第二部分</strong>：三大要素。自主（&ldquo;我做什麼，我決定&rdquo;）、專精（&ldquo;把想做的事情做得越來越好&rdquo;）、目的（&ldquo;超越自身的渴望&rdquo;）。</li>
+<li><strong>第三部分</strong>：I 型工具箱。</li>
+</ul>
+<p>平克官網列出的 Kindle 高亮裡，有一句對工程管理很有用：&ldquo;Autonomy over four aspects of work: what people do, when they do it, how they do it, and whom they do it with.&rdquo; 也就是任務、時間、方法、團隊四個維度的自主。</p>
+<p>2009 年的 TED 演講《The puzzle of motivation》是這本書的濃縮版。演講中他講了 Glucksberg 的蠟燭問題：一組被告知&quot;最快的 25% 得 5 美元，最快的人得 20 美元&quot;，結果比對照組平均慢了三分半鐘。繁體字幕是這樣譯的：&ldquo;答案：是慢了三分半鐘&rdquo;。他的解釋是，獎勵會讓人聚焦，適合答案就在眼前的任務；可蠟燭問題需要四處尋找靈感，&ldquo;獎勵只會收窄我們的視線，限制了可能性&rdquo;。</p>
+<p>演講最後的總結，繁體字幕是：&ldquo;第一：那些二十世紀的獎勵方式……只能在一個比我們想像更狹窄的環境下發揮作用，第二：那種「因果」式的獎勵往往摧毀創意，第三：提高工作表現的秘訣，不在獎與罰，而是在見不到的內在動力&rdquo;。</p>
+<h3 id="混合訊號激勵是會說話的">《混合訊號》：激勵是會說話的</h3>
+<p>格尼茨的出發點完全不同。他不是心理學家，而是做田野實驗的經濟學家。耶魯出版社頁面引用了全書的一句核心話：&ldquo;Incentives send a signal &hellip; and your objective is to make sure this signal is aligned with your goals.&rdquo;</p>
+<p>天下文化的簡介給&quot;混合訊號&quot;下了定義：&ldquo;所提供的誘因，其發出的訊號原本應該是為了獎勵A行為，最後卻鼓勵了B行為&rdquo;。</p>
+<p>全書分七部分 28 章，引言叫&quot;照我說的做，別學我的樣兒&quot;。我最關心的是第二部分&quot;避免混合訊號&quot;，四章分別是：</p>
+<ul>
+<li>以品質為代價激勵數量</li>
+<li>鼓勵創新卻懲罰失敗</li>
+<li>鼓勵長期目標卻獎勵短期成果</li>
+<li>鼓勵團隊合作卻激勵個人成功</li>
+</ul>
+<p>這幾乎就是技術團隊績效制度的四大病。後面幾部分講激勵如何塑造故事（風險與錯誤、心理帳戶、作為訊號的獎勵）、用激勵診斷問題（比如&quot;有償離職&quot;）、改變習慣，以及在馬賽社群用激勵改變獵獅、割禮等文化習俗。最後講談判中的訊號（錨定、價格傳遞品質訊號）。</p>
+<p>在 Adam Grant 的播客裡，格尼茨舉了公交司機的例子：管理層說要安全駕駛、乘客滿意，但工資按載客數算，那麼司機讀到的資訊就是&quot;其實就是要多拉客&quot;。他說：&ldquo;I really pick up the signals of what does it mean to be a good driver or a good employee &hellip; from the incentives that are out there.&rdquo; 他還補充：&ldquo;you cannot have a situation without incentives&rdquo;。不設激勵也是一種激勵，現狀本身就帶著訊號。</p>
+<p>臺灣博主&quot;西恩的閱讀筆記&quot;的總結很到位。書裡把激勵分成兩類：直接的經濟效應（錢、罰款），和間接的社會訊號與自我訊號。&ldquo;社會訊號&quot;是在意別人怎麼看我，&ldquo;自我訊號&quot;是維持內心的自我形象。</p>
+<h2 id="三兩本書共享的證據我逐條核對了">三、兩本書共享的證據，我逐條核對了</h2>
+<p>兩本書引用的經典研究大量重疊，而且其中幾篇格尼茨本人就是作者。我把原始文獻找出來對了一遍。</p>
+<p><strong>1. 托兒所罰款：「A Fine is a Price」</strong>（Gneezy &amp; Rustichini，<em>Journal of Legal Studies</em> 2000）</p>
+<ul>
+<li>實驗在海法 10 傢俬立托兒所進行，時間是 1998 年 1 至 6 月，共 20 周。</li>
+<li>從第 5 周起，6 家托兒所對遲到 10 分鐘以上的家長罰款 10 新謝克爾，另外 4 家作對照。</li>
+<li>結果遲到的家長不減反增，穩定在初始水平的&quot;almost twice&rdquo;。第 17 周取消罰款後，遲到率也沒有回落。</li>
+<li>論文的解釋是：罰款被引入一個&quot;不完全契約&rdquo;，它改變了家長掌握的資訊。遲到原本是一件說不清有多糟的事，現在被標上了價格，&ldquo;No guilt or shame&rdquo;。</li>
+<li>格尼茨在播客裡的說法更直白：&ldquo;Now that you told me that it&rsquo;s $3 bad, now I don&rsquo;t care.&rdquo; 他還說這件事最初來自自己女兒上托兒所的親身經歷。</li>
+</ul>
+<p><strong>2. 「Pay Enough or Don&rsquo;t Pay at All」</strong>（Gneezy &amp; Rustichini，<em>QJE</em> 2000）</p>
+<ul>
+<li>IQ 測試：每答對一題付 10 美分的組，平均答對 23.07 題，比不付錢的組（28.4）還低。付 1 或 3 新謝克爾的組則升到 34 題左右，兩者之間沒有顯著差異。</li>
+<li>募捐：高中生上門募捐，拿 1% 提成的組只募到 153.6，比純義務組的 238.6 少得多。提成提到 10%，募到 219.3，仍然沒超過義務組。</li>
+<li>結論就是標題：要麼給夠，要麼別給。給一點點錢，等於告訴對方&quot;這事就值這麼點&quot;。</li>
+</ul>
+<p><strong>3. Deci 1971</strong>（<em>JPSP</em> 18(1):105–115）</p>
+<ul>
+<li>實驗讓 24 名心理學導論課的學生（實驗組、對照組各 12 人）分三次玩 Parker Brothers 出的 Soma 立體拼圖。第二次只給實驗組按完成情況付錢，第三次撤掉報酬，觀察大家在自由時間裡還願不願意繼續玩。</li>
+<li>摘要的結論是：用錢作外部獎勵時，內在動機傾向於下降；用口頭強化和正面反饋時，內在動機傾向於上升。</li>
+<li>我在原文第 107 頁讀到一段幾乎就是格尼茨理論雛形的話：金錢獎勵的存在&quot;suggests to the subjects that they &lsquo;should probably not render this activity without pay&rsquo;&quot;。早在 1971 年，Deci 就把擠出效應解釋成&quot;獎勵傳遞了關於這件事性質的資訊&quot;。這是兩本書最自然的交匯點。</li>
+<li>Deci 和 Ryan 此後發展出自我決定理論（SDT）。官網的表述是：支援自主（autonomy）、勝任（competence）、關係（relatedness）三種基本心理需要的環境，會帶來最高品質的動機。平克的&quot;自主、專精、目的&quot;基本是把 SDT 的前兩項拿來，再把&quot;關係&quot;換成了&quot;目的&quot;。</li>
+</ul>
+<p><strong>4. 高額獎勵與&quot;大錯&quot;</strong>（Ariely、Gneezy、Loewenstein &amp; Mazar，<em>Review of Economic Studies</em> 2009）</p>
+<ul>
+<li>這正是平克 TED 裡講的&quot;麻省理工研究 + 印度馬杜賴復現&quot;。論文在印度鄉村設了 4、40、400 盧比三檔獎勵，最高一檔單個遊戲的滿額獎金（400 盧比）已接近當時印度農村人均月消費支出（495 盧比）。</li>
+<li>摘要原話：&ldquo;With some important exceptions, very high reward levels had a detrimental effect on performance.&rdquo;</li>
+<li>但論文同時報告，在純體力的按鍵任務上，高獎勵確實提高了表現。所以準確的說法是：高額獎勵傷害需要認知技能的任務，而不是傷害一切任務。</li>
+</ul>
+<h2 id="四爭議擠出效應到底有多普遍">四、爭議：擠出效應到底有多普遍</h2>
+<p>平克的書寫得像一場&quot;科學對企業&quot;的審判，但學術界對擠出效應爭論了二十多年，遠不止一邊倒。</p>
+<ul>
+<li><strong>Cameron &amp; Pierce（1994，<em>Review of Educational Research</em>）</strong>：對 96 項實驗做元分析，摘要結論是&quot;overall, reward does not decrease intrinsic motivation&quot;。口頭表揚會提高內在動機，唯一的負面效應出現在&quot;為了完成任務本身而給予的預期有形獎勵&quot;上，而且只是&quot;minimal negative effect&quot;。</li>
+<li><strong>Deci、Koestner &amp; Ryan（1999，<em>Psychological Bulletin</em>）</strong>：用 128 項研究反駁。結論是，與參與、完成、表現掛鉤的有形獎勵都會顯著削弱自由選擇情境下的內在動機（d 約為 −0.40、−0.36、−0.28），對兒童傷害更大；但正面反饋會增強內在動機（d = 0.33）。同一期附了大量評論與回應，可見爭論之激烈。</li>
+<li><strong>Cerasoli、Nicklin &amp; Ford（2014，<em>Psychological Bulletin</em>）</strong>：這是我認為最有調和價值的一項。它覆蓋 183 個樣本、21 萬餘人，發現內在動機能預測績效，而且在&quot;品質&quot;上預測力更強；外部激勵則更能預測&quot;數量&quot;。擠出效應主要出現在激勵與績效直接掛鉤、高度顯著的情況下。作者的結論是二者&quot;not necessarily antagonistic&quot;。Adam Grant 在播客裡也是這麼概括的：激勵更擅長讓人更努力，而不是更聰明。</li>
+</ul>
+<p>所以，平克說&quot;if-then 獎勵往往摧毀創意&quot;，這個說法在實驗室的創造性任務上有證據，但推到&quot;獎金和 KPI 在知識工作中普遍失效&quot;就過度概括了。格尼茨的框架恰好能解釋兩邊的資料為什麼都成立：同樣是錢，傳遞的訊號不同，結果就不同。</p>
+<h2 id="五整合激勵--經濟價格--訊號">五、整合：激勵 = 經濟價格 + 訊號</h2>
+<p>我把兩本書合成一張圖：</p>
+<pre tabindex="0"><code>                 一項激勵（獎金 / 罰款 / 指標 / 晉升標準）
+                                  │
+          ┌───────────────────────┴───────────────────────┐
+          ▼                                               ▼
+   直接效應：價格                                    間接效應：訊號
+   （格尼茨 / 標準經濟學）                           （格尼茨 + Deci + 平克）
+   做 X 更划算 → 做更多 X                                  │
+                               ┌──────────────────────┼──────────────────────┐
+                               ▼                      ▼                      ▼
+                         關於任務的訊號         關於我的訊號           關於你的訊號
+                       &#34;這事值多少/有多糟&#34;   &#34;我是因為錢才做&#34;       &#34;組織真正在乎什麼&#34;
+                        托兒所罰款              Deci 1971               公交司機、20% 時間
+                        給一點點錢              自我訊號/身份           混合訊號四大病
+                               │                      │                      │
+                               └──────────────────────┼──────────────────────┘
+                                                      ▼
+                     訊號與內在動機（自主 / 專精 / 目的）一致 → 互相加強
+                     訊號與內在動機衝突 → 擠出（平克說的&#34;獎勵的懲罰&#34;）
+</code></pre><table>
+	<thead>
+			<tr>
+					<th>問題</th>
+					<th>平克的回答</th>
+					<th>格尼茨的回答</th>
+					<th>我的整合</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>激勵為什麼會失效？</td>
+					<td>外部獎勵把&quot;玩&quot;變成&quot;活&quot;，擠出內在動機</td>
+					<td>激勵發出的訊號和你嘴上說的目標相反</td>
+					<td>擠出是訊號失敗的一種特例：訊號告訴對方&quot;你是為錢幹活的&quot;</td>
+			</tr>
+			<tr>
+					<td>什麼時候錢有用？</td>
+					<td>常規、演算法型任務</td>
+					<td>給夠、訊號清晰、與目標一致時</td>
+					<td>數量型、可度量的任務直接用；品質型、創造性任務，先檢查訊號</td>
+			</tr>
+			<tr>
+					<td>應該怎麼設計？</td>
+					<td>給自主、專精、目的；先把基本報酬給公平，&ldquo;把錢的問題移出桌面&rdquo;</td>
+					<td>先畫出激勵會引發的行為樹，確保&quot;放進誘因的，確實是你想要鼓勵的事物&quot;</td>
+					<td>先付公平的基本報酬，再用非控制性的反饋與認可做訊號，最後才謹慎用 if-then</td>
+			</tr>
+			<tr>
+					<td>正面反饋呢？</td>
+					<td>鼓勵&quot;now-that&quot;式的事後、非預期認可</td>
+					<td>獎勵本身就是訊號，可以表達尊重</td>
+					<td>Deci 等人 1999 年的元分析：正面反饋 d = 0.33，是最便宜的強訊號</td>
+			</tr>
+	</tbody>
+</table>
+<p>一句話：<strong>平克告訴你&quot;什麼&quot;會被擠出，格尼茨告訴你&quot;為什麼&quot;會被擠出，以及如何不被擠出。</strong></p>
+<h2 id="六放到工程團隊裡">六、放到工程團隊裡</h2>
+<p>下面幾條是我結合兩本書，給技術負責人列的診斷方法。每一條都先問同一個問題：<strong>這項激勵到底在對工程師&quot;說&quot;什麼？</strong></p>
+<p><strong>1. OKR / KPI</strong></p>
+<ul>
+<li>混合訊號：說&quot;品質第一&quot;，卻按功能交付數、故事點、PR 數量考核。這正是格尼茨第 4 章的&quot;以品質為代價激勵數量&quot;。</li>
+<li>做法：KPI 用於觀察系統，不用於直接發錢。OKR 保持&quot;有挑戰、可失敗&quot;的定位，和獎金脫鉤；否則大家會把目標往低處定，這本身就是理性回應訊號。</li>
+</ul>
+<p><strong>2. 獎金與績效評級</strong></p>
+<ul>
+<li>兩本書在這裡意見一致：基本報酬要公平且有競爭力。平克要先&quot;把錢的問題移出桌面&quot;，格尼茨要&quot;給夠&quot;。只給一點點錢的&quot;優秀獎&quot;，最容易落入&quot;給一點點等於告訴你這事不值錢&quot;的陷阱。</li>
+<li>團隊目標配個人獎金，就是第 7 章的&quot;鼓勵團隊合作卻激勵個人成功&quot;。如果工作高度依賴協作，就讓獎金池的一部分與團隊結果掛鉤，並在評審中明確評價幫助他人、帶新人、做 code review 這類&quot;不顯眼的貢獻&quot;。</li>
+</ul>
+<p><strong>3. On-call 補貼</strong></p>
+<ul>
+<li>On-call 應該付錢，這是對打擾的補償。但要小心&quot;按事故次數付錢&quot;：這會發出&quot;事故越多越好&quot;的訊號，跟托兒所罰款反過來是同一個道理。</li>
+<li>更好的做法是按值班時長付固定補貼，同時把&quot;減少告警噪音、寫 runbook&quot;算作專精和晉升證據，讓人從中得到&quot;我在變得更好&quot;的自我訊號。</li>
+</ul>
+<p><strong>4. Bug bounty 與內部品質獎</strong></p>
+<ul>
+<li>對外部白帽，賞金是清晰的價格訊號，效果很好。對內部員工按 bug 數發獎，則可能產生&quot;自己埋雷自己挖&quot;的經典反效果；即便沒人作弊，也在告訴大家&quot;品質是額外的活&quot;。</li>
+<li>做法：內部更多用公開認可和事後的&quot;now-that&quot;獎勵，不事先承諾按件計酬。</li>
+</ul>
+<p><strong>5. Code review 指標</strong></p>
+<ul>
+<li>統計&quot;每人 review 了多少 PR、平均響應時長&quot;，很快就會出現秒批的 LGTM。這是典型的數量擠出品質。</li>
+<li>做法：指標只給團隊看趨勢，不排名；把&quot;一次有深度的 review&quot;當作專精來認可，比如在週會上點評一條好評論。</li>
+</ul>
+<p><strong>6. 20% 時間 / 駭客日</strong></p>
+<ul>
+<li>平克在 TED 中盛讚 Atlassian 的&quot;FedEx 日&quot;和谷歌的 20% 時間。但 Quartz 在 2013 年報道，谷歌 20% 時間已經&quot;as good as dead&quot;。原因很有意思：專案要經理批准，而經理按團隊生產力被考核，考核又預設員工 100% 時間都在主業上。</li>
+<li>這是一個教科書級的混合訊號：嘴上給自主，考核卻在懲罰自主。想做 20% 時間，必須同步調整經理的考核口徑，否則不如不做。</li>
+</ul>
+<p><strong>7. 失敗與創新</strong></p>
+<ul>
+<li>格尼茨第 5 章&quot;鼓勵創新卻懲罰失敗&quot;。他在播客裡說：&ldquo;you try to innovate, you fail &hellip; and then they punish you&rdquo;。</li>
+<li>做法：事故復盤對事不對人，實驗失敗不進績效扣分項，而且要讓大家看到真實的例子。比如一個失敗的重構提案仍被寫進晉升材料，比一百次口號都管用。</li>
+</ul>
+<p><strong>8. 職級階梯與專精</strong></p>
+<ul>
+<li>專精需要&quot;可見的進步&quot;。一份清晰的工程職級說明，本身就是最強的專精訊號：它告訴大家組織在乎什麼樣的成長。</li>
+<li>要注意，如果職級說明寫的是&quot;技術深度&quot;，實際晉升看的卻是&quot;帶了多大的專案&quot;，大家就會去搶專案而不是磨手藝。</li>
+</ul>
+<p><strong>9. 自主的四個維度</strong></p>
+<ul>
+<li>用平克的&quot;任務、時間、方法、團隊&quot;四維度做一次自查：工程師能否選擇技術方案？能否調整自己的工作時間？能否參與選題？能否換組？每多一個&quot;不能&quot;，就該問一句：這條限制是必要的，還是習慣？</li>
+</ul>
+<h2 id="七我的思考兩本書的侷限">七、我的思考：兩本書的侷限</h2>
+<p><strong>《驅動力》的問題</strong></p>
+<ol>
+<li><strong>證據被講成了故事。</strong> 平克把實驗室裡的創造性任務結論推廣到整個&quot;21 世紀的工作&quot;，跳過了 Cameron &amp; Pierce 和 Cerasoli 等人的反面與調和證據。TED 裡&quot;谷歌差不多一半的新產品都誕生於 20% 時間&quot;這類說法，也缺少嚴格的資料支撐。</li>
+<li><strong>I 型/X 型的二分太乾淨。</strong> 格尼茨在播客裡說得好：心理學家說人上班是為了意義，經濟學家說是為了交房租，&ldquo;these two strawmen are just strawmen&rdquo;。</li>
+<li><strong>&ldquo;把錢移出桌面&quot;說起來容易。</strong> 在薪酬不透明、差距大的組織裡，錢永遠在桌面上。</li>
+</ol>
+<p><strong>《混合訊號》的問題</strong></p>
+<ol>
+<li><strong>框架太寬，幾乎什麼都能解釋。</strong> &ldquo;一切激勵都是訊號&quot;很有洞察力，但幾乎可以事後解釋任何結果。要讓它有用，必須事先寫下&quot;我預期對方會讀到什麼訊號&rdquo;，並用實驗檢驗。格尼茨本人倡導小規模測試，讀者卻容易只記住故事。</li>
+<li><strong>案例多，組織層面的系統設計少。</strong> 臺灣讀者的書評也指出，書名像是教&quot;怎麼設計&rdquo;，&ldquo;其實更多是用非常多的例子&rdquo;，告訴你混合訊號會帶來什麼後果。</li>
+<li><strong>田野實驗的外推。</strong> 托兒所、募捐、馬賽社群的結論，搬到一家 500 人的軟體公司能保留多少，需要自己驗證。</li>
+</ol>
+<p><strong>兩本書都沒有充分討論的</strong></p>
+<ul>
+<li>訊號是被&quot;讀&quot;出來的，讀法受文化、信任和歷史影響。同一筆獎金，在一個剛裁過員的團隊裡，訊號完全不同。</li>
+<li>激勵的設計者通常也處在激勵之中。經理有自己的 KPI，這才是 20% 時間失敗的真正原因。</li>
+</ul>
+<h2 id="八可執行清單">八、可執行清單</h2>
+<p>設計或調整任何一項激勵前，逐條過一遍：</p>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>寫下目標行為</strong>：我希望大家多做什麼、少做什麼？品質還是數量？</li>
+<li><input disabled="" type="checkbox"> <strong>寫下訊號</strong>：站在一名普通工程師的角度，這項激勵在&quot;說&quot;什麼？會不會和我們嘴上說的相反？</li>
+<li><input disabled="" type="checkbox"> <strong>檢查四類混合訊號</strong>：數量 vs 品質、創新 vs 懲罰失敗、長期 vs 短期、團隊 vs 個人。</li>
+<li><input disabled="" type="checkbox"> <strong>金額檢查</strong>：要麼給夠，要麼不要給錢，改用認可、機會或時間。</li>
+<li><input disabled="" type="checkbox"> <strong>任務型別檢查</strong>：常規、可度量的任務可以用 if-then；探索性、創造性的任務優先保障自主、專精、目的，獎勵放在事後、不事先承諾。</li>
+<li><input disabled="" type="checkbox"> <strong>畫行為樹</strong>：如果有人鑽空子，最便宜的鑽法是什麼？</li>
+<li><input disabled="" type="checkbox"> <strong>檢查設計者自己的激勵</strong>：經理、HR 的考核是否會讓這項政策名存實亡？</li>
+<li><input disabled="" type="checkbox"> <strong>反饋優先</strong>：有沒有更便宜的方法，例如具體、及時、非控制性的正面反饋？</li>
+<li><input disabled="" type="checkbox"> <strong>小範圍試點</strong>：先在一個團隊試一個週期，帶對照組和退出條件。</li>
+<li><input disabled="" type="checkbox"> <strong>撤銷預案</strong>：托兒所告訴我們，撤掉一個壞激勵並不能讓行為自動恢復，上線前要想好怎麼收場。</li>
+</ul>
+<h2 id="參考資料">參考資料</h2>
+<p><strong>書籍資訊</strong></p>
+<ul>
+<li>Yale University Press, <em>Mixed Signals: How Incentives Really Work</em>（平裝與電子版頁面）：<a href="https://yalebooks.yale.edu/book/9780300276749/mixed-signals/">https://yalebooks.yale.edu/book/9780300276749/mixed-signals/</a></li>
+<li>Google Books, <em>Mixed Signals</em>（精裝 ISBN 9780300255539）：<a href="https://books.google.com/books/about/Mixed_Signals.html?id=k7JI0QEACAAJ">https://books.google.com/books/about/Mixed_Signals.html?id=k7JI0QEACAAJ</a></li>
+<li>豆瓣讀書，《混合訊號：激勵是如何發揮作用的》（中信出版社）：<a href="https://book.douban.com/subject/36623489/">https://book.douban.com/subject/36623489/</a></li>
+<li>豆瓣讀書，《誘因設計》（天下文化）：<a href="https://book.douban.com/subject/36622217/">https://book.douban.com/subject/36622217/</a></li>
+<li>天下文化 Bookzone，《誘因設計》：<a href="https://bookzone.cwgv.com.tw/book/BCB817">https://bookzone.cwgv.com.tw/book/BCB817</a></li>
+<li>Daniel Pink 官網，<em>Drive</em>：<a href="https://www.danpink.com/books/drive/">https://www.danpink.com/books/drive/</a></li>
+<li>湛廬文化，《驅動力》新版頁面：<a href="https://www.cheerspublishing.com/book/detail/1651107448999563264">https://www.cheerspublishing.com/book/detail/1651107448999563264</a></li>
+<li>誠品，《動機，單純的力量》（大塊文化）：<a href="https://www.eslite.com/product/1001129721961311">https://www.eslite.com/product/1001129721961311</a></li>
+<li>豆瓣讀書，《動機，單純的力量》：<a href="https://book.douban.com/subject/5288336/">https://book.douban.com/subject/5288336/</a></li>
+</ul>
+<p><strong>演講與訪談</strong></p>
+<ul>
+<li>Dan Pink, &ldquo;The puzzle of motivation&rdquo;, TEDGlobal 2009（含繁體、簡體中文字幕）：<a href="https://www.ted.com/talks/dan_pink_the_puzzle_of_motivation">https://www.ted.com/talks/dan_pink_the_puzzle_of_motivation</a></li>
+<li>ReThinking with Adam Grant, &ldquo;How do incentives really work? with Uri Gneezy&rdquo;（文字稿）：<a href="https://www.ted.com/podcasts/rethinking-with-adam-grant/how-do-incentives-really-work-with-uri-gneezy-transcript">https://www.ted.com/podcasts/rethinking-with-adam-grant/how-do-incentives-really-work-with-uri-gneezy-transcript</a></li>
+<li>The Brainy Business 播客第 273 期，&ldquo;Mixed Signals: How Incentives Really Work, with Uri Gneezy&rdquo;：<a href="https://thebrainybusiness.com/podcast/273-mixed-signals-how-incentives-really-work-with-uri-gneezy/">https://thebrainybusiness.com/podcast/273-mixed-signals-how-incentives-really-work-with-uri-gneezy/</a></li>
+</ul>
+<p><strong>原始研究</strong></p>
+<ul>
+<li>Gneezy &amp; Rustichini (2000), &ldquo;A Fine is a Price&rdquo;, <em>Journal of Legal Studies</em> 29(1):1–17：<a href="https://rady.ucsd.edu/_files/faculty-research/uri-gneezy/fine.pdf">https://rady.ucsd.edu/_files/faculty-research/uri-gneezy/fine.pdf</a>（DOI 頁：<a href="https://www.journals.uchicago.edu/doi/10.1086/468061">https://www.journals.uchicago.edu/doi/10.1086/468061</a>）</li>
+<li>Gneezy &amp; Rustichini (2000), &ldquo;Pay Enough or Don&rsquo;t Pay at All&rdquo;, <em>QJE</em> 115(3):791–810：<a href="https://rady.ucsd.edu/_files/faculty-research/uri-gneezy/pay-enough.pdf">https://rady.ucsd.edu/_files/faculty-research/uri-gneezy/pay-enough.pdf</a></li>
+<li>Gneezy, Meier &amp; Rey-Biel (2011), &ldquo;When and Why Incentives (Don&rsquo;t) Work to Modify Behavior&rdquo;, <em>JEP</em> 25(4):191–210：<a href="https://www.aeaweb.org/articles?id=10.1257/jep.25.4.191">https://www.aeaweb.org/articles?id=10.1257/jep.25.4.191</a></li>
+<li>Ariely, Gneezy, Loewenstein &amp; Mazar (2009), &ldquo;Large Stakes and Big Mistakes&rdquo;, <em>Review of Economic Studies</em> 76(2):451–469：<a href="https://people.duke.edu/~dandan/webfiles/PapersUpside/Large%20Stakes%20Big%20Mistakes.pdf">https://people.duke.edu/~dandan/webfiles/PapersUpside/Large%20Stakes%20Big%20Mistakes.pdf</a></li>
+<li>Deci (1971), &ldquo;Effects of externally mediated rewards on intrinsic motivation&rdquo;, <em>JPSP</em> 18(1):105–115：<a href="https://selfdeterminationtheory.org/SDT/documents/1971_Deci.pdf">https://selfdeterminationtheory.org/SDT/documents/1971_Deci.pdf</a>（DOI：<a href="https://doi.org/10.1037/h0030644">https://doi.org/10.1037/h0030644</a>）</li>
+<li>Glucksberg (1962), &ldquo;The influence of strength of drive on functional fixedness and perceptual recognition&rdquo;, <em>Journal of Experimental Psychology</em> 63:36–41：<a href="https://pubmed.ncbi.nlm.nih.gov/13899303/">https://pubmed.ncbi.nlm.nih.gov/13899303/</a></li>
+<li>Cameron &amp; Pierce (1994), &ldquo;Reinforcement, Reward, and Intrinsic Motivation: A Meta-Analysis&rdquo;, <em>Review of Educational Research</em> 64(3):363–423：<a href="https://journals.sagepub.com/doi/10.3102/00346543064003363">https://journals.sagepub.com/doi/10.3102/00346543064003363</a></li>
+<li>Deci, Koestner &amp; Ryan (1999), <em>Psychological Bulletin</em> 125(6):627–668：<a href="https://pubmed.ncbi.nlm.nih.gov/10589297/">https://pubmed.ncbi.nlm.nih.gov/10589297/</a></li>
+<li>Cerasoli, Nicklin &amp; Ford (2014), <em>Psychological Bulletin</em> 140(4):980–1008：<a href="https://pubmed.ncbi.nlm.nih.gov/24491020/">https://pubmed.ncbi.nlm.nih.gov/24491020/</a></li>
+<li>Self-Determination Theory 官網，Theory 概述：<a href="https://selfdeterminationtheory.org/theory/">https://selfdeterminationtheory.org/theory/</a></li>
+</ul>
+<p><strong>報道與書評</strong></p>
+<ul>
+<li>Quartz (2013), &ldquo;Google&rsquo;s &lsquo;20% time,&rsquo; which brought you Gmail and AdSense, is now as good as dead&rdquo;：<a href="https://qz.com/115831/googles-20-time-which-brought-you-gmail-and-adsense-is-now-as-good-as-dead">https://qz.com/115831/googles-20-time-which-brought-you-gmail-and-adsense-is-now-as-good-as-dead</a></li>
+<li>西恩的閱讀筆記，【超閱讀觀點】《誘因設計》：<a href="https://seanreads.com/mixed-signals-how-incentives-really-work/">https://seanreads.com/mixed-signals-how-incentives-really-work/</a></li>
+<li>Angela Watson, &ldquo;Responsible rewards: using the &rsquo;now-that&rsquo; principle with students&rdquo;（引述《驅動力》對 if-then 與 now-that 獎勵的區分）：<a href="https://truthforteachers.com/truth-for-teachers-podcast/responsible-rewards-using-now-principle-students/">https://truthforteachers.com/truth-for-teachers-podcast/responsible-rewards-using-now-principle-students/</a></li>
+<li>托馬斯的社群咖啡館，閱讀心得《動機，單純的力量》：<a href="https://vocus.cc/article/6906a023fd897800014f3c6a">https://vocus.cc/article/6906a023fd897800014f3c6a</a></li>
+</ul>
+]]></content:encoded></item><item><title>《精要主義》×《輕鬆主義》整合讀書筆記：先做對的事，再把對的事做輕鬆</title><link>https://d94807974-commits.github.io/posts/essentialism-effortless-integrated-notes/</link><pubDate>Wed, 04 Nov 2026 14:51:09 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/essentialism-effortless-integrated-notes/</guid><description>把 Greg McKeown 的《精要主義》（探索、排除、執行）與《輕鬆主義》（輕鬆狀態、輕鬆行動、輕鬆成果）合成一個框架：前者回答做什麼，後者回答怎麼做。結合臺灣天下文化繁體版《少，但是更好》《努力，但不費力》的書摘、編輯導讀與書評，對照兩岸譯名（專準主義、精．簡．準），附章節對映表、工程落地方法、不足反思和可執行清單。</description><content:encoded><![CDATA[<div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>《精要主義》回答「做什麼」，《輕鬆主義》回答「怎麼做」。先只做對的事，再把對的事做得輕鬆。</p>
+</div><blockquote>
+  <p>素材說明：這篇筆記依據的是兩本書的出版社簡介與完整目錄，涵蓋英文版、簡體中文版和臺灣天下文化的繁體中文版。此外還用到作者官網、作者在 Next Big Idea Club 發表的長文摘要、Jordan Harbinger 播客的文字稿，以及天下文化官網「Bookzone」公開刊出的書摘與編輯導讀、《遠見》雜誌 2014 年的報道、臺灣讀書博主的長評，以及豆瓣讀者的摘錄和評論。</p>
+<p>引用規則：</p>
+<ul>
+<li>英文引文都是我在這些頁面上逐字核對過的原文，後面附中文意譯。</li>
+<li>繁體中文引文保留原字形，註明出處。</li>
+<li>簡體中文引文出自出版社簡介或豆瓣讀者摘錄。</li>
+<li>其餘章節層面的內容，我只根據目錄和作者公開的說法來概括，不對沒讀到的段落做推測。</li>
+</ul>
+<p>本文首發後，又補充了繁體中文資料並重寫。</p>
+
+</blockquote><figure>
+<img src="/images/essentialism-effortless-integrated-notes/white-room.jpg" alt="極簡白色房間" loading="lazy" width="800">
+<figcaption>圖片：Richard Schatzberger / <a href="https://commons.wikimedia.org/wiki/File:A_White_Room_-_Flickr_-_schatz.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>。少，但是更好——空間本身就是取捨。</figcaption>
+</figure>
+<h2 id="一兩本書的基本資訊一套框架三個中文版本">一、兩本書的基本資訊：一套框架，三個中文版本</h2>
+<table>
+	<thead>
+			<tr>
+					<th></th>
+					<th>《精要主義》</th>
+					<th>《輕鬆主義》</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>英文原書</td>
+					<td><em>Essentialism: The Disciplined Pursuit of Less</em>，Crown Business，2014-04-15，ISBN 9780804137386</td>
+					<td><em>Effortless: Make It Easier to Do What Matters Most</em>，Currency，2021-04-27，ISBN 9780593135648</td>
+			</tr>
+			<tr>
+					<td>繁體中文版（臺灣）</td>
+					<td>《少，但是更好》，詹採妮 譯，天下文化，2014-09-25 初版，ISBN 9789863205623；2021-12-29 出《新編增訂版》，ISBN 9789865254117，收錄〈二十一天專準主義挑戰〉</td>
+					<td>《努力，但不費力：只做最重要的事，其實沒有你想的那麼難》，張靖之 譯，天下文化，2021-12-29，ISBN 9789865254094；2022-12-23 另有書號 BCB754A 的新版次</td>
+			</tr>
+			<tr>
+					<td>簡體中文版</td>
+					<td>《精要主義：如何應對擁擠不堪的工作和生活》，邵信芳 譯，浙江人民出版社 / 湛廬文化，2016-04，ISBN 9787213072291；2023-09 由中國財政經濟出版社 / 湛廬再版，ISBN 9787522323732</td>
+					<td>《輕鬆主義：讓關鍵的事情變得容易做》，範兆明 譯，中國財政經濟出版社 / 湛廬文化，2022 年（豆瓣標 2022-2，豆瓣閱讀與讀書網標 2022-03），ISBN 9787522310893</td>
+			</tr>
+			<tr>
+					<td>豆瓣評分（查閱時）</td>
+					<td>2016 版 7.6（4531 人）；2023 版 6.6</td>
+					<td>7.4（1376 人）</td>
+			</tr>
+	</tbody>
+</table>
+<p>幾個值得注意的細節：</p>
+<ul>
+<li><strong>繁體版比簡體版來得早。</strong> 《少，但是更好》比簡體版早了一年半；《努力，但不費力》與 Effortless 英文版只隔八個月，比簡體版也早了兩三個月。</li>
+<li><strong>臺版兩本書同日出新版。</strong> 天下文化在 2021-12-29 同時推出了《少，但是更好（新編增訂版）》和《努力，但不費力》，顯然是當作一套書來經營的。2025 年，天下文化又把《少，但是更好》和一本《90天生活實踐》（周群英 譯）合成兩冊套書。</li>
+<li><strong>作者譯名不同。</strong> 臺版作者名譯作「葛瑞格．麥基昂」，簡體版譯作&quot;格雷戈·麥吉沃恩&quot;。</li>
+</ul>
+<p>天下文化的作者簡介寫道：作者在史丹佛大學與人合開「設計精簡生活」（Designing Life, Essentially）課程，曾獲世界經濟論壇任命為「青年全球領袖」，並主持 Podcast《What&rsquo;s Essential》。</p>
+<h2 id="二兩岸譯本對照同一套框架兩種中文">二、兩岸譯本對照：同一套框架，兩種中文</h2>
+<p>把三個版本的目錄放在一起讀，最大的收穫不是資訊量，而是<strong>譯名本身就是一種解讀</strong>。</p>
+<h3 id="1-書名一個強調主義一個強調取捨與努力">1. 書名：一個強調&quot;主義&quot;，一個強調&quot;取捨&quot;與&quot;努力&quot;</h3>
+<p>簡體版把兩本書譯成&quot;××主義&quot;，讀者一眼就知道它們是一個系列。臺版的書名走了另一條路：</p>
+<ul>
+<li>《少，但是更好》直譯作者的口號 <em>Weniger aber besser</em>。</li>
+<li>《努力，但不費力》把一對看似矛盾的詞放在一起。</li>
+</ul>
+<p>我認為後者翻得更準。&ldquo;輕鬆主義&quot;四個字很容易被讀成&quot;偷懶有理&rdquo;，而「努力，但不費力」先承認了努力，再討論怎樣不白費力氣。這正是作者在訪談裡反覆澄清的那條線（見第四節）。</p>
+<h3 id="2-精要主義的三步精挑簡化準確執行">2. 《精要主義》的三步：精挑、簡化、準確執行</h3>
+<p>臺版把 Essentialism 譯作「專準主義」，並把三個部分壓縮成一個口訣：「精．簡．準」。時任臺大管理學院院長的郭瑞祥在推薦語裡寫道，這本書在教人成為「精．簡．準」（精挑、簡化、準確執行）的專業工作者」。</p>
+<table>
+	<thead>
+			<tr>
+					<th>英文</th>
+					<th>簡體中文版</th>
+					<th>繁體中文版（臺灣）</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Essence（核心思維）</td>
+					<td>核心思維模式：選擇 / 甄別 / 取捨</td>
+					<td>追求本質：懂得選擇 / 懂得辨別 / 懂得取捨</td>
+			</tr>
+			<tr>
+					<td>Explore</td>
+					<td>探索：抽離 / 審視 / 遊戲 / 睡眠 / 精選</td>
+					<td>精挑：逃離 / 留意 / 玩樂 / 睡眠 / 嚴選</td>
+			</tr>
+			<tr>
+					<td>Eliminate</td>
+					<td>排除：澄清 / 勇氣 / 放棄 / 編輯 / 邊界</td>
+					<td>簡化：釐清 / 膽量 / 取消承諾 / 剪輯 / 界線</td>
+			</tr>
+			<tr>
+					<td>Execute</td>
+					<td>執行：緩衝 / 掃除 / 進步 / 心流 / 專注</td>
+					<td>準確執行：緩衝 / 減法 / 進展 / 心流 / 專注</td>
+			</tr>
+	</tbody>
+</table>
+<p>幾處差異值得注意：</p>
+<ul>
+<li><strong>Eliminate</strong>：簡體版譯作&quot;排除&quot;，臺版目錄的部名卻叫「簡化」，副標題是「如何排除瑣碎的多數？」。天下文化刊出的前言書摘裡，同一步又寫作「簡化、排除」。創業媒體 Innopreneur 的繁體文章則用「消除」。這樣一來，<em>Effortless</em> 第八章 Simplify 在簡體和繁體裡都叫&quot;簡化&quot;，但在臺版《少，但是更好》裡，「簡化」指的是刪專案。兩本書合讀時，一定要分清兩個&quot;簡化&quot;：前者刪的是要不要做的事，後者刪的是怎麼做裡的步驟。</li>
+<li><strong>Unschedule / Subtract</strong>：簡體版的&quot;放棄&quot;、&ldquo;掃除&rdquo;，臺版分別作「取消承諾：停損贏更大」和「減法：移除障礙，事半功倍」。「減法」兩個字比&quot;掃除&quot;更貼近原意：不是加把勁，而是拿掉阻礙。</li>
+<li><strong>新編增訂版的改動</strong>：臺版新編增訂版把二十章加附錄改排成〈二十一天專準主義挑戰〉的第一天到第二十一天，比如「剪輯：隱形的藝術」「界限：有界限，才有自由」。初版目錄裡的「界線」也改成了「界限」。</li>
+</ul>
+<h3 id="3-輕鬆主義臺版譯名更動作化">3. 《輕鬆主義》：臺版譯名更&quot;動作化&quot;</h3>
+<table>
+	<thead>
+			<tr>
+					<th>英文</th>
+					<th>簡體中文版</th>
+					<th>繁體中文版（臺灣）</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Effortless State</td>
+					<td>輕鬆狀態：倒置 / 享受 / 釋懷 / 休息 / 覺察</td>
+					<td>不費力的狀態：翻轉 / 享受 / 釋放 / 休息 / 察覺</td>
+			</tr>
+			<tr>
+					<td>Effortless Action</td>
+					<td>輕鬆行動：定義 / 開始 / 簡化 / 過程 / 節奏</td>
+					<td>不費力的行動：界定 / 起跑 / 簡化 / 推進 / 步調</td>
+			</tr>
+			<tr>
+					<td>Effortless Results</td>
+					<td>輕鬆成果：學習 / 提升 / 自動 / 信任 / 預防</td>
+					<td>不費力的成果：學習 / 提升 / 自動化 / 信任 / 預防</td>
+			</tr>
+	</tbody>
+</table>
+<p>臺版的章名副標題也很好用，幾乎可以直接當成工程團隊的口號：</p>
+<ul>
+<li>「界定：『完成』是什麼樣子」</li>
+<li>「起跑：顯而易見的第一步」</li>
+<li>「推進：產出垃圾的勇氣」</li>
+<li>「步調：慢即穩，穩即快」</li>
+<li>「自動化：做一次就好」</li>
+<li>「信任：發動高績效團隊的引擎」</li>
+</ul>
+<h2 id="三兩本書各自講了什麼">三、兩本書各自講了什麼</h2>
+<h3 id="精要主義做對的事">《精要主義》：做&quot;對的事&quot;</h3>
+<p>出版社的定位一句話說清了這本書：&ldquo;Essentialism isn&rsquo;t about getting more done in less time. It&rsquo;s about getting only the right things done.&quot;（精要主義不是在更少的時間裡做更多事，而是只做對的事。）</p>
+<p>天下文化刊出的前言書摘裡，作者講了一段親身經歷：女兒剛出生幾個小時，同事寫信說那天下午的客戶會需要他出席，他去了。事後他承認那場會「毫無成果可言」，自己「在想讓每個人都開心的情況下，我犧牲了最要緊的事」。他從中得到的教訓是：</p>
+<blockquote>
+  <p>「如果你不替自己的生活排定優先次序，別人就會代勞。」（《少，但是更好》前言書摘，天下文化 Bookzone）</p>
+
+</blockquote><p>作者用&quot;整理衣櫃&quot;來比喻全書的三步：</p>
+<ol>
+<li>不問「我以後還有沒有機會穿這件衣服？」，而問「我喜歡這件衣服嗎？」；</li>
+<li>把不要的真正裝袋送走；</li>
+<li>建立一套定期清理的例行流程。</li>
+</ol>
+<h3 id="輕鬆主義把對的事做輕鬆">《輕鬆主義》：把對的事&quot;做輕鬆&rdquo;</h3>
+<p>官網和出版社的簡介點出了它要反駁的信念：&ldquo;That if we want to overachieve, we have to overexert, overthink, and overdo.&quot;（想要超常成就，就必須用力過猛、想得過多、做得過頭。）它的立場是：&ldquo;The effortless way isn&rsquo;t the lazy way. It&rsquo;s the smart way.&quot;（輕鬆之道不是偷懶之道，而是聰明之道。）</p>
+<p>臺版的文案換了個說法講這件事：我們習慣把事情分成「困難而重要」和「簡單而瑣碎」兩類，「其實我們還有第三種選擇：把重要但困難的工作變得簡單。」（天下文化《努力，但不費力》書籍頁）</p>
+<h2 id="四整合一個講做什麼一個講怎麼做">四、整合：一個講&quot;做什麼&rdquo;，一個講&quot;怎麼做&rdquo;</h2>
+<h3 id="1-證據第一本書就預告了第二本">1. 證據：第一本書就預告了第二本</h3>
+<p>把兩本書看成&quot;上下集&quot;，並不只是我的讀法。天下文化刊出的《少，但是更好》前言書摘裡，作者在講第三步時寫道：</p>
+<blockquote>
+  <p>「一旦你釐清要保留的是哪些活動和努力⸺⸺使你能做出最高程度貢獻的那些⸺⸺你就需要一套能讓你盡可能輕鬆執行意圖的系統。在本書中，你將學習創造出一個使必要的事情盡可能輕鬆完成的過程。」</p>
+
+</blockquote><p>Innopreneur 的文章引用了原書中的英文：&ldquo;While Nonessentialists tend to force execution, Essentialists invest the time they have saved by eliminating the nonessentials into designing a system to make execution almost effortless.&quot;（非精要主義者傾向於硬推執行；精要主義者則把排除雜事省下的時間，投入到設計一套讓執行幾乎不費力的系統上。）這裡已經出現了 effortless 這個詞。</p>
+<p>作者在 Jordan Harbinger 的訪談裡，也把《精要主義》的落點概括為&quot;how to build systems to make execution of what is essential, as easy as possible&rdquo;（建立系統，讓精要之事執行起來儘可能容易）。</p>
+<p>《努力，但不費力》的臺版書摘則把接力棒說得更直接：</p>
+<blockquote>
+  <p>「當手上重要的事已經超出你所能負荷，你可以選擇割捨，或是找輕鬆的方法來做。《努力，但不費力》要談的則是，用對的方法來做對的事。」（〈別把「過勞倦怠」當成榮譽勳章！〉，天下文化 Bookzone，2021-12-22）</p>
+
+</blockquote><p>臺灣讀書部落格「超閱者」的一句話概括，正好是本文的標題：「如果說《少，但是更好》是教你如何做對的事情；這本書則是教你如何用對的方法來做對的事。」</p>
+<h3 id="2-精要主義的陷阱減法做完了剩下的仍然在硬扛">2. 精要主義的陷阱：減法做完了，剩下的仍然在硬扛</h3>
+<p>精要主義最常見的失敗方式，並不是沒做減法，而是做完減法後，用加倍的意志力去對付剩下的每一件事。&ldquo;既然這件事最重要，就該拼盡全力。&ldquo;結果是：重要的事少了，人卻更累了。</p>
+<p>臺版書摘開篇講了 Patrick McGinnis 的故事。他在 AIG 每週工作 80 小時，2008 年公司崩盤，他手上的股票跌了 97%。他事後的結論被譯成：</p>
+<blockquote>
+  <p>「我解決所有問題的方式，就是花更多時間、再努力一點。」但突然之間，他發現，「再努力一點的邊際報酬竟然是負的。」</p>
+
+</blockquote><p>作者由此得出的教訓是：「當你已經沒辦法再多努力一點，就是時候另覓出路了。」作者和天下文化編輯張彤華的導讀都借用了《動物農莊》裡的馬「拳擊手」：牠面對每一次挫折和每一個難題，回答總是「我會更努力的。」，最後積勞成疾，被送進老弱家畜屠宰場。</p>
+<p>作者在 Next Big Idea Club 的長文裡，講的是女兒 Eve 重病的經歷。這件事絕對屬於精要，但這場仗要打多久沒人知道：&ldquo;If your job is to keep the fires burning for an indefinite period, you can&rsquo;t throw all the fuel on the flames at the beginning.&quot;（如果你的任務是讓火無限期地燃燒，就不能一開始把所有燃料都扔進去。）</p>
+<p>所以兩本書合起來，構成一個完整的閉環：</p>
+<pre tabindex="0"><code>          《精要主義》：做什麼                    《輕鬆主義》：怎麼做
+  ┌──────────────────────────────┐    ┌──────────────────────────────────┐
+  │ 核心思維：選擇 / 甄別 / 取捨    │──▶│ 輕鬆狀態：倒置 / 享受 / 釋懷 / 休息 / 覺察 │
+  │ 探索（精挑）：抽離 審視 遊戲 睡眠 精選│ │  （先把&#34;人&#34;調到能清醒選擇的狀態）       │
+  ├──────────────────────────────┤    ├──────────────────────────────────┤
+  │ 排除（簡化）：澄清 勇氣 放棄 編輯 邊界│─▶│ 輕鬆行動：定義 / 開始 / 簡化 / 過程 / 節奏 │
+  │ 執行（準確執行）：緩衝 掃除 進步 心流 專注││  （把留下來的事拆成可持續的動作）         │
+  ├──────────────────────────────┤    ├──────────────────────────────────┤
+  │ 附錄：精要領導者               │──▶│ 輕鬆成果：學習 / 提升 / 自動 / 信任 / 預防 │
+  │                              │    │  （讓一次投入產生持續回報）               │
+  └──────────────────────────────┘    └──────────────────────────────────┘
+     問：這件事值得做嗎？（臺版：「現在所做的事情，是否值得投入？」）
+                                       問：What if this could be easy?
+                                       （臺版：「會不會這其實可以很簡單？」）
+</code></pre><p>再細一點，可以按章節對應：</p>
+<table>
+	<thead>
+			<tr>
+					<th>問題</th>
+					<th>精要主義（簡 / 繁）</th>
+					<th>輕鬆主義（簡 / 繁）</th>
+					<th>關係</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>我有沒有餘力做判斷？</td>
+					<td>抽離 / 逃離，睡眠</td>
+					<td>休息、覺察 / 察覺、釋懷 / 釋放</td>
+					<td>後者補上了情緒負擔（如抱怨）的清理</td>
+			</tr>
+			<tr>
+					<td>什麼算&quot;做完&rdquo;？</td>
+					<td>澄清 / 釐清</td>
+					<td>定義 / 界定</td>
+					<td>前者定方向，後者定終點</td>
+			</tr>
+			<tr>
+					<td>怎樣減少工作量？</td>
+					<td>編輯 / 剪輯，放棄 / 取消承諾</td>
+					<td>簡化 / 簡化</td>
+					<td>前者刪專案，後者刪步驟</td>
+			</tr>
+			<tr>
+					<td>怎樣開始？</td>
+					<td>進步 / 進展</td>
+					<td>開始 / 起跑，過程 / 推進</td>
+					<td>後者給出具體抓手</td>
+			</tr>
+			<tr>
+					<td>怎樣不燒盡？</td>
+					<td>緩衝 / 緩衝，邊界 / 界線</td>
+					<td>節奏 / 步調</td>
+					<td>後者把&quot;邊界&quot;做成節奏</td>
+			</tr>
+			<tr>
+					<td>怎樣排障？</td>
+					<td>掃除 / 減法</td>
+					<td>預防、自動 / 自動化</td>
+					<td>前者治當下的瓶頸，後者防未來的重複</td>
+			</tr>
+			<tr>
+					<td>團隊層面</td>
+					<td>精要領導者</td>
+					<td>提升、信任</td>
+					<td>後者講槓桿和信任結構</td>
+			</tr>
+	</tbody>
+</table>
+<h3 id="3-一個關鍵區分輕鬆不等於偷懶">3. 一個關鍵區分：輕鬆不等於偷懶</h3>
+<p>作者在訪談裡專門劃了這條線：&ldquo;Lazy is an unwillingness to work. Easy is just something doesn&rsquo;t require a lot of effort to get it done.&quot;（懶是不願工作；容易只是指一件事不需要大量努力就能完成。）他還說：&ldquo;Effort is a finite resource.&quot;（努力是有限的資源。）</p>
+<p>臺版文案的說法幾乎一致：「問題在於動力和努力都是有限的資源，我們愈是消耗，就愈容易過勞」。這句話把兩本書統一成一個經濟學問題：精要主義管&quot;把有限的努力投向哪裡&rdquo;，輕鬆主義管&quot;每單位努力能換來多少產出&rdquo;。</p>
+<h3 id="4-技術負責人身上的典型陷阱">4. 技術負責人身上的典型陷阱</h3>
+<p>我見過不少技術負責人，精要主義做得很好：季度目標只留三個，雜事推得乾乾淨淨。可那三件事，每一件都靠自己通宵頂上去：核心模組自己寫，關鍵評審自己看，線上事故自己衝在第一線。</p>
+<p>短期看，這是&quot;聚焦&rdquo;；長期看，這就是拳擊手式的「我會更努力」。團隊的能力沒有長起來，負責人自己成了系統裡唯一的瓶頸，也就是《精要主義》裡的&quot;最慢行進者&rdquo;。</p>
+<p>輕鬆主義給的出路不是&quot;再砍一件&quot;，而是換一個問題：怎樣讓這件事不依賴我的透支也能完成？答案往往落在三個地方：</p>
+<ul>
+<li>把知識寫下來，讓別人能接手（學習、提升）；</li>
+<li>把重複勞動交給指令碼（自動）；</li>
+<li>把決策權交給可信的人（信任）。</li>
+</ul>
+<h2 id="五放到工程師與技術負責人的日常">五、放到工程師與技術負責人的日常</h2>
+<h3 id="backlog-排序先用精要主義砍再用輕鬆主義拆">Backlog 排序：先用精要主義砍，再用輕鬆主義拆</h3>
+<ul>
+<li><strong>砍</strong>：給每個需求問一句，它能不能進前 10%？豆瓣讀者摘錄的簡體中譯本裡有一句判斷規則：&ldquo;如果答案不是一個確定的yes，那麼就應該是一個肯定的no&rdquo;。真實的 backlog 很難做到這麼絕對，但可以把&quot;不確定&quot;的需求統一放進&quot;下季度再評估&quot;，不讓它佔用本迭代的容量。</li>
+<li><strong>拆</strong>：對留下的需求，依次問輕鬆主義的幾個問題：完成長什麼樣？哪些步驟可以刪掉？第一個顯而易見的動作是什麼？</li>
+</ul>
+<h3 id="說不把拒絕做成機制而不是每次靠勇氣">說&quot;不&quot;：把拒絕做成機制，而不是每次靠勇氣</h3>
+<p>天下文化刊出的「界限」一章書摘，開頭引了 Anne Lamott 的一句話：「不，就是完整的句子。」這一章裡有兩個對工程團隊特別有用的做法。</p>
+<p><strong>一是「社會契約」。</strong> 作者和一位作風相反的同事搭檔，第一次開會就先講清各自的優先事項，以及自己願意或不願意承擔的額外工作。</p>
+<p><strong>二是「別搶他人的問題」。</strong> 原文是：「一旦我們替他們扛下問題，我們所做的一切不過是在奪走他們解決問題的能力而已。」</p>
+<p>這兩點可以沉澱成輕鬆主義式的&quot;一次性決定&quot;。出版社簡介的說法是&quot;Make one-time choices that eliminate many future decisions&quot;。落到團隊裡：</p>
+<ul>
+<li>公開 intake 規則和本季度目標，不在目標裡的需求，預設進入排隊；</li>
+<li>設立值班&quot;介面人&quot;，其餘人預設不接插單；</li>
+<li>專案啟動會先寫一份&quot;社會契約&quot;：本期目標、各自不接的事、升級路徑。</li>
+</ul>
+<p>作者在同一章裡提醒：「如果你不設定界限，就不會有任何界限。」《遠見》雜誌 2014 年的報道引了另一句：「只要你無法對不必要的事情說不，就等於在消極被動情況下說好。」</p>
+<h3 id="定義做完避免瓦薩號式的範圍蔓延">定義&quot;做完&quot;：避免瓦薩號式的範圍蔓延</h3>
+<p>在訪談裡，作者和主持人談到了那艘瑞典戰艦（瓦薩號）。作者說它&quot;not fit for purpose&quot;（不適合它原本的用途），因為造船的人從來沒有定義清楚&quot;完成&quot;長什麼樣。主持人當場就把它類比成軟體專案裡的 feature creep（功能蔓延）。</p>
+<p>工程上的對應物就是 Definition of Done：驗收標準、效能指標、回滾方案、文件，在開工前寫下來。作者給自己的書定過一個&quot;完成&quot;的樣子：&ldquo;I&rsquo;ve given this to my editor and she has looked through all of the chapters and said, &lsquo;Every one of them is solid and great.&rsquo;&quot;（我交給編輯，她看完所有章節後說：每一章都紮實而出色。）這個標準是可觀察的，不是&quot;我覺得寫好了&rdquo;。</p>
+<h3 id="第一個顯而易見的動作--零稿">第一個顯而易見的動作 + 零稿</h3>
+<p>作者在訪談裡說，完美主義讓人遲遲不開始；他的辦法是寫一份&quot;零稿&quot;：&ldquo;You don&rsquo;t publish rubbish, but you got to be willing to stare at rubbish.&quot;（你不會發布垃圾，但必須願意直視垃圾。）臺版第九章的章名把這個意思譯得很傳神：「推進：產出垃圾的勇氣」。</p>
+<p>落到工程上就是：</p>
+<ul>
+<li>先開一個 Draft PR；</li>
+<li>先寫一個能跑通主路徑的 spike；</li>
+<li>設計文件先寫成提綱，第一天就請同事看。</li>
+</ul>
+<p>第一個動作應該簡單到不需要任何心理建設，比如&quot;新建分支，寫一個失敗的測試&rdquo;。</p>
+<h3 id="節奏給工作量設上下限也給恢復留出時間">節奏：給工作量設上下限，也給恢復留出時間</h3>
+<p>作者用阿蒙森與斯科特的南極競賽說明節奏的價值：阿蒙森堅持每天前進約 15 英里，&ldquo;no more and no less&rdquo;（不多也不少）。作者建議給工作量同時設下限和上限，例如寫書&quot;never write less than 500 words a day, but never more than a thousand&quot;（每天不少於 500 字，也不多於 1000 字）。</p>
+<p>臺版「休息」一章的書摘給了一條更嚴格的規則：</p>
+<blockquote>
+  <p>「切勿在一天之內做超過隔天一早可以完全恢復的事情，切勿在一週之內做超過隔週一開始可以徹底恢復的事情。」</p>
+
+</blockquote><p>書摘還給了一個具體排法：「利用早上處理重要工作」，「分三個時段工作，每個時段不超過90分鐘」，中間休息 10 到 15 分鐘。</p>
+<p>工程團隊的對應做法是：</p>
+<ul>
+<li>設 WIP（在製品）上限；</li>
+<li>每天至少合併一個小 PR，但不在一天裡堆十個；</li>
+<li>上午留出兩到三個不開會的深度工作塊；</li>
+<li>值班或救火之後，第二天主動降負荷。</li>
+</ul>
+<p>《遠見》的報道還提到，LinkedIn 執行長 Jeff Weiner 每天會在行事曆裡預留兩個小時空檔。</p>
+<h3 id="自動化與預防時間管理的長尾">自動化與預防：時間管理的&quot;長尾&quot;</h3>
+<p>作者舉過一個例子：有人被一隻卡住的抽屜煩了兩年，修好它只用了兩分鐘。他的總結是：&ldquo;it usually takes less time to manage a problem than to solve it.&quot;（應付一個問題，通常比解決它花的時間少。）這正是 SRE 說的 toil（重複性雜務）。目標是&quot;find the most annoying thing that can be solved in the least amount of time&rdquo;（找到最煩人、又能用最少時間解決的那件事）。</p>
+<p>臺灣「閱讀前哨站」的書評補了一個有意思的視角。作者把&quot;檢查清單&quot;放進「自動化」一章，書評把它概括為「大腦決策的自動化」。書評裡還舉了一個例子：有人原本每到交週報那天都要忙到很晚，後來改成每天下班前用一到兩行話記下進度，到交週報時只要整理一下就行。</p>
+<p>對工程團隊來說，可以這樣落地：</p>
+<ul>
+<li>用指令碼替換手工釋出、手工對帳；</li>
+<li>把釋出、回滾、事故處置寫成 checklist 和 Runbook，相當於&quot;決策的自動化&quot;；</li>
+<li>每天在工單裡留一行進展，週報自動彙總；</li>
+<li>在復盤裡追問&quot;怎樣讓這類問題根本不會發生&quot;，對應「預防：預見問題，防患未然」一章。</li>
+</ul>
+<h3 id="信任低信任結構是自動出現的">信任：低信任結構是自動出現的</h3>
+<p>豆瓣讀者摘錄的第 14 章簡體中譯本裡寫道：在低度信任結構中，&ldquo;規則模稜兩可，沒人知道成功的標準是什麼&rdquo;；而&quot;低度信任結構通常是自動出現的，而不是有意為之&quot;。</p>
+<p>技術負責人要刻意搭建高信任結構：</p>
+<ul>
+<li>寫清楚每個模組的 owner；</li>
+<li>寫清楚介面契約和 SLO；</li>
+<li>寫清楚什麼情況下可以自行決定。</li>
+</ul>
+<p>信任一旦建立，Review 和審批就可以變輕。臺版把這一章叫做「信任：發動高績效團隊的引擎」。</p>
+<h2 id="六我的思考兩本書的不足">六、我的思考：兩本書的不足</h2>
+<p><strong>第一，過度假設個人擁有選擇權。</strong> 兩本書的讀者畫像，是能夠自主安排時間的知識工作者。一線工程師的 backlog 往往由產品、老闆和合規要求共同決定，&ldquo;確定的 yes 或肯定的 no&quot;在組織裡很難由個人說了算。</p>
+<p>有意思的是，「界限」一章的書摘裡，作者自己也承認：「界限確實可能付出昂貴的代價。」我認為更現實的做法是把精要主義上移到團隊層面：由技術負責人和產品負責人一起做取捨，再由個人去執行輕鬆主義。</p>
+<p><strong>第二，故事多、證據少，第二本更淺。</strong> 兩本書都大量依靠故事：南極競賽、瓦薩號、抽屜、女兒的病、McGinnis 的 AIG 往事。故事好記，但因果關係往往被簡化了。以斯科特的失敗為例，常見的解釋遠不止&quot;節奏&quot;一項，還包括運輸方式和補給安排。</p>
+<p>「閱讀前哨站」的評價很中肯：他對《少，但是更好》評價不錯，但《努力，但不費力》讓他覺得有點「搔不到癢處」，每個小節篇幅太短，讀起來「淺嚐即止」。如果你想「學習實踐步驟」，這本書「比較像是給予一些原則和基本指引」。這和豆瓣短評裡&quot;主旨很好……但是內容稍顯囉嗦&quot;的感受，算是兩岸讀者的共識。</p>
+<p><strong>第三，&ldquo;輕鬆&quot;容易被濫用。</strong> 作者再三強調&quot;easy does not equal lazy&rdquo;，但在團隊裡，&ldquo;找更輕鬆的路&quot;也可能被用來跳過測試、省略評審。臺版書名「努力，但不費力」在這點上是一個很好的提醒：努力本身沒有被取消。我的補丁是：可以簡化步驟，不能降低&quot;完成&quot;的標準。先定義完成，再談輕鬆。</p>
+<p><strong>第四，重複和&quot;雞湯感&rdquo;。</strong> 兩本書有大量重疊，比如休息與睡眠、邊界與節奏、小勝。如果只讀一本，我建議讀《精要主義》的框架，再把《輕鬆主義》當作&quot;執行&quot;部分的工具書來查。</p>
+<p><strong>第五，宗教與個人信仰色彩。</strong> 天下文化刊出的《少，但是更好》書摘（從內容看出自最後一章「存在」）從甘地寫到釋迦牟尼、摩西、穆罕默德和耶穌，稱「專準主義在許多靈性和宗教傳統中具有深厚的根基」。《努力，但不費力》的「釋放」一章則大量討論感恩。這些內容對部分讀者有幫助，但不是方法的必要組成部分，閱讀時可以剝離開。</p>
+<h2 id="七可執行清單">七、可執行清單</h2>
+<ol>
+<li><strong>每季度做一次&quot;前10%&ldquo;篩選</strong>：列出所有專案，只保留不超過 3 個精要目標，其餘明確降級或拒絕。</li>
+<li><strong>公開 intake 規則，專案啟動先簽&quot;社會契約&rdquo;</strong>：把&quot;說不&quot;寫成團隊預設流程，減少每次拒絕的情緒成本。</li>
+<li><strong>每個任務先寫&quot;完成長什麼樣&rdquo;</strong>：可觀察的驗收標準，寫進工單。</li>
+<li><strong>區分兩個&quot;簡化&quot;</strong>：先刪專案（精要主義的「簡化」），再刪步驟（輕鬆主義的「簡化」）。</li>
+<li><strong>寫下第一個顯而易見的動作</strong>：小到 5 分鐘內能開始，比如建分支、寫失敗的測試、開 Draft PR。</li>
+<li><strong>允許零稿</strong>：設計和程式碼先發草稿，早求反饋，靠迭代達到品質。</li>
+<li><strong>設節奏上下限</strong>：WIP 上限、每天的最小進展和最大投入、固定的收工時間。</li>
+<li><strong>守住恢復線</strong>：不在一天裡做超過第二天早上能恢復的量；上午留出深度工作塊，每塊不超過 90 分鐘。</li>
+<li><strong>每月消滅一件 toil</strong>：用&quot;最煩人、最省時&quot;的標準挑一項，做成指令碼、checklist 或 Runbook。</li>
+<li><strong>復盤時追問&quot;預防&quot;</strong>：每次事故至少產出一項讓同類問題不再發生的改動。</li>
+<li><strong>搭建高信任結構</strong>：明確 owner、契約、SLO 和自主決策邊界；不替別人扛下本該由他們解決的問題。</li>
+<li><strong>定期問一句</strong>：我是不是把事情弄得比必要的更難了？（&ldquo;how am I making things harder than they need to be?&quot;；臺版：「會不會這其實可以很簡單？」）</li>
+</ol>
+<h2 id="參考資料">參考資料</h2>
+<p><strong>英文資料</strong></p>
+<ol>
+<li>Penguin Random House：<em>Essentialism</em> 圖書頁 <a href="https://www.penguinrandomhouse.com/books/228364/essentialism-by-greg-mckeown/">https://www.penguinrandomhouse.com/books/228364/essentialism-by-greg-mckeown/</a></li>
+<li>Penguin Random House：<em>Effortless</em> 圖書頁 <a href="https://www.penguinrandomhouse.com/books/612206/effortless-by-greg-mckeown/">https://www.penguinrandomhouse.com/books/612206/effortless-by-greg-mckeown/</a></li>
+<li>作者官網：Essentialism <a href="https://gregmckeown.com/books/essentialism/">https://gregmckeown.com/books/essentialism/</a></li>
+<li>作者官網：Effortless <a href="https://gregmckeown.com/books/effortless/">https://gregmckeown.com/books/effortless/</a></li>
+<li>Orange County Library System：<em>Effortless</em> 書目與英文目錄 <a href="https://catalog.ocls.org/Record/.b23474580">https://catalog.ocls.org/Record/.b23474580</a></li>
+<li>Google Books：<em>Essentialism</em>（書目資訊與作者簡介） <a href="https://books.google.com/books/about/Essentialism.html?id=CleNDQAAQBAJ">https://books.google.com/books/about/Essentialism.html?id=CleNDQAAQBAJ</a></li>
+<li>Greg McKeown, &ldquo;Effortless: Make It Easier to Do What Matters Most&rdquo;（作者自述 5 個要點），Next Big Idea Club，2021-06-21 <a href="https://nextbigideaclub.com/magazine/effortless-make-easier-matters-bookbite/27845/">https://nextbigideaclub.com/magazine/effortless-make-easier-matters-bookbite/27845/</a></li>
+<li>The Jordan Harbinger Show #534：Greg McKeown, How to Make What Matters Effortless（含文字稿），2021-07-14 <a href="https://www.jordanharbinger.com/greg-mckeown-how-to-make-what-matters-effortless/">https://www.jordanharbinger.com/greg-mckeown-how-to-make-what-matters-effortless/</a></li>
+<li>Greg McKeown, &ldquo;The Disciplined Pursuit of Less&rdquo;, <em>Harvard Business Review</em>, 2012-08-08 <a href="https://hbr.org/2012/08/the-disciplined-pursuit-of-less">https://hbr.org/2012/08/the-disciplined-pursuit-of-less</a></li>
+<li>The Greg McKeown Podcast #82：Greg on the Power of Inversion <a href="https://www.thegoodpodcast.co/episodes/82-what-s-essential-greg-on-the-power-of-inversion-what-if-this-could-be-easy">https://www.thegoodpodcast.co/episodes/82-what-s-essential-greg-on-the-power-of-inversion-what-if-this-could-be-easy</a></li>
+<li>Mint Arrow Podcast Ep.118：Greg McKeown on Effortless（節目摘要） <a href="https://www.mintarrow.com/podcast/episode-118-greg-mckeown-on-effortless-what-to-do-when-everything-feels-important-and-nothing-can-be-eliminated/">https://www.mintarrow.com/podcast/episode-118-greg-mckeown-on-effortless-what-to-do-when-everything-feels-important-and-nothing-can-be-eliminated/</a></li>
+</ol>
+<p><strong>繁體中文資料</strong></p>
+<ol start="12">
+<li>天下文化：《少，但是更好（新編增訂版）》書籍頁（簡介、目錄、出版資訊） <a href="https://bookzone.cwgv.com.tw/book/BCB757">https://bookzone.cwgv.com.tw/book/BCB757</a></li>
+<li>天下文化：《努力，但不費力》書籍頁（簡介、目錄、出版資訊） <a href="https://bookzone.cwgv.com.tw/book/BCB754A">https://bookzone.cwgv.com.tw/book/BCB754A</a></li>
+<li>部落格來：《少，但是更好（新編增訂版）》 <a href="https://www.books.com.tw/products/0010912185">https://www.books.com.tw/products/0010912185</a></li>
+<li>部落格來：《努力，但不費力》（2021-12-29 版，ISBN 9789865254094） <a href="https://www.books.com.tw/products/0010912262">https://www.books.com.tw/products/0010912262</a>；2022-12-23 版 <a href="https://www.books.com.tw/products/0010947099">https://www.books.com.tw/products/0010947099</a></li>
+<li>城邦讀書花園：《少，但是更好》2014 初版（目錄、推薦語、譯後序） <a href="https://www.cite.com.tw/book?id=46630">https://www.cite.com.tw/book?id=46630</a></li>
+<li>天下文化 Bookzone 書摘：〈你才是你生活的主導者！懂得適時取捨，不一味迎合「他人的期待」〉（《少，但是更好》前言） <a href="https://bookzone.cwgv.com.tw/article/23294">https://bookzone.cwgv.com.tw/article/23294</a></li>
+<li>天下文化 Bookzone 書摘：〈有界限，才有自由〉 <a href="https://bookzone.cwgv.com.tw/article/1566">https://bookzone.cwgv.com.tw/article/1566</a></li>
+<li>天下文化 Bookzone 書摘：〈清除生活中不必要的人事物，擁抱「精、簡、準」的人生〉 <a href="https://bookzone.cwgv.com.tw/article/19546">https://bookzone.cwgv.com.tw/article/19546</a></li>
+<li>天下文化 Bookzone 書摘：〈別把「過勞倦怠」當成榮譽勳章！不是每件事都得這麼拚、這麼累〉 <a href="https://bookzone.cwgv.com.tw/article/23284">https://bookzone.cwgv.com.tw/article/23284</a></li>
+<li>天下文化 Bookzone 書摘：〈事半功倍的工作效率秘訣：學會放鬆和充足休息〉 <a href="https://bookzone.cwgv.com.tw/article/23337">https://bookzone.cwgv.com.tw/article/23337</a></li>
+<li>天下文化 Bookzone 編輯導讀（張彤華）：〈別讓加班變成職場中的「傳統文化」！走向努力但不費力的人生〉 <a href="https://bookzone.cwgv.com.tw/article/23473">https://bookzone.cwgv.com.tw/article/23473</a></li>
+<li>遠見雜誌：〈找回人生主導權，先學會「專準主義」〉，2014 年 10 月號 <a href="https://www.gvm.com.tw/article/19741">https://www.gvm.com.tw/article/19741</a></li>
+<li>閱讀前哨站：〈《努力，但不費力》讀後心得：聰明做事的三種方法〉 <a href="https://readingoutpost.com/effortless/">https://readingoutpost.com/effortless/</a></li>
+<li>超閱者：〈《努力，但不費力》閱讀筆記：擺脫過勞人生的三個方法〉 <a href="https://transcendentreaderblog.com/effortless/">https://transcendentreaderblog.com/effortless/</a></li>
+<li>Innopreneur：〈做更少但成就更多！專準主義 Essentialism 如何領導個人及企業達成目標？〉，2022-08-08 <a href="https://www.innopreneur.io/blogs/business-operation/leadership-and-talent/essentialism-in-leadership-and-goal-pursuit/">https://www.innopreneur.io/blogs/business-operation/leadership-and-talent/essentialism-in-leadership-and-goal-pursuit/</a></li>
+</ol>
+<p><strong>簡體中文資料</strong></p>
+<ol start="27">
+<li>豆瓣讀書：《精要主義》2016 浙江人民出版社版（簡介、目錄、摘錄、評分） <a href="https://book.douban.com/subject/26761859/">https://book.douban.com/subject/26761859/</a></li>
+<li>豆瓣讀書：《精要主義》2023 中國財政經濟出版社版 <a href="https://book.douban.com/subject/36549290/">https://book.douban.com/subject/36549290/</a></li>
+<li>豆瓣讀書：《輕鬆主義》（簡介、目錄、摘錄、短評） <a href="https://book.douban.com/subject/35799638/">https://book.douban.com/subject/35799638/</a></li>
+<li>豆瓣閱讀：《輕鬆主義》電子書 <a href="https://read.douban.com/ebook/384051973/">https://read.douban.com/ebook/384051973/</a></li>
+<li>讀書網：《輕鬆主義》 <a href="https://www.dushu.com/book/13904030/">https://www.dushu.com/book/13904030/</a></li>
+</ol>
+]]></content:encoded></item></channel></rss>
