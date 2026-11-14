@@ -4,7 +4,7 @@ on:
     branches: ["main"]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 concurrency:
@@ -33,6 +33,14 @@ jobs:
         env:
           HUGO_ENVIRONMENT: production
         run: hugo --gc --minify --baseURL "${{ steps.pages.outputs.base_url }}/"
+      - name: Mirror built site to cloudzyro branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          publish_branch: cloudzyro
+          force_orphan: true
+          commit_message: "mirror: ${{ github.sha }}"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./public
