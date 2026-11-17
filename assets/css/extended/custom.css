@@ -1,12 +1,20 @@
 /* Site overrides on top of PaperMod. Keep theme untouched; edit this file only. */
 
-/* 1. Layout width: wider container, prose column stays readable */
+/* 1. Layout width: prose column is the measure; wide screens add a TOC column
+      instead of an empty gutter beside a narrower text block. */
 :root {
-    --main-width: 1040px;
-    --prose-width: 50rem;
+    --prose-width: 42.5rem;
+    --toc-width: 15.25rem;
+    --main-width: var(--prose-width);
+    --viewpoint-accent: #215bcc;
 }
-@media (min-width: 1600px) {
-    :root { --main-width: 1180px; }
+:root[data-theme="dark"] {
+    --viewpoint-accent: #8cb6ff;
+}
+@media (min-width: 1200px) {
+    :root {
+        --main-width: calc(var(--prose-width) + var(--toc-width) + 2rem);
+    }
 }
 
 /* 2. CJK typography with Traditional Chinese font fallbacks */
@@ -28,10 +36,81 @@ body {
 }
 .post-description { max-width: var(--prose-width); }
 
+/* Long CJK titles: keep weight, avoid a 40px title eating the viewport */
+.post-single .post-title {
+    max-width: var(--prose-width);
+    font-size: clamp(1.55rem, 1.2rem + 1.5vw, 2.15rem);
+    line-height: 1.35;
+    text-wrap: pretty;
+}
+.post-single .post-description {
+    line-height: 1.7;
+}
+.post-content.md-content h2 {
+    font-size: clamp(1.25rem, 1.15rem + 0.6vw, 1.5rem);
+    line-height: 1.4;
+    margin: 2rem 0 0.8rem;
+}
+
+/* Wide screens: use the extra column for a sticky TOC, not leftover blank space */
+@media (min-width: 1200px) {
+    article.post-single {
+        display: grid;
+        grid-template-columns: minmax(0, var(--prose-width)) var(--toc-width);
+        column-gap: 2rem;
+        align-items: start;
+    }
+    article.post-single .post-header,
+    article.post-single .post-content,
+    article.post-single .post-footer {
+        grid-column: 1;
+        max-width: var(--prose-width);
+    }
+    article.post-single details.toc {
+        grid-column: 2;
+        grid-row: 1 / span 4;
+        position: sticky;
+        top: 1rem;
+        align-self: start;
+        max-height: calc(100vh - 2rem);
+        overflow: auto;
+        margin: 24px 0 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    article.post-single details.toc .inner {
+        margin: 0 0.9rem 0.5rem;
+    }
+    article.post-single details.toc li {
+        margin-top: 0.35rem;
+        font-size: 0.88em;
+        line-height: 1.45;
+    }
+    article.post-single details.toc a {
+        overflow-wrap: anywhere;
+    }
+    article.post-single .post-content {
+        margin-top: 0.5rem;
+    }
+}
+
+/* Compact TOC on narrow screens so an open outline does not push the article down too far */
+@media (max-width: 1199px) {
+    article.post-single details.toc .inner {
+        margin: 0 1.1rem 0.5rem;
+    }
+    article.post-single details.toc li {
+        margin-top: 0.25rem;
+        font-size: 0.92em;
+        line-height: 1.45;
+    }
+}
+
 /* 3. Tables: real table layout, wrap cells, no clipped horizontal scroll on desktop */
 .post-content table {
     display: table;
     width: 100%;
+    max-width: var(--prose-width);
     table-layout: auto;
     word-break: normal;
     overflow-wrap: break-word;
@@ -65,6 +144,7 @@ body {
 .post-content .highlight table {
     display: block;
     font-size: inherit;
+    max-width: 100%;
 }
 .post-content .highlight table td {
     white-space: pre;
@@ -99,29 +179,49 @@ body {
     max-width: 100%;
     height: auto;
 }
-.post-content figure { margin: 1.2em 0; }
-.post-content figcaption { font-size: 0.85em; color: var(--secondary); }
+.post-content figure { margin: 1.2em 0; max-width: var(--prose-width); }
+.post-content figure img,
+.post-content p img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+.post-content figcaption { font-size: 0.85em; color: var(--secondary); margin-top: 0.4em; line-height: 1.55; }
 .post-content .mermaid { overflow-x: auto; }
+.post-content ol li,
+.post-content ul li { overflow-wrap: anywhere; }
 
 /* 5. Core viewpoint block: > [!VIEWPOINT] 核心觀點 */
 .post-content .viewpoint {
     max-width: var(--prose-width);
-    margin: 0 0 var(--content-gap);
+    margin: 0 0 1.25rem;
     padding: 14px 18px;
-    border: 1px solid var(--border);
-    border-inline-start: 5px solid #2f6fdf;
+    border: 1px solid color-mix(in srgb, var(--viewpoint-accent) 28%, var(--border));
+    border-inline-start: 5px solid var(--viewpoint-accent);
     border-radius: var(--radius);
-    background: color-mix(in srgb, #2f6fdf 8%, var(--entry));
+    background: color-mix(in srgb, var(--viewpoint-accent) 9%, var(--entry));
 }
 .post-content .viewpoint-title {
     margin: 0 0 6px;
     font-weight: 700;
     font-size: 0.95em;
-    color: #2f6fdf;
+    color: var(--viewpoint-accent);
     letter-spacing: 0.05em;
 }
-.post-content .viewpoint p { margin: 0; font-size: 1.02em; }
+.post-content .viewpoint p { margin: 0; font-size: 1.02em; color: var(--content); }
 .post-content .viewpoint p + p { margin-top: 0.5em; }
+
+/* Visual-edition link at the top: compact notice, not a heavy quote well */
+.post-content > blockquote:first-child {
+    max-width: var(--prose-width);
+    margin: 0 0 1rem;
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    border-inline-start: 3px solid var(--viewpoint-accent);
+    border-radius: var(--radius);
+    background: var(--code-bg);
+}
+.post-content > blockquote:first-child p { margin: 0; }
 
 /* 6. Small "Markdown 版" link in post meta */
 .post-meta .md-alt a { text-decoration: underline dotted; }

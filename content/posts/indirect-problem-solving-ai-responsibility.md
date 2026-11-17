@@ -8,6 +8,7 @@ categories: ["工程反思"]
 description: "從兩則食安新聞反觀 AI 輔助開發：實作與測試如何共享錯誤前提，局部修補如何放大副作用，以及生成加速後誰有能力驗證、停止發布並接住使用者。"
 summary: "好的間接解題改變問題反覆發生的條件；壞的間接解題只把問題推出指標與責任範圍。本文以兩則公開食安新聞劃出界線，再用原創軟體示例（非真實事故）討論 AI 輔助開發中的驗證、重試與放行責任。資料查核：2026-11-17（Asia/Singapore）。"
 ShowToc: true
+TocOpen: true
 ---
 
 > 📊 **圖解版**：[間接解題、測試全綠與不能外包的責任](/visual/indirect-problem-solving-ai-responsibility.html)（單頁 HTML，由 answer-me-with-html 產生）
