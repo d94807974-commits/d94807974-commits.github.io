@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>工程實踐 on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/%E5%B7%A5%E7%A8%8B%E5%AF%A6%E8%B8%90/</link><description>Recent content in 工程實踐 on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Thu, 05 Nov 2026 13:26:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/%E5%B7%A5%E7%A8%8B%E5%AF%A6%E8%B8%90/index.xml" rel="self" type="application/rss+xml"/><item><title>工程師讀書筆記方案：從閱讀前哨站到可複用的工程知識</title><link>https://d94807974-commits.github.io/posts/engineer-reading-notes-system/</link><pubDate>Thu, 05 Nov 2026 13:26:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/engineer-reading-notes-system/</guid><description>參考臺灣《閱讀前哨站》瓦基關於「節錄評論法」「一問一答」「HQ&amp;amp;A」「卡片盒筆記」與「化輸入為輸出」的公開文章，結合 Tiago Forte 的漸進式總結，設計一套面向工程師與技術主管的讀書筆記方案：選書→摘錄→轉述→連線工程實踐→侷限→清單→復盤，並提供 Hugo archetype、品質標準與開源配圖規範。</description><content:encoded><![CDATA[<div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>工程師讀書筆記的終點不是收藏，而是能寫進設計文件、復盤、1:1 和部落格的可檢驗主張。本文把「輸入→處理→輸出」、卡片盒的原子化連結與漸進式總結，收成一套可重複使用的流程。</p>
+</div><blockquote>
+  <p>素材說明：本文不是某一本書的讀書筆記，而是一套<strong>可複用的筆記方案</strong>。方法來源以我實際開啟並閱讀的公開網頁為準：臺灣《閱讀前哨站》（readingoutpost.com，創辦人瓦基）關於讀書心得、卡片盒筆記與筆記方法比較的文章；Tiago Forte 在 Forte Labs 上的 Progressive Summarization 原文；以及 Wikimedia Commons 等開源圖片的許可證頁。引號內句子均可在文末「參考資料」核對。我沒有購買瓦基的付費課程《化輸入為輸出》《卡片盒筆記實戰課》，課程大綱與 HQ&amp;A 步驟只引用其公開頁面上的說明。</p>
+
+</blockquote><figure>
+<img src="/images/engineer-reading-notes-system/books-stack.jpg" alt="一疊精裝書" loading="lazy" width="800">
+<figcaption>圖片：Heffloaf / <a href="https://commons.wikimedia.org/wiki/File:Stack_of_Books.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>。已壓縮並本地託管。</figcaption>
+</figure>
+<h2 id="一為什麼工程師需要方案而不是多記幾頁">一、為什麼工程師需要「方案」，而不是「多記幾頁」</h2>
+<p>工程師讀書有兩個常見失敗模式：</p>
+<ol>
+<li><strong>劃線很多，輸出很少。</strong> Kindle / 瀏覽器高亮堆成山，三個月後搜不到，也講不清楚。</li>
+<li><strong>寫得很滿，用不上。</strong> 筆記像全書縮寫，卻找不到和 on-call、code review、排期激勵相關的那一句話。</li>
+</ol>
+<p>臺灣書評博主瓦基在《閱讀前哨站》裡反覆強調的，恰好對準這兩點。在〈讀書心得怎麼寫？〉裡，他把筆記方法收成三個訣竅：<strong>簡單好上手</strong>；<strong>不要仰賴靈感，而是對既有資訊做出討論</strong>；以及 <strong>「筆記 = 複習 + 學習 + 寫作」</strong>。同文還給出思維翻轉：「先紀錄、後思考」「用自己的話重新闡述」「發展和自己有關的想法」——而不是「先想清楚再動筆」「反覆抄寫」「只忠實記錄知識原貌」。</p>
+<p>對工程師來說，第三點尤其重要：<strong>筆記的終點不是收藏，而是能寫進設計文件、復盤、1:1 和部落格的可檢驗主張。</strong></p>
+<p>另一條線索來自卡片盒筆記。瓦基在〈正確使用卡片盒筆記法的六個關鍵步驟〉裡整理了靈感筆記 → 文獻筆記 → 永久筆記 → 索引 → 關鍵詞索引 → 寫作的流程，並引用 Luhmann 的意思：一則筆記的品質，來自它在系統裡的網路連結。工程師已有類似習慣——issue、ADR、RFC、wiki 雙鏈——缺的是把<strong>讀書輸入</strong>接到同一套網路上。</p>
+<p>本文把閱讀前哨站的「輸入→處理→輸出」、卡片盒的原子化連結，以及 Tiago Forte 的漸進式總結，收成一套<strong>工程師讀書筆記方案</strong>，並落到本站 Hugo 倉庫裡的 archetype 與配圖規範。</p>
+<h2 id="二方法論來源核實過的要點">二、方法論來源（核實過的要點）</h2>
+<h3 id="1-閱讀前哨站單一來源如何變成一篇心得">1. 閱讀前哨站：單一來源如何變成一篇心得</h3>
+<p>站點身份先說清楚：<strong>《閱讀前哨站》是瓦基（曾在臺積電任職）經營的繁體中文書評與方法部落格</strong>，官網為 <a href="https://readingoutpost.com/">readingoutpost.com</a>，不是 bmpi.dev。</p>
+<p>公開文章裡，和「寫讀書筆記」直接相關的幾條：</p>
+<table>
+	<thead>
+			<tr>
+					<th>方法</th>
+					<th>出處</th>
+					<th>工程師可怎麼用</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td><strong>節錄評論法</strong></td>
+					<td><a href="https://readingoutpost.com/how-to-take-note/">how-to-take-note</a></td>
+					<td>記下頁碼 + 原文要點，下面寫自己的評論；回看時刪掉「不再重要」的標籤</td>
+			</tr>
+			<tr>
+					<td><strong>一問一答法</strong></td>
+					<td>同上</td>
+					<td>為什麼讀？一句話核心？推薦給誰？（技術語境可改成：解決什麼工程問題？一句話原則？適合哪個角色？）</td>
+			</tr>
+			<tr>
+					<td><strong>萬能寫作框架</strong></td>
+					<td>同上</td>
+					<td>觀點 → 案例 → 總結；寫作是「由下而上」編排已有筆記，不是對著空白頁硬寫</td>
+			</tr>
+			<tr>
+					<td><strong>HQ&amp;A</strong></td>
+					<td><a href="https://readingoutpost.com/learn-in-out/">learn-in-out 課程大綱</a>、<a href="https://readingoutpost.com/zettelkasten-practice/">zettelkasten-practice</a></td>
+					<td>Highlight → Question → Answer：對重點自問自答，用自己的話寫答案</td>
+			</tr>
+			<tr>
+					<td><strong>化輸入為輸出</strong></td>
+					<td><a href="https://readingoutpost.com/zettelkasten-vs-inoutcourse/">zettelkasten-vs-inoutcourse</a></td>
+					<td>針對<strong>單一來源</strong>寫出一篇紮實心得；三種筆記法 + 輸出框架</td>
+			</tr>
+			<tr>
+					<td><strong>卡片盒四特性</strong></td>
+					<td><a href="https://readingoutpost.com/zettelkasten-difference/">zettelkasten-difference</a></td>
+					<td>連結性、原子化、可擴充、再訪性；區分「筆記格式」與「筆記系統」</td>
+			</tr>
+	</tbody>
+</table>
+<p>瓦基在比較課程時寫得很清楚：任何知識管理都含輸入、處理、輸出；《化輸入為輸出》偏「單一來源 → 一篇文章」，《卡片盒筆記實戰課》偏「多來源 → 長期知識體系」。工程師寫部落格式讀書筆記，前者夠用；要跨書形成自己的架構觀，需要後者。</p>
+<figure>
+<img src="/images/engineer-reading-notes-system/index-cards.jpg" alt="索引卡片盒" loading="lazy" width="800">
+<figcaption>圖片：Goatid / <a href="https://commons.wikimedia.org/wiki/File:Index_cards.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>。卡片盒筆記的實體隱喻。</figcaption>
+</figure>
+<h3 id="2-卡片盒六步公開整理版">2. 卡片盒六步（公開整理版）</h3>
+<p>據瓦基整理的六步（原文有更細的 Luhmann 文獻筆記格式討論）：</p>
+<ol>
+<li><strong>靈感筆記（Fleeting）</strong>：快速捕捉，媒介不重要。</li>
+<li><strong>文獻筆記（Literature）</strong>：選擇性、簡短、<strong>用自己的話</strong>，註明書名作者年份頁碼。</li>
+<li><strong>永久筆記（Permanent）</strong>：一則一個完整想法，寫給「別人」能看懂；並問：反駁/支援了什麼舊知？如何組合？觸發什麼新問題？</li>
+<li><strong>索引卡片</strong>：編號與位置本身參與記憶（實體場景）；數字工具則用雙鏈/白板空間。</li>
+<li><strong>關鍵詞索引</strong>：手動維護主題入口，避免只靠全文搜尋。</li>
+<li><strong>好玩（Playful）</strong>：能持續的系統，必須不太痛苦。</li>
+</ol>
+<p>永久筆記與文獻筆記的對照（瓦基轉述 Eva Keiffenheim）：文獻是「作者的問題與事實」；永久是「與你工作/好奇的關聯」——工程師可以把「工作」具體成：線上事故、評審爭議、招聘標準、技術債策略。</p>
+<h3 id="3-漸進式總結把壓縮攤到時間裡">3. 漸進式總結：把壓縮攤到時間裡</h3>
+<p>Tiago Forte 在 Forte Labs 的 <a href="https://fortelabs.com/blog/progressive-summarization-a-practical-technique-for-designing-discoverable-notes/">Progressive Summarization</a> 裡提出：難的不是獲取資訊，而是把知識<strong>轉發到未來真正用得上的時刻</strong>；單則筆記要在「可發現性（壓縮）」與「可理解性（上下文）」之間平衡。分層大致是：</p>
+<ul>
+<li>Layer 0：原文</li>
+<li>Layer 1：摘入筆記的片段</li>
+<li>Layer 2：加粗精華</li>
+<li>Layer 3：高亮「精華中的精華」</li>
+<li>Layer 4：用<strong>自己的話</strong>寫執行摘要</li>
+<li>極少數：改寫成部落格、幻燈、程式碼實驗</li>
+</ul>
+<p>關鍵約束：<strong>只在本來就要複習這條筆記時加下一層</strong>（機會性壓縮），不要對所有高亮走完全流程。這和工程師的「不是每個 ticket 都值得寫 ADR」是同一類判斷。</p>
+<figure>
+<img src="/images/engineer-reading-notes-system/lego-atoms.jpg" alt="樂高積木堆" loading="lazy" width="800">
+<figcaption>圖片：Grendelkhan / <a href="https://commons.wikimedia.org/wiki/File:Pile_of_light_gray_LEGO_bricks_at_a_LEGO_store.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>。原子化筆記 ≈ 可重組的積木。</figcaption>
+</figure>
+<h2 id="三工程師版流程八步閉環">三、工程師版流程：八步閉環</h2>
+<p>把上面來源收成一條可執行流水線（對應本站 archetype <code>archetypes/reading-notes.md</code>）：</p>
+<pre tabindex="0"><code>選書 → 帶著問題讀 → 摘錄(L1) → 轉述/HQ&amp;A(L2-L4)
+     → 連到工程場景 → 寫侷限 → 檢查清單 → 釋出與復盤
+</code></pre><h3 id="1-選書工程師標準不是暢銷榜">1. 選書（工程師標準，不是暢銷榜）</h3>
+<p>優先滿足至少一條：</p>
+<ul>
+<li>能解釋你最近一次<strong>真實失敗</strong>（事故、延期、激勵反噬、架構返工）</li>
+<li>能和已有筆記/部落格形成<strong>對照或反駁</strong>（例如《驅動力》對《混合訊號》）</li>
+<li>有可核對的<strong>一手材料</strong>（論文、監管檔案、作者專欄），避免只能轉述營銷文案</li>
+</ul>
+<p>不選：只有金句、無可檢驗主張、或你明確不會在工作中用到的雞湯。</p>
+<h3 id="2-帶著輸出前提讀">2. 帶著輸出前提讀</h3>
+<p>瓦基建議：吸收時想著「之後要寫出可公開發表的筆記」。工程師可改成更硬的提問：</p>
+<ul>
+<li>這本書想推翻我哪條預設假設？</li>
+<li>三個月後，我希望哪一條能寫進團隊手冊？</li>
+</ul>
+<h3 id="3-摘錄文獻筆記--layer-1">3. 摘錄（文獻筆記 / Layer 1）</h3>
+<ul>
+<li>只留對你有意義的段落；頁碼或章節號必填</li>
+<li><strong>禁止</strong>大段無評論貼上</li>
+<li>繁體原文引用時保留繁體字形，並註明出處</li>
+</ul>
+<h3 id="4-轉述節錄評論--hqa--layer-4">4. 轉述（節錄評論 / HQ&amp;A / Layer 4）</h3>
+<p>每條高價值摘錄至少做一件：</p>
+<ul>
+<li>寫 2–5 句自己的評論；或</li>
+<li>寫成 HQ&amp;A：問題用工程語言（「為什麼 on-call 獎金可能傷害協作？」）</li>
+</ul>
+<p>檢驗標準：<strong>合上書，你還能向同事講清楚嗎？</strong> 講不清就還沒轉述完。</p>
+<h3 id="5-連線工程實踐永久筆記的與自己有關">5. 連線工程實踐（永久筆記的「與自己有關」）</h3>
+<p>強制對映到具體工件，例如：</p>
+<table>
+	<thead>
+			<tr>
+					<th>書裡的概念</th>
+					<th>工程落點</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>激勵是訊號</td>
+					<td>績效等級、on-call 津貼、Hackathon 獎品的文案是否互相打架</td>
+			</tr>
+			<tr>
+					<td>精要 / 輕鬆</td>
+					<td>路線圖砍什麼；Runbook 如何變「預設輕鬆」</td>
+			</tr>
+			<tr>
+					<td>迂迴 / 本質思考</td>
+					<td>大改版是否該先畫因果環與槓桿點，再小步試</td>
+			</tr>
+			<tr>
+					<td>讓別人贏</td>
+					<td>Code review 是補臺還是拆臺；跨團隊介面的「兩清」</td>
+			</tr>
+	</tbody>
+</table>
+<p>沒有這一步，筆記停在「懂了作者」；有這一步，才進入「改自己的系統」。</p>
+<h3 id="6-寫侷限與邊界">6. 寫侷限與邊界</h3>
+<p>每篇公開筆記至少回答：</p>
+<ul>
+<li>作者假設的組織規模/文化是什麼？</li>
+<li>哪些主張<strong>缺少</strong>你能核對的證據？</li>
+<li>什麼場景下照做會有害？（例如在強合規環境裡盲目「少即是多」）</li>
+</ul>
+<p>本站既有筆記裡「素材說明」置頂，就是在落實這一點。</p>
+<h3 id="7-檢查清單給未來的自己和讀者">7. 檢查清單（給未來的自己和讀者）</h3>
+<p>清單要可勾選、可在下週站會用，例如：</p>
+<ul>
+<li><input disabled="" type="checkbox"> 本週績效溝通裡，有沒有一條激勵和公開價值觀衝突？</li>
+<li><input disabled="" type="checkbox"> 新需求是否先問「能不能刪除」再問「怎麼做」？</li>
+</ul>
+<h3 id="8-釋出與復盤">8. 釋出與復盤</h3>
+<ul>
+<li>用 Hugo archetype 生成草稿；<code>date</code> 設為釋出時間前幾分鐘（Hugo 不渲染未來日期）</li>
+<li><code>reading_extent</code> 如實填寫：<code>full</code> / <code>partial</code> / <code>secondary-sources-only</code></li>
+<li>一個月後回訪：哪條清單真的改了行為？把結果補進 <code>lastmod</code> 段落</li>
+</ul>
+<figure>
+<img src="/images/engineer-reading-notes-system/knowledge-network.jpg" alt="社會網路分析視覺化圖" loading="lazy" width="800">
+<figcaption>圖片：Martin Grandjean / <a href="https://commons.wikimedia.org/wiki/File:Social_Network_Analysis_Visualization.png">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>。筆記之間的連結品質，決定知識網路是否有用。</figcaption>
+</figure>
+<h2 id="四公開部落格的品質標準本站約定">四、公開部落格的品質標準（本站約定）</h2>
+<ol>
+<li><strong>每條引文可回溯。</strong> 引號內容必須能在「參考資料」的 URL 或頁碼上核對；不「憑印象復原」書中原話。</li>
+<li><strong>標明閱讀程度。</strong> 沒讀全文就寫在文首；只讀到目錄/書摘/專欄時，不偽裝成全書精讀。</li>
+<li><strong>簡體正文 + 繁體對照。</strong> 臺灣/香港譯本的書名、關鍵譯名、書評儘量並列，避免只活在簡體市場的資訊繭房。</li>
+<li><strong>工程落點 + 侷限 + 清單</strong> 三段不缺。</li>
+<li><strong>配圖合規。</strong> 只用開源許可圖片，本地託管，文內署名（見下一節）。</li>
+<li><strong>簡單優先。</strong> 工具可以是 Obsidian / Heptabase / 純 Markdown；流程複雜到不想用，就違反了瓦基的第一條訣竅。</li>
+</ol>
+<h2 id="五hugo-模板與目錄約定">五、Hugo 模板與目錄約定</h2>
+<p>本倉庫新增 archetype：<code>archetypes/reading-notes.md</code>。</p>
+<p>建立範例：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>~/.local/bin/hugo new content/posts/my-book-reading-notes.md --kind reading-notes
+</span></span></code></pre></div><p>Front matter 關鍵欄位：</p>
+<ul>
+<li><code>date</code> / <code>draft</code> / <code>tags</code> / <code>summary</code> / <code>ShowToc</code></li>
+<li><code>books[]</code>：原書、簡繁體版本資訊</li>
+<li><code>reading_extent</code>：閱讀程度宣告</li>
+</ul>
+<p>建議章節骨架（與 archetype 正文一致）：書籍資訊 → 核心觀點（轉述）→ 工程實踐 → 侷限 → 清單 → 參考資料。</p>
+<p>既有四篇讀書筆記（讓別人贏、精要×輕鬆、混合訊號×驅動力、間接思考×本質思考）已經按同一骨架寫；本文釋出後，它們補上開源配圖並更新 <code>lastmod</code>。</p>
+<h2 id="六配圖規範開源社群圖片">六、配圖規範（開源社群圖片）</h2>
+<p>原則：</p>
+<ol>
+<li><strong>來源白名單</strong>：Wikimedia Commons、Unsplash（Unsplash License）、CNCF/Kubernetes 官方 artwork、unDraw（按其網站許可）等。</li>
+<li><strong>先核許可證再下載</strong>：Commons 用 API / 檔案頁確認 <code>CC0</code> / <code>CC BY</code> / <code>CC BY-SA</code> / 公有領域等。</li>
+<li><strong>本地託管</strong>：放入 <code>static/images/&lt;slug&gt;/</code>，<strong>禁止熱鏈</strong>外站圖床。</li>
+<li><strong>壓縮</strong>：單圖目標 &lt; 300KB；可縮小最長邊並降低 JPEG quality。</li>
+<li><strong>署名</strong>：圖片下方寫清作者、來源連結、許可證連結；若做過裁剪/壓縮，可註明「已壓縮」。</li>
+<li><strong>相關性</strong>：圖必須服務論點（卡片→原子化，交通燈→訊號，迷宮→迂迴），不為裝飾硬塞。</li>
+</ol>
+<p>本頁四張圖均來自 Wikimedia Commons，許可證見各圖注。</p>
+<h2 id="七侷限這套方案自身的邊界">七、侷限（這套方案自身的邊界）</h2>
+<ul>
+<li><strong>公開部落格 ≠ 私密第二大腦。</strong> 有些文獻筆記涉及未公開業務，只應留在私有庫；公開文只輸出已脫敏的永久筆記級結論。</li>
+<li><strong>瓦基課程細節未親測。</strong> HQ&amp;A 與課程周次來自公開大綱與書評文，實施節奏以你自己的迭代為準。</li>
+<li><strong>卡片盒有維護成本。</strong> 若一週讀一本卻從不連結舊筆記，系統會退化成資料夾收藏；寧可少寫永久筆記，也要寫能鏈上的。</li>
+<li><strong>漸進式總結不適合合規審計材料。</strong> 需要完整上下文的法規、合同、事故時間線，應保留全文歸檔，而不是只留高亮層。</li>
+</ul>
+<h2 id="八檢查清單用這套方案寫下一篇時">八、檢查清單（用這套方案寫下一篇時）</h2>
+<ul>
+<li><input disabled="" type="checkbox"> 文首寫了閱讀程度與素材邊界</li>
+<li><input disabled="" type="checkbox"> 至少使用一種閱讀前哨站方法（節錄評論 / 一問一答 / HQ&amp;A）並留下痕跡</li>
+<li><input disabled="" type="checkbox"> 每個核心觀點有工程落點，不只是書摘</li>
+<li><input disabled="" type="checkbox"> 有「侷限」節，且至少指出一條反例或前提</li>
+<li><input disabled="" type="checkbox"> 「參考資料」裡每個被引用主張都有可點開的連結或明確頁碼</li>
+<li><input disabled="" type="checkbox"> 若配圖：許可證已核、檔案在 <code>static/images/&lt;slug&gt;/</code>、圖注含作者與許可</li>
+<li><input disabled="" type="checkbox"> <code>hugo</code> 本地構建通過；<code>date</code> 不在未來</li>
+</ul>
+<h2 id="參考資料">參考資料</h2>
+<ol>
+<li>瓦基，〈【教學】讀書心得怎麼寫？顛覆舊觀唸的三種筆記和寫作技巧〉，閱讀前哨站：<a href="https://readingoutpost.com/how-to-take-note/">https://readingoutpost.com/how-to-take-note/</a></li>
+<li>瓦基，〈正確使用卡片盒筆記法（Zettelkasten）的六個關鍵步驟〉：<a href="https://readingoutpost.com/zettelkasten-6-steps/">https://readingoutpost.com/zettelkasten-6-steps/</a></li>
+<li>瓦基，〈【如何挑選筆記方法？】卡片盒筆記和其他四種筆記法的差異〉：<a href="https://readingoutpost.com/zettelkasten-difference/">https://readingoutpost.com/zettelkasten-difference/</a></li>
+<li>瓦基，〈讀書心得怎麼寫？五個步驟…〉（化輸入為輸出課程頁，含 HQ&amp;A 周次大綱）：<a href="https://readingoutpost.com/learn-in-out/">https://readingoutpost.com/learn-in-out/</a></li>
+<li>瓦基，〈《知識複利筆記術》讀後心得…〉（文中歸納 HQ&amp;A 三步）：<a href="https://readingoutpost.com/zettelkasten-practice/">https://readingoutpost.com/zettelkasten-practice/</a></li>
+<li>瓦基，〈《化輸入為輸出》和《卡片盒筆記實戰課》有什麼差異？〉：<a href="https://readingoutpost.com/zettelkasten-vs-inoutcourse/">https://readingoutpost.com/zettelkasten-vs-inoutcourse/</a></li>
+<li>閱讀前哨站首頁（站點身份與作者背景）：<a href="https://readingoutpost.com/">https://readingoutpost.com/</a></li>
+<li>Tiago Forte，<em>Progressive Summarization: A Practical Technique for Designing Discoverable Notes</em>，Forte Labs：<a href="https://fortelabs.com/blog/progressive-summarization-a-practical-technique-for-designing-discoverable-notes/">https://fortelabs.com/blog/progressive-summarization-a-practical-technique-for-designing-discoverable-notes/</a></li>
+<li>Wikimedia Commons 檔案頁（本頁配圖許可證來源）：<a href="https://commons.wikimedia.org/wiki/File:Stack_of_Books.jpg">Stack of Books</a>、<a href="https://commons.wikimedia.org/wiki/File:Index_cards.jpg">Index cards</a>、<a href="https://commons.wikimedia.org/wiki/File:Pile_of_light_gray_LEGO_bricks_at_a_LEGO_store.jpg">LEGO bricks pile</a>、<a href="https://commons.wikimedia.org/wiki/File:Social_Network_Analysis_Visualization.png">Social Network Analysis Visualization</a></li>
+</ol>
+]]></content:encoded></item></channel></rss>

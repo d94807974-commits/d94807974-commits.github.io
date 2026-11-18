@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>麻省理工深度思考法 on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/%E9%BA%BB%E7%9C%81%E7%90%86%E5%B7%A5%E6%B7%B1%E5%BA%A6%E6%80%9D%E8%80%83%E6%B3%95/</link><description>Recent content in 麻省理工深度思考法 on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Thu, 05 Nov 2026 13:25:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/%E9%BA%BB%E7%9C%81%E7%90%86%E5%B7%A5%E6%B7%B1%E5%BA%A6%E6%80%9D%E8%80%83%E6%B3%95/index.xml" rel="self" type="application/rss+xml"/><item><title>《間接思考的藝術》×《麻省理工深度思考法》整合讀書筆記：先畫出系統，再繞著走</title><link>https://d94807974-commits.github.io/posts/obliquity-mit-essential-thinking-reading-notes/</link><pubDate>Wed, 04 Nov 2026 19:02:51 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/obliquity-mit-essential-thinking-reading-notes/</guid><description>把約翰·凱的《間接思考的藝術》（Obliquity）和平井孝志的《麻省理工深度思考法》（本質思考）放在一起讀。平井教你用系統動力學畫出現象背後的模型和動力機制，找到槓桿點；凱提醒你模型永遠不完整，複雜目標只能迂迴、漸進地逼近。筆記裡有兩本書的簡體、繁體、原版資訊與譯名對照，凱 2004 年《金融時報》原文裡黃石林火、ICI、波音等案例的核對，書評裡的批評，還有一個「畫圖—找槓桿—迂迴試探」的整合框架、工程師的落地用法、兩本書各自的侷限和一份檢查清單。</description><content:encoded><![CDATA[<div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>平井孝志給你一張地圖，約翰·凱提醒你地圖永遠不完整、路是彎的。目標通常是系統的輸出，而不是能直接擰動的旋鈕，所以要先畫出系統，再迂迴地逼近。</p>
+</div><blockquote>
+  <p>素材說明：兩本書的全文我都沒有讀完。這篇筆記依據的材料有：兩本書的出版社頁面和中、日、英文目錄（中信出版社、中國華僑出版社/後浪、東洋經濟新報社、Profile Books、臺灣商周出版、天下文化），豆瓣條目裡的簡介和讀者摘錄，約翰·凱 2004 年發表在《金融時報》上的長文 <em>Forget how the crow flies</em>（這本書的前身），《獨立報》《新科學家》《泰晤士高等教育》的書評，一位英文讀者整理的章節摘錄，日本書摘服務 flier 的公開部分，以及 Donella Meadows、MIT Sloan 系統動力學組的公開資料。加引號的句子都能在「參考資料」裡找到出處；書中原話只引用出版社或可靠二手來源公開刊出的部分，轉引的會註明是轉引。</p>
+
+</blockquote><figure>
+<img src="/images/obliquity-mit-essential-thinking-reading-notes/winding-road.jpg" alt="蜿蜒道路" loading="lazy" width="800">
+<figcaption>圖片：J Doll / <a href="https://commons.wikimedia.org/wiki/File:The_Winding_Road_(140435981).jpeg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>。複雜目標常常要繞著走。</figcaption>
+</figure>
+<figure>
+<img src="/images/obliquity-mit-essential-thinking-reading-notes/labyrinth.jpg" alt="迷宮俯瞰" loading="lazy" width="640">
+<figcaption>圖片：Wiewanderlust / <a href="https://commons.wikimedia.org/wiki/File:Labyrinth.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>。先看見結構，再談捷徑。</figcaption>
+</figure>
+<h2 id="一兩本書的基本資訊">一、兩本書的基本資訊</h2>
+<p>先說書名。「間接思考的藝術」我只查到一個對應的書：英國經濟學家約翰·凱（John Kay）的 <em>Obliquity</em>。中信出版社 2023 年的簡體版用了這個書名，副標題是「複雜問題解決法」，豆瓣條目標註的原作名也是 <em>Obliquity: Why Our Goals Are Best Achieved Indirectly</em>。我沒有找到同名的其他書，所以就按這本寫。「麻省理工深度思考法」對應的是平井孝志的日文書《本質思考――MIT式課題設定＆問題解決》。</p>
+<table>
+	<thead>
+			<tr>
+					<th></th>
+					<th>《間接思考的藝術》</th>
+					<th>《麻省理工深度思考法》</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>作者</td>
+					<td>約翰·凱（John Kay），英國經濟學家，曾任牛津賽德商學院院長，為《金融時報》寫專欄二十多年</td>
+					<td>平井孝志，東大理學碩士、MIT Sloan MBA，做過貝恩、戴爾、星巴克、羅蘭貝格，2017 年起任筑波大學研究生院教授</td>
+			</tr>
+			<tr>
+					<td>原版</td>
+					<td><em>Obliquity: Why Our Goals Are Best Achieved Indirectly</em>，Profile Books，2010（精裝 224 頁，ISBN 9781846682889）；平裝 2011-02-03；Profile 官網顯示修訂版定於 2026-11-19 出版</td>
+					<td>『本質思考――MIT式課題設定＆問題解決』，東洋經濟新報社，2015-01-23 發售（國會圖書館記為 2015.2），237 頁，ISBN 978-4-492-55756-3</td>
+			</tr>
+			<tr>
+					<td>簡體版</td>
+					<td>《間接思考的藝術：複雜問題解決法》，符李桃 譯，中信出版社，2023（豆瓣記為 2023-5，三民書局記為 2023-07-24），ISBN 9787521755718，定價 69 元，豆瓣 6.7（64 人評價）</td>
+					<td>《麻省理工深度思考法：從模型及動力機制來思考現象》，張玉虹 譯，中國華僑出版社/後浪，2018-5，ISBN 9787511373441，36 元，豆瓣 7.2（738 人評價）</td>
+			</tr>
+			<tr>
+					<td>繁體版</td>
+					<td>《迂迴的力量》，陳琇玲 譯，商周出版，2011-05-13，ISBN 9789861207902，256 頁</td>
+					<td>《本質思考：MIT菁英這樣找到問題根源，解決困境》，吳怡文 譯，天下文化，2016-09-29 初版（ISBN 9789864790821），2024-05-17 新版</td>
+			</tr>
+	</tbody>
+</table>
+<p>兩本書都是三個華文地區先後出版的。幾個關鍵詞在各版本裡的譯法不一樣，對照著看能幫助理解：</p>
+<table>
+	<thead>
+			<tr>
+					<th>原文</th>
+					<th>簡體</th>
+					<th>繁體</th>
+					<th>備註</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>obliquity</td>
+					<td>間接、迂迴</td>
+					<td>迂迴</td>
+					<td>這個詞的本義是「傾斜」，比如地軸傾角</td>
+			</tr>
+			<tr>
+					<td>muddling through（Lindblom）</td>
+					<td>漸進除錯</td>
+					<td>漸進調適</td>
+					<td>繁體的「調適」更接近原意</td>
+			</tr>
+			<tr>
+					<td>The Flickering Lamp of History</td>
+					<td>歷史是搖曳之燈</td>
+					<td>歷史不是一盞明燈</td>
+					<td>簡體直譯，繁體意譯</td>
+			</tr>
+			<tr>
+					<td>モデル</td>
+					<td>模型</td>
+					<td>模式</td>
+					<td>繁體的「模式」容易被誤讀成 pattern</td>
+			</tr>
+			<tr>
+					<td>ダイナミズム</td>
+					<td>動力機制</td>
+					<td>物力論</td>
+					<td>繁體用了 dynamism 的哲學譯名，讀起來比較拗口</td>
+			</tr>
+			<tr>
+					<td>レバレッジポイント</td>
+					<td>改變模型的支點</td>
+					<td>槓桿點</td>
+					<td>也就是 Meadows 說的 leverage point</td>
+			</tr>
+	</tbody>
+</table>
+<h2 id="二兩本書各自講了什麼">二、兩本書各自講了什麼</h2>
+<h3 id="1-凱為什麼好結果往往是繞出來的">1. 凱：為什麼好結果往往是「繞」出來的</h3>
+<p>這本書的核心論點最早見於凱 2004 年 1 月發在 FT.com 上的長文 <em>Forget how the crow flies</em>。文章開頭一句是：</p>
+<blockquote>
+  <p>&ldquo;If you want to go in one direction, the best route may involve going in the other. Paradoxical as it sounds, goals are more likely to be achieved when pursued indirectly.&rdquo;</p>
+
+</blockquote><p>他舉的第一個例子是巴拿馬運河：要從大西洋去太平洋，最短的路線反而是朝東南方向走，到太平洋一側的巴爾博亞港時，人比大西洋入口科隆還偏東約 30 英里。</p>
+<p>全書一共 21 章，分三部分。中信版和商周版的目錄結構一致：</p>
+<ul>
+<li>**第一部分：迂迴的世界（第 2–6 章）。**幸福、利潤、財富這三個悖論，以及「高層目標—中間目標—具體行動」這個分層。</li>
+<li>**第二部分：為什麼很多問題無法直接解決（第 7–12 章）。**原因有六個：漸進除錯、多元主義、相互作用、複雜性、不完整性、抽象性。</li>
+<li>**第三部分：迂迴的應對之道（第 13–20 章）。**依次講以結果論過程的謬誤、斯托克代爾悖論、刺蝟與狐狸、盲眼鐘錶匠、貝克漢姆的射門（意會勝於言傳）、無法設計的制度、因時制宜比前後一致更重要，以及虛假的理性。</li>
+</ul>
+<p>我認為全書最有用的是第二部分，因為它說清了直接法在什麼條件下會失效。2004 年那篇長文的結尾講得很清楚：環境穩定、目標單一且透明、事後能判斷有沒有達成，這時直接法合適；反過來，環境複雜多變、目標多重而且互相沖突、事後都說不清有沒有達成，迂迴就不可避免。我覺得這是全書最該記住的一句話，因為它說明凱並不是一概反對直接法。他在文末還特意補了一個反例：加拿大太平洋鐵路在羅傑斯山口反覆被大雪封路，最後乾脆在麥克唐納山底下打了一條筆直的隧道。</p>
+<h3 id="2-平井現象只是輸出本質是模型和動力機制">2. 平井：現象只是輸出，本質是模型和動力機制</h3>
+<p>平井的書短得多。中文版目錄共七章，第 3 到第 6 章正好對應四個步驟：</p>
+<ol>
+<li><strong>建立模型</strong>：用一張圖把構成要素和它們之間的關係畫出來。</li>
+<li><strong>解讀動力機制</strong>：看這個模型在較長的時間裡會產生什麼變化。</li>
+<li><strong>尋找改變模型的對策</strong>：找到槓桿點。</li>
+<li><strong>行動</strong>：在實踐中獲取反饋，再修正。</li>
+</ol>
+<p>flier 的書摘把全書的立論概括為：輸入和輸出之間那個「黑箱」才是本質。現象背後一定有模型和動力機制，眼前的現象只是它們產生的結果。</p>
+<p>第 1 章列了九種阻礙深度思考的「思考慣性」，這一章是我覺得最該給工程師看的。天下文化版的介紹把它們寫得很具體，我挑幾條：</p>
+<ul>
+<li>「反面結論」：累了就休息，把現象的反面當答案。</li>
+<li>「滿足於一般性解答」：停在人人都會說的答案上。豆瓣簡介裡的「發胖的原因是吃太多和沒運動？」就是在質疑這類答案。</li>
+<li>「依賴架構」：用 SWOT 之類的框架整理完資料，就以為自己思考過了。</li>
+<li>「因為關鍵字而停止思考」：找到一個聽起來很對的詞，就不再往下想。</li>
+</ul>
+<p>後浪版的一條讀者摘錄總結得很好：依賴框架的危險在於，「通過資訊整理本身所獲得的成就感，僅僅來自資訊整理而非思考」。</p>
+<p>flier 的書摘裡有一個容易理解的模型例子：廣告戰。A 公司加大廣告投入搶到份額，B 公司也加大投入搶回來，A 再加碼，雙方的廣告費沿著一條增強迴路一路升級。看清這個結構之後，你會意識到真正的問題不是「下一輪投多少」，而是要不要、怎樣改變這個結構本身。按書裡的說法，從根本上解決問題，就是改變模型。</p>
+<p>平井在序言裡講了自己在 MIT 答錯的一道題。A、B 兩家檢驗儀器廠份額相當，A 的產品裝在漂亮的盒子裡，B 的管線和感測器裸露在外，教授問五年後誰的份額會漲。平井選了 A，正確答案是 B。原因是客戶能看到內部結構，就能按自己的需要改裝；B 再把客戶的改裝吸收進下一代產品，形成良性迴圈。他反省說：「我沒有看到問題的本質，而是被設計這種眼睛看得見的表象所迷惑。」</p>
+<h2 id="三我核對過的幾個關鍵案例">三、我核對過的幾個關鍵案例</h2>
+<p>凱的論證主要靠案例，所以我對照 2004 年的長文核對了幾個最常被轉述的例子。</p>
+<p>**黃石公園的林火。**美國國家公園管理局從 19 世紀末起對火災零容忍，有火必滅，結果火災並沒有減少，反而更多了。原因是大多數林火規模很小，會自己燒完，同時清掉林下的可燃物、形成防火帶。1972 年政策改成「人為火災撲滅、自然火災任其燃燒」，16 年後（1988 年）黃石發生了有記錄以來最大的火災，動用了 25,000 名消防員，花費 1.2 億美元，公園三分之一以上的植被被燒燬。現在的做法是交給護林員判斷。凱從中得出的結論是：保護森林不能靠直接追求「不起火」，而要在多個目標之間做整體的權衡。值得注意的是，這個故事本身就說明鐘擺會往兩邊擺過頭。</p>
+<p>**ICI 和波音。**1987 年的 ICI 把目標表述為「通過創新和負責任地應用化學」服務各方。正是在這個寬泛的使命下，它在二戰後投入製藥，熬了很多年才在 1960 年代做出 β 受體阻斷劑。1991 年 Hanson 入股之後，ICI 把製藥業務拆分成 Zeneca，剩下的部分把使命改成「為股東創造最大價值」。凱寫道，ICI 股價在新戰略宣佈後不久的 1998 年見頂，之後一路下跌，2003 年被踢出富時 100 指數。波音那邊，長期執掌公司的 Bill Allen 說過，人生最大的樂趣來自參與一項艱難而有建設性的事業；747 立項時，有董事問投資回報，得到的回答是做過一些研究，但負責人記不清結果了。1997 年併購麥道之後，CEO Phil Condit 宣佈公司要轉向一個以單位成本、投資回報率和股東回報來衡量的環境，並稱「That&rsquo;s a big shift」。凱給的數字是：Condit 接任時股價 48 美元，他高調錶態擁抱股東價值時漲到 70 美元，到 2003 年 12 月他被迫辭職時跌到 38 美元。</p>
+<p>**默克和輝瑞。**這個例子凱轉引自《基業長青》。喬治·默克說：「We try never to forget that medicine is for the people. It is not for the profits. The profits follow&hellip;」輝瑞的 John McKeen 則說要從做的每件事裡儘可能賺到利潤。</p>
+<p>這些案例都有一個共同的方法論問題：樣本是挑過的，而且是事後講的故事。下文第五節會專門討論。</p>
+<h2 id="四書評裡的批評">四、書評裡的批評</h2>
+<p>這兩本書在中英文書評裡的評價都不算一邊倒的好評。</p>
+<ul>
+<li><strong>對凱。</strong>《新科學家》的 Michael Bond 批評得最直接，說這本書「misrepresents psychology」，而且誇大了出版方宣傳的「brilliant new idea」；凱斷言世界太複雜、決策永遠不可能成為一門科學，Bond 認為這等於把心理學最熱門的研究領域之一一筆帶過（brush aside），並回了一句「Complexity is not immune to analysis」。《泰晤士高等教育》的書評認可它好讀，但指出凱只挑支援自己的例子，把迂迴的定義擴張到了狡詐、李德·哈特的間接路線和橫向思維，而且書裡散落著不少沒有論證的斷言。比較正面的是經濟學家 Diane Coyle 在《獨立報》的書評：她認為最新穎的部分是凱提出的「teleological fallacy」，也就是以為好結果一定來自好決策、壞結果一定來自壞決策，而運氣的作用常常更大。豆瓣讀者也有類似的意見，有人說這本書寫法發散、很難讀，要「大海撈針一樣」才能找到打動自己的點。中信版 6.7 的評分大致說明了這一點。</li>
+<li>**對平井。**豆瓣讀者的意見集中在內容偏薄：有人說「後幾章基本看標題就行了」，案例「舉的真不怎麼樣」；有人說如果只留乾貨，「應該可以少三分之一到一半的篇幅」；還有人說它實用，但「有些地方帶有諮詢師那種帶專業態度掩飾的語焉不詳」。7.2 分大致說明這是一本門檻很低的入門書，好上手，但講得不深。</li>
+</ul>
+<h2 id="五整合地圖與路徑">五、整合：地圖與路徑</h2>
+<p>把兩本書放在一起，我得到的主線是：**平井給你一張地圖，凱告訴你地圖永遠是錯的，而且路是彎的。**兩本書看上去互相矛盾，實際上是互補的。</p>
+<p>平井的立場接近「本質主義」：現象背後有一個可以畫出來的結構，找到槓桿點就能根治。凱的立場是多元主義（第 8 章的標題就叫「多元主義」，第 15 章還借用了 Tetlock 研究預測者時用的「刺蝟與狐狸」之分）：問題的答案不止一個，模型只是對現實不完美的描述（第 12 章），我們對問題本身的瞭解也很不完整（第 11 章）。如果只讀平井，容易高估自己畫出的那張因果圖；如果只讀凱，容易把「迂迴」當成不做分析的藉口。凱自己也說過，迂迴不等於憑直覺、無結構的決策，Lindblom 的「漸進除錯」是一個有紀律的、有序的過程（據 James Stuber 的章節摘錄轉引）。</p>
+<p>兩本書真正交匯的地方在於：**為什麼直接法會失效。**平井說，眼睛看到的只是結果，不是原因，所以把現象倒過來當成答案的「反面結論」必然失敗。凱說，複雜系統會因為我們的介入而改變性質，所以直接瞄準目標常常適得其反。這兩句話說的其實是同一件事：<strong>目標變數通常是系統的輸出，而不是你能直接擰動的旋鈕。</strong></p>
+<p>Meadows 在《槓桿點》一文裡轉述過 Jay Forrester 最喜歡講的一個故事。Forrester 說，大家憑直覺都知道槓桿點在哪裡，問題是所有人都在拼命「push it IN THE WRONG DIRECTION」。黃石公園的零容忍、ICI 的股東價值宣言，都是在正確的槓桿點上用力推錯了方向。</p>
+<pre tabindex="0"><code>          平井：看清結構                         凱：迂迴前進
+  ┌────────────────────────────┐      ┌────────────────────────────┐
+  │ ① 畫模型：要素 + 因果迴路       │      │ 高層目標（模糊、多元、不可度量）  │
+  │ ② 讀動力：存量/流量、延遲、拐點   │ ───▶ │        │ 拆成               │
+  │ ③ 找槓桿點：改結構，不改參數     │      │ 中間目標（可調整、可替換）       │
+  └──────────────┬─────────────┘      │        │ 落到               │
+                 │ 模型 = 假設        │ 具體行動（小步、可逆、可觀察）    │
+                 ▼                    └──────────────┬─────────────┘
+  ┌────────────────────────────┐                     │
+  │ ④ 行動 → 反饋 → 修正模型        │ ◀───────────────────┘
+  │   （平井第 6 章 ≈ 凱第 7 章        │   結果不等於決策品質（目的論謬誤）
+  │     的「漸進除錯」）              │   警惕指標被遊戲（古德哈特定律）
+  └────────────────────────────┘
+</code></pre><table>
+	<thead>
+			<tr>
+					<th>維度</th>
+					<th>平井（本質思考）</th>
+					<th>凱（Obliquity）</th>
+					<th>整合後的做法</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>對世界的假設</td>
+					<td>有可描繪的結構</td>
+					<td>結構永遠不完整，且會因介入而改變</td>
+					<td>把模型當作可證偽的假設，並寫明有效期</td>
+			</tr>
+			<tr>
+					<td>對目標的態度</td>
+					<td>定義清楚課題（課題設定）</td>
+					<td>高層目標本來就模糊，要通過行動逐步發現</td>
+					<td>高層目標保持穩定，中間目標保持靈活</td>
+			</tr>
+			<tr>
+					<td>主要工具</td>
+					<td>因果迴路圖、存量與流量、槓桿點</td>
+					<td>漸進除錯、多元判斷、意會知識</td>
+					<td>先畫圖找候選槓桿點，再用小實驗來驗證</td>
+			</tr>
+			<tr>
+					<td>最大的敵人</td>
+					<td>思考慣性、把現象當原因</td>
+					<td>虛假的理性、以結果論過程</td>
+					<td>兩者都反對「看上去很理性」的直接答案</td>
+			</tr>
+			<tr>
+					<td>失敗模式</td>
+					<td>模型畫得漂亮卻沒人驗證</td>
+					<td>「迂迴」變成拖延和不擔責的藉口</td>
+					<td>給每個迂迴動作都設好觀察指標和止損點</td>
+			</tr>
+	</tbody>
+</table>
+<h2 id="六放到工程團隊裡">六、放到工程團隊裡</h2>
+<h3 id="1-排查故障先問這是誰的輸出">1. 排查故障：先問「這是誰的輸出」</h3>
+<p>線上延遲升高，「反面結論」式的做法是加超時、加重試、加機器。系統動力學式的做法是先畫一個迴路：下游變慢，於是超時，於是重試，於是下游負載更高，於是更慢。這是一條典型的增強迴路，重試本身就是讓問題惡化的那個槓桿點，而且大家正在往錯誤的方向推它。真正的對策是改變結構：加退避和抖動、做重試預算、設熔斷，而不是繼續調參數。平井第 4 章強調「存量和流量要分開看」，對應到工程裡就是：佇列長度是存量，請求速率是流量；只盯著 QPS 看，看不出積壓。</p>
+<h3 id="2-系統設計延遲會造成振盪">2. 系統設計：延遲會造成振盪</h3>
+<p>系統動力學入門書裡常用洗澡調水溫來講延遲：擰了龍頭，水溫不會立即變化，於是你繼續往熱的方向擰，最後燙到受不了，再猛地往回擰。自動擴縮容是同一個結構：指標採集有延遲，擴容生效也有延遲，閾值又設得過於敏感，結果就是機器數量來回抖動。在設計評審裡，我會專門問一句：這條控制迴路上有幾處延遲？任何反饋環都要標出延遲，這是我從兩本書裡提煉出來最直接的一條做法。</p>
+<h3 id="3-黃石的啟示受控的小火">3. 黃石的啟示：受控的小火</h3>
+<p>我認為凱的林火故事是對混沌工程最好的辯護。把每一個小故障都壓下去，比如永遠不讓依賴超時、永遠不演練切換，看上去是在追求穩定，實際上在積累「可燃物」：沒人測過的降級路徑、沒人記得的手動步驟。定期、可控地放一些「小火」，比如故障注入、演練和 GameDay，就是凱說的那種迂迴的方式。同時也要記住黃石的另一半教訓：「任其燃燒」也會走過頭，所以範圍要控制，判斷權要交給離現場最近的人。</p>
+<h3 id="4-復盤別犯目的論謬誤">4. 復盤：別犯目的論謬誤</h3>
+<p>Coyle 書評裡總結的「teleological fallacy」，在復盤中天天都在發生：一次釋出出事了，大家就認定決策糟糕；僥倖沒事，同樣冒險的流程就被當成了最佳實踐。一個好的復盤要分開問兩件事：在當時掌握的資訊下，這個決策合理嗎？結果裡有多少是運氣？無責復盤之所以有效，部分原因就在這裡。</p>
+<h3 id="5-需求澄清高層目標中間目標具體行動">5. 需求澄清：高層目標、中間目標、具體行動</h3>
+<p>凱在第 5 章講的三層結構，可以直接套用在需求澄清上。使用者說「匯出按鈕太慢」，這是具體行動層面的說法；中間目標可能是「月底對帳能按時完成」；高層目標可能是「財務團隊信任這個系統」。如果只最佳化匯出速度，就是在直接追逐表層目標。往上問一層，可能會發現真正該做的是定時生成報表，或者提供一個對帳檢視。這恰好也對應平井說的「忘記思考的目的」這種慣性。</p>
+<h3 id="6-技術決策重寫還是漸進">6. 技術決策：重寫還是漸進</h3>
+<p>凱在長文裡專門批評了《企業再造》（<em>Reengineering the Corporation</em>），說它像勒·柯布西耶一樣，想把舊系統扔掉、從頭設計。軟體界對應的誘惑就是「推倒重寫」。凱的「漸進除錯」加上平井的「先畫模型」，得出的是一種更穩的做法：先畫出現有系統的依賴和資料流，找到耦合最重的那個點，再用絞殺者模式一塊一塊替換，每一步都可以回滾。</p>
+<h3 id="7-指標古德哈特定律">7. 指標：古德哈特定律</h3>
+<p>據讀者摘錄，凱在第 9 章討論了古德哈特定律和平衡計分卡。Coyle 的書評裡提到書中一個例子：英國救護車有「8 分鐘到達」的考核目標，結果絕大多數緊急呼叫的記錄恰好都在 8 分鐘內，幾乎沒有記錄超時的，因為排程員分配車輛的方式變了。工程團隊裡的測試覆蓋率、故事點、MTTR 都可能這樣被「做」出來。按 Coyle 的概括，凱開出的藥方是：一組所有相關的人都內化了的高層目標，加上一些定期調整的中間目標，再加上與之一致的日常行動，因為沒人能時時刻刻想著戰略目標。</p>
+<h2 id="七我的思考兩本書的侷限">七、我的思考：兩本書的侷限</h2>
+<ol>
+<li>**凱的論證依賴倖存者敘事。**ICI、波音、默克這些都是事後挑出來的故事。凱自己在長文裡也承認，平均而言，以利潤為導向的公司可能確實更賺錢，他只是說最出色的成功來自迂迴。這個限定很重要，但在暢銷書式的轉述裡常常被丟掉。《新科學家》的批評也有道理：複雜並不等於無法分析。平井這本書本身就是在示範，複雜系統可以被近似地建模。</li>
+<li>**「迂迴」很難證偽。**任何成功都可以事後解釋成迂迴的勝利，任何失敗都可以說成「迂迴得不夠」。所以我在整合框架裡要求每個迂迴動作都寫下觀察指標和止損點。</li>
+<li>**平井的模型容易被畫成「漂亮的圖」。**一張因果迴路圖很容易畫得自洽，卻從來沒有被資料檢驗過，這正好落入他自己批評的「依賴框架」慣性。Forrester 在 MIT 開創的系統動力學是要做定量模擬的，而這本書基本只講到了定性畫圖那一半。</li>
+<li>**平井的案例偏向商業諮詢。**廣告戰、業務改革、新產品推廣，到了工程語境需要自己翻譯。好在系統動力學的基本元素，比如迴路、延遲、存量，對工程師來說幾乎是母語。</li>
+<li>**兩本書都輕視了「直接」的價值。**凱的羅傑斯山口隧道提醒我們，問題一旦被理解透、條件變得穩定，就該果斷改用直接法：寫成規則、做成自動化、打一條筆直的隧道。迂迴應該是探索階段用的方法，不能當作永久的姿態。</li>
+</ol>
+<h2 id="八可執行清單">八、可執行清單</h2>
+<ul>
+<li><input disabled="" type="checkbox"> 遇到問題時，先寫下「表面答案」，也就是現象反過來是什麼，再刻意把它放到一邊。</li>
+<li><input disabled="" type="checkbox"> 畫一張因果迴路圖，至少標出一條增強迴路、一條調節迴路和所有延遲。</li>
+<li><input disabled="" type="checkbox"> 區分存量和流量：我盯著的指標是積壓量，還是速率？</li>
+<li><input disabled="" type="checkbox"> 問一句：這個槓桿點，大家是不是正在往錯誤的方向推？</li>
+<li><input disabled="" type="checkbox"> 把目標拆成三層：高層（穩定、可以模糊）、中間（可替換）、行動（小步、可逆）。</li>
+<li><input disabled="" type="checkbox"> 判斷這個問題適合直接法還是迂迴法：環境穩定嗎？目標單一嗎？結果可以度量嗎？</li>
+<li><input disabled="" type="checkbox"> 每個迂迴動作都寫下觀察指標、複查時間和止損條件。</li>
+<li><input disabled="" type="checkbox"> 復盤時分開評價「決策品質」和「結果」，標出運氣成分。</li>
+<li><input disabled="" type="checkbox"> 新增考核指標時，先想一想它會被怎樣「遊戲」。</li>
+<li><input disabled="" type="checkbox"> 每季度挑一個「小火」做受控演練，比如故障注入、切換演練或依賴降級。</li>
+<li><input disabled="" type="checkbox"> 問題一旦被理解透，就把它固化成規則或自動化，也就是打一條隧道。</li>
+</ul>
+<h2 id="參考資料">參考資料</h2>
+<p><strong>書目與出版資訊</strong></p>
+<ul>
+<li>豆瓣讀書：《間接思考的藝術：複雜問題解決法》（中信出版社）：https://book.douban.com/subject/36422168/</li>
+<li>豆瓣閱讀：《間接思考的藝術》電子書：https://read.douban.com/ebook/440247607/</li>
+<li>三民網路書店：《間接思考的藝術》簡體書資料：https://www.sanmin.com.tw/product/index/012025866</li>
+<li>買書網：《迂迴的力量》（商周出版，含目錄）：https://www.buybook.tw/book-0010504921.htm</li>
+<li>臺北市立大學圖書館：《迂迴的力量》書目：https://library.utaipei.edu.tw/webpac/bookDetail.do?id=400943</li>
+<li>Profile Books：<em>Obliquity</em>：https://profilebooks.com/work/obliquity/</li>
+<li>豆瓣讀書：《麻省理工深度思考法》（中國華僑出版社/後浪）：https://book.douban.com/subject/30181942/</li>
+<li>東洋經濟 STORE：『本質思考』：https://str.toyokeizai.net/books/9784492557563/</li>
+<li>紀伊國屋書店：『本質思考』（含各章副標題）：https://www.kinokuniya.co.jp/f/dsg-01-9784492557563</li>
+<li>日本國立國會圖書館 NDL Search：『本質思考』：https://ndlsearch.ndl.go.jp/books/R100000002-I026028224</li>
+<li>天下文化：《本質思考》（含目錄、作者序、推薦序）：https://bookzone.cwgv.com.tw/book/BWL047A</li>
+<li>誠品線上：《本質思考》2016 年版：https://www.eslite.com/product/1001122732542222</li>
+</ul>
+<p><strong>作者原文、書評與摘錄</strong></p>
+<ul>
+<li>John Kay, &ldquo;Forget how the crow flies&rdquo;, FT.com, 2004-01-16（引用的是讀者部落格的全文轉載）：http://thinkingmoose.blogspot.com/2007/12/shortest-path-vs-path-of-least.html</li>
+<li>Diane Coyle, &ldquo;Obliquity, By John Kay&rdquo;, <em>The Independent</em>, 2010-04-29：https://www.independent.co.uk/arts-entertainment/books/reviews/obliquity-by-john-kay-1958028.html</li>
+<li>Michael Bond, &ldquo;The indirect pursuit of happiness&rdquo;, <em>New Scientist</em>, 2010-03-31：https://www.newscientist.com/article/1946986-the-indirect-pursuit-of-happiness/</li>
+<li><em>Times Higher Education</em> 書評：<em>Obliquity</em>：https://www.timeshighereducation.com/books/obliquity-why-our-goals-are-best-achieved-indirectly/412407.article</li>
+<li>James Stuber：<em>Obliquity</em> 章節摘錄（英文讀者筆記，二手來源）：https://jamesstuber.com/obliquity/</li>
+<li>flier：『本質思考』書摘（公開部分）：https://www.flierinc.com/summary/435</li>
+</ul>
+<p><strong>系統動力學背景</strong></p>
+<ul>
+<li>Donella Meadows, &ldquo;Leverage Points: Places to Intervene in a System&rdquo;：https://donellameadows.org/archives/leverage-points-places-to-intervene-in-a-system/</li>
+<li>MIT Sloan System Dynamics Group：https://mitsloan.mit.edu/faculty/academic-groups/system-dynamics/about-us</li>
+</ul>
+]]></content:encoded></item></channel></rss>

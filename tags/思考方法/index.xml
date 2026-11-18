@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>思考方法 on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/%E6%80%9D%E8%80%83%E6%96%B9%E6%B3%95/</link><description>Recent content in 思考方法 on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Tue, 17 Nov 2026 17:30:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/%E6%80%9D%E8%80%83%E6%96%B9%E6%B3%95/index.xml" rel="self" type="application/rss+xml"/><item><title>AI 把測試寫綠之後：間接解題的藝術，與不能外包的責任</title><link>https://d94807974-commits.github.io/posts/indirect-problem-solving-ai-responsibility/</link><pubDate>Tue, 17 Nov 2026 17:30:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/indirect-problem-solving-ai-responsibility/</guid><description>從兩則食安新聞反觀 AI 輔助開發：實作與測試如何共享錯誤前提，局部修補如何放大副作用，以及生成加速後誰有能力驗證、停止發布並接住使用者。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/indirect-problem-solving-ai-responsibility.html">間接解題、測試全綠與不能外包的責任</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>好的間接解題，是改變讓問題反覆發生的條件；壞的間接解題，是讓問題離開我們的指標與責任範圍。AI 輔助開發的關鍵，不是讓實作與測試更快互相同意，而是用獨立的需求與證據約束它們，並由我們承擔放行與補救的責任。</p>
+</div><p>AI 寫完程式、補齊測試，再由另一個 AI 審查，結果全部通過。我們能安心交付嗎？這些工作可能有價值，但如果大家讀的是同一份錯誤規格，一致也可能只是把同一個誤解確認了幾遍。</p>
+<p>約翰・凱（John Kay）的《間接思考的藝術：複雜問題解決法》，原書是 <em>Obliquity: Why Our Goals Are Best Achieved Indirectly</em>。中信出版集團中文版由符李桃翻譯，此處將該簡體版書名轉為繁體。凱提醒我們，不少複雜目標，反而經由間接途徑比較容易達成；出版社以工程、技術與產品如何創造利潤，對照只追逐利潤的侷限。<a href="https://www.sanmin.com.tw/product/index/012025866">1</a></p>
+<p>放回工程現場，問題不是要不要追求可靠性，而是：我們能否直接命令「可靠性提高」？還是得先改變交付、觀測與問責的方式，讓可靠性有機會長出來？間接思考不只是更巧妙的提示詞，而是設計一套會讓錯誤提案遭到反證的工作方式。</p>
+<p>兩則食品安全新聞，可以先替這個問題劃出不能跨越的界線。</p>
+<p><em>資料查核：2026-11-17，Asia/Singapore。下文軟體情境為原創示例，並非真實事故；工程機制另附一手技術資料。</em></p>
+<h2 id="一新聞裡的兩道縫合格的數字切開的責任">一、新聞裡的兩道縫：合格的數字，切開的責任</h2>
+<p>2008 年三聚氰胺奶粉事件中，造假利用的不是高深技術，而是檢驗與目的之間的落差。澳洲紐西蘭食品標準局說明，原奶摻水會降低蛋白質濃度；當檢驗以含氮量推估蛋白質，加入富含氮的三聚氰胺，就能製造蛋白質含量較高的假象。WHO 當年通報確認，嬰兒腎結石病例與受污染配方奶粉有關。<a href="https://www.foodstandards.gov.au/sites/default/files/science-data/surveillance/Documents/Report%20on%20the%20national%20melamine%20survey%20post%20board.pdf">2</a><a href="https://www.who.int/emergencies/disease-outbreak-news/item/2008_09_19-en">3</a></p>
+<p>數字可以過關，營養與安全卻被破壞了。9 月 16 日，路透社記錄家長帶著奶粉到三鹿公司外要求解釋，有人坐在準備退貨的奶粉箱上。一名父親表達的意思是：錢退回來，也換不回孩子的健康。<a href="https://www.independent.co.uk/news/world/asia/panic-grows-in-china-milk-scandal-932607.html">4</a> 交易可以退款，傷害卻不會因此撤銷。</p>
+<p>2024 年 7 月 2 日，《新京報》調查揭露，罐車卸下煤制油、未洗罐便接著裝載食用油。報導記錄，有查驗只看罐口，有的依賴照片；中儲糧油脂（天津）一名銷售經理則向記者表示，買家自提、買家找車，裝車之後的品質不由他們負責。<a href="https://www.bjnews.com.cn/detail/1719878490168127.html">5</a></p>
+<p>8 月 25 日的官方調查進一步揭露虛假清洗票據，並認定運輸企業、車主、司機、購買企業與生產企業各負相應責任。生產企業不能只靠合約，就把運輸交付責任全部推給買方。<a href="https://www.samr.gov.cn/xw/zj/art/2024/art_ed0367937f844ff09d3e1dc98755eaff.html">6</a></p>
+<p>這不是說責任一經外包，就真的在法律上消失了。恰恰相反，官方追責拆開了合約上的說法與應負的義務。讓我們不安的，是若只讀每段交接文件，可能看不出有人應該在哪裡攔住整個過程。</p>
+<p>這兩件事不是同一種違規，卻把兩道縫照得清楚：一是把代理數字當成真正目的，二是把分工邊界當成責任終點。</p>
+<p>還有一條科學邊界必須守住。三聚氰胺事件在此有依據的健康後果是腎臟與泌尿系統問題，不是白血病。NCI 指出苯暴露增加白血病風險，也說明主要暴露途徑是吸入，相關產業勞工可能接觸較高濃度；這不能跳接成某批混運食用油已造成白血病。<a href="https://www.who.int/emergencies/disease-outbreak-news/item/2008_09_19-en">3</a><a href="https://www.cancer.gov/about-cancer/causes-prevention/risk/substances/benzene">7</a> 我們不能一面批評指標失真，一面用疾病名稱補上證據的空白。</p>
+<p>食品安全不等於軟體品質，人的身體更不能像版本一樣回復。以下不是把社會問題縮成程式缺陷，而是把新聞帶來的問題轉向自己：我們的工作裡，有沒有相似的自我安慰？</p>
+<h2 id="二第一個反省ai-寫的程式與測試可能共享同一個盲點">二、第一個反省：AI 寫的程式與測試，可能共享同一個盲點</h2>
+<p>假設我們維護一個購物系統。規格寫著：「收到下單資料，寫入佇列後回傳成功。」我們請 AI 實作，再請它補測試。產物檢查狀態碼、欄位與訊息格式，全部通過；另一個 agent 依同一份規格審查，也沒有提出異議。</p>
+<p>可是背景處理失敗時，訂單沒有成立，畫面仍已顯示「下單成功」。程式未必違反規格，測試也忠實確認了規格；問題是規格把「已接收」誤當成使用者理解的「已完成」。</p>
+<p>這不是 AI 專屬的錯誤。人工開發也會如此，只是當我們能很快產出相互吻合的程式、測試與說明，可能更容易把一致性看成正確性。換模型、換 agent 可以帶來不同觀點，卻不會自動產生獨立證據：若驗收仍沿用同一個前提，幾份答案都可能漏掉同一件事。</p>
+<p>GitHub 官方也提醒，Copilot 審查可能漏掉問題、提出不存在的問題，建議程式碼亦可能有誤；其回饋需要人工審查與測試補強。<a href="https://docs.github.com/en/copilot/responsible-use/agents">13</a> 這是工具的公開限制，不是 AI 程式碼整體品質較差的統計證明。</p>
+<p>所以我們首先要拿回的，不是打字工作，而是定義完成的責任。訂單成立究竟意味著什麼，應由實際業務承諾、使用者需求與資料狀態共同決定，不能從生成的實作倒推答案。</p>
+<p>在這個示例裡，我們可以與產品、付款與營運負責人確認幾條不能破壞的約束：收到請求不等於交易完成；同一筆購買意圖不能因重送而重複扣款；已扣款卻無法成立訂單的情況，必須能被找出並進入退款或人工處理。這些不是一句提示詞能替我們批准的需求，也不是宣稱分散式系統能保證所有工作只執行一次。</p>
+<p>接著才請 AI 幫忙反駁設計：「列出一條狀態碼成功、但上述承諾不成立的事件序列。」它可以提出訊息遺失、處理中斷、付款回應逾時的候選情境；我們仍須核對這些情境是否符合實際架構，再把可成立的假設變成測試。</p>
+<p>直接修補，是停止誤導性的成功提示、找回遺漏交易。結構改善，則是明確區分接收、處理中與完成，讓交易身分跨越各階段，並核對扣款與訂單結果。Google SRE 同樣提醒，HTTP 200 可能帶著錯誤內容，服務水準目標應圍繞使用者行動，而不只是內部回應。<a href="https://sre.google/sre-book/monitoring-distributed-systems/">8</a><a href="https://sre.google/workbook/implementing-slos/">9</a></p>
+<p>驗證時，我們刻意中斷背景程序，檢查畫面是否仍提前報喜；再比對付款紀錄與訂單狀態，而不只相信由同一組模擬資料產生的斷言。AI 能協助產生故障注入與核對程式，但預期結果必須能回到獨立確認的需求與紀錄。核對可在有權限的環境執行，不代表要把真實付款明細交給模型。</p>
+<p>代價是狀態更多、核對更麻煩，某些交易也可能需要人工介入。但不處理時，這些麻煩並未消失，只是由我們的測試環境移到使用者與客服身上。</p>
+<h2 id="三第二個反省ai-的局部修補是否把成本推向下游">三、第二個反省：AI 的局部修補，是否把成本推向下游？</h2>
+<p>沿用同一個系統。結帳偶爾等待過久，我們把一段呼叫程式交給 AI，要求「降低等待、改善成功率」。它建議縮短逾時，再加入自動重試。在隔離測試裡，下游第二次就成功，修補看起來合理。</p>
+<p>但呼叫端停止等待，不等於下游停止工作。若取消訊號沒有傳遞或處理，原請求可能仍在執行，重試又送來一份工作。閘道、訂單服務與資料存取層若各自重試，單一使用者操作就可能衍生多次下游嘗試。</p>
+<p>Google SRE 的級聯故障章節說明，重試會增加後端工作量，多層重試還可能造成乘法式放大；它建議限制次數、設定重試預算，並採用帶隨機抖動的指數退避。<a href="https://sre.google/sre-book/addressing-cascading-failures/">10</a> 這不是「重試不好」，而是局部容錯必須服從整體容量。</p>
+<p>如果給 AI 的上下文只有單一函式，它沒有收到其他層的重試規則與負載資訊，我們就不該把輸出當成已完成的系統設計。補更多上下文有幫助，但也不能保證它已正確理解所有互動。真正需要驗證的是修補背後的假設：失敗是否短暫？再次送出是否安全？下游還有沒有餘裕？</p>
+<p>我們可以讓 AI 提出對立方案：不重試、只由指定一層重試、減少非必要工作，分別在哪種故障下較好。重點不是投票選最有說服力的一段話，而是為每個方案寫出會讓它失敗的條件。</p>
+<p>受控測試要讓下游變慢、部分拒絕，再觀察完整交易的等待、完成量、重試嘗試與佇列能否恢復。對扣款操作，還要重複送出相同交易身分，確認結果可核對、不會產生重複的業務效果；一把冪等鍵是否有效，取決於伺服器如何保存與處理它，不是請求裡多一個欄位就完成。</p>
+<p>這些驗證不一定便宜，也無法窮盡正式環境。可是在 AI 給出更多修補選項時，我們更需要知道該淘汰什麼，而不是把審查退化成看程式是否順眼。</p>
+<p>若故障正在擴大，直接止血可以是減少重試、限制進入流量、暫停非必要功能。不能為了等待漂亮的架構方案，放任負載互相放大。Google 的過載處理也強調，系統應接受可處理的負載，妥善拒絕超出的部分。<a href="https://sre.google/sre-book/handling-overload/">11</a></p>
+<p>長期則要共同約定重試層級、整筆交易的等待期限、可重試錯誤與未定交易的接手方式。停止等待後若還有扣款結果在路上，就不能只回覆「失敗，請再試一次」，把查明真相的責任丟給使用者。</p>
+<p>縮短單次呼叫，可能拉長一個人完成購買的時間；保住總體完成率，也可能讓弱網路使用者承受更多拒絕。我們降低的延遲與成本，究竟是被消除了，還是離開自己的報表？這是我們要回答的問題，不是生成工具能替我們承擔的取捨。</p>
+<h2 id="四第三個反省生成速度增加後誰還有能力說先別上線">四、第三個反省：生成速度增加後，誰還有能力說「先別上線」？</h2>
+<p>假設 AI 讓這個專案短時間多出許多可提交的變更，但熟悉付款狀態、相容性與資料修復的人並沒有變多。此時瓶頸可能不再是寫程式，而是理解、驗證與決定是否放行。這是此情境的容量推理，不是所有團隊採用 AI 後必然發生的結果。</p>
+<p>如果我們仍以提交量或關單數衡量進展，最容易得到的也許是更快堆積的待審工作。審查者只剩時間確認測試有跑、AI 審查有通過，於是原本應挑戰前提的關卡，又變成收齊文件。</p>
+<p>DORA 的 2025 年研究將 AI 描述為放大既有組織優勢與弱點的工具，並把小批次工作列為重要能力。這套研究來自全球近五千名技術從業者的問卷與超過一百小時的質性資料，討論的是組織中的 AI 輔助開發，不是針對我們這個購物系統的受控實驗。它能提示假設，不能替每個團隊預告收益。<a href="https://dora.dev/research/2025/dora-report/">14</a></p>
+<p>我們可以做的，不是要求所有變更都慢下來，而是讓生成的批次服從驗證能力。不要把畫面、付款、重試與資料遷移一次交成大包；先交一個能說清楚行為差異、能獨立驗證的變更。AI 可以協助拆解、標出受影響契約與尋找反例，但審查者必須能回到原始需求與實際差異，不只閱讀它替自己寫的摘要。</p>
+<p>接著，權限也要跟責任對齊：誰能核准交易語意改變，誰能因資料矛盾暫停發布，誰接手跨團隊的不完整交易？若停止交付的人獨自承受進度壓力，維持交付的人只需出示綠燈，我們就在獎勵自己忽略壞消息。</p>
+<p>在這個示例裡，小範圍發布不是先找一小群人替我們冒險，而是先完成必要驗證，再限制變更暴露範圍，觀察訂單完成、付款核對與使用者失敗。放量前要訂出停止條件，確認能關閉新路徑，也要說明已發生的副作用如何補救。</p>
+<p>回復程式碼不會自動撤銷扣款或資料寫入。若沒有核對與補償流程，「可以回滾」可能只是把部署風險說小了。新版本停止製造問題，也不表示先前受影響的人已經得到結果。</p>
+<p>上線後，客服持續反映已付款卻查不到訂單，即使各服務都達標，也應被當成可能推翻現有判斷的證據。可觀測性只能呈現選定訊號；Google SRE 因此區分使用者可見症狀與內部原因，結合外部行為觀測、內部診斷與預警。<a href="https://sre.google/sre-book/monitoring-distributed-systems/">8</a> 告警少了，可能是改善，也可能只是門檻調高。</p>
+<p>AI 可以整理異常、協助查核交易與提出修補候選，但不該因為產出了完整復盤，就自動替事件結案。我們要確認使用者拿到訂單或退款，核對同類問題是否再現，再把學到的東西改進到下一次驗收。</p>
+<p>系統觀點不能抹掉個人責任。忙碌、錯誤指標與自動化可以解釋誘因，不能讓明知風險而隱瞞與確實無從預見變成同一回事。採納 AI 建議、核准變更、決定不停機的，仍是有職責的人與組織；責任不能外包給一句「模型建議如此」。</p>
+<h2 id="五間接傷害提醒我們未被列入目標的人不是配角">五、《間接傷害》提醒我們：未被列入目標的人，不是配角</h2>
+<p>2002 年電影《間接傷害》（<em>Collateral Damage</em>）裡，消防員 Brewer 的妻兒死於爆炸。依美國電影學會簡介，襲擊原本鎖定的是哥倫比亞領事館與美國情報人員；他的家人成為無辜死者，官方追查停滯後，他前往哥倫比亞追尋涉案者。<a href="https://watch.afi.com/movie/collateral-damage">12</a></p>
+<p>電影不能替私人報復提供正當性，更不是間接解題的成功範本。它值得帶回工程討論的，是視角：我們可能稱某些結果為非核心、少數例外或可接受損失，對承受的人而言，那卻是唯一正在發生的交易。</p>
+<p>軟體故障不因此等同暴力傷害，營運上也不可能沒有任何取捨。但只要取捨存在，我們就應說清楚：誰得到了好處，誰承擔失敗，誰有能力拒絕這個安排。</p>
+<p>凱的書讓我們看見，改善結果有時要先改變生成結果的條件；電影則追問，當我們只盯著目標，誰被留在計算之外。兩者不是同一個「間接」，卻共同要求我們別只看自己的終點。</p>
+<h2 id="結語下一次我們願意在哪裡停下來">結語：下一次，我們願意在哪裡停下來？</h2>
+<p>AI、測試、分工與告警都可以幫助我們。問題在於，它們是否仍服務於原本的承諾，還是已經變成證明「我這裡沒問題」的工具。間接解題的價值，不在讓 AI 更快完成一串任務，而在改變我們發現錯誤、停止放行與接住後果的能力。</p>
+<p>我們不需要因為看不見全部風險就停止交付，也不必等到所有責任查清才開始補救。可以先止血，再調整結構；可以承認不確定，仍採取有根據、能驗證的預防措施。技術能縮小某些風險，卻不能替法律、資源分配與公共救助作完全部決定。</p>
+<p>下一次評審，與其先問「這個最佳化能省多少」，我們可以先問三句：<strong>這個答案有什麼來自生成流程之外的證據？我們省下的等待與成本，轉到了誰身上？如果明天出現可信的反證，我們是否真的有權、有準備停下來，並把已受影響的人接回來？</strong></p>
+<p>答案若不清楚，那條捷徑可能還沒有走完，只是剩下的路不由我們走。</p>
+<h2 id="參考與資料範圍">參考與資料範圍</h2>
+<p>新聞、機構資料與工程文件用來支持相應事實和機制；軟體情境與決策反省為本文示例，不是事故調查或實測報告。</p>
+<ol>
+<li><a href="https://www.sanmin.com.tw/product/index/012025866">三民書目</a>、<a href="https://book.qq.com/book-detail/47724632">QQ 閱讀書目</a>、<a href="https://profilebooks.com/work/obliquity/">Profile Books：Obliquity</a>。核對作者、譯者、出版社與公開書介；ISBN 9787521755718。本文對書的討論限於已核對的公開書介與書目，不作逐章評述。</li>
+<li><a href="https://www.foodstandards.gov.au/sites/default/files/science-data/surveillance/Documents/Report%20on%20the%20national%20melamine%20survey%20post%20board.pdf">FSANZ：食品與飲料三聚氰胺調查，PDF，第 1 頁</a>。含氮量檢驗與摻假機制。</li>
+<li><a href="https://www.who.int/emergencies/disease-outbreak-news/item/2008_09_19-en">WHO，2008-09-18：中國受三聚氰胺污染配方奶粉通報</a>。腎結石與污染奶粉；不支持白血病因果。</li>
+<li><a href="https://www.independent.co.uk/news/world/asia/panic-grows-in-china-milk-scandal-932607.html">Reuters，2008-09-16：Panic grows in China milk scandal（《獨立報》刊載）</a>。家長現場與受訪意見，正文採轉述。</li>
+<li><a href="https://www.bjnews.com.cn/detail/1719878490168127.html">《新京報》，2024-07-02：罐車運輸亂象調查</a>。追蹤觀察及受訪者說法，不推為所有企業行為。</li>
+<li><a href="https://www.samr.gov.cn/xw/zj/art/2024/art_ed0367937f844ff09d3e1dc98755eaff.html">國務院食安辦，2024-08-25：罐車運輸食用植物油調查處置通報</a>。虛假票據與責任認定按官方通報歸屬，不冒稱獨立實測或後續健康研究。</li>
+<li><a href="https://www.cancer.gov/about-cancer/causes-prevention/risk/substances/benzene">NCI：Benzene</a>。苯暴露與白血病風險；不能據此判定特定食品或個別患者的病因。</li>
+<li><a href="https://sre.google/sre-book/monitoring-distributed-systems/">Google SRE：Monitoring Distributed Systems</a>。成功回應中的錯誤、症狀與原因、內外部觀測及告警原則。</li>
+<li><a href="https://sre.google/workbook/implementing-slos/">Google SRE Workbook：Implementing SLOs</a>。關鍵使用者旅程、觀測位置與 SLI 實作限制。SLI 是服務水準指標，SLO 是其目標；都只是使用者體驗的近似。</li>
+<li><a href="https://sre.google/sre-book/addressing-cascading-failures/">Google SRE：Addressing Cascading Failures</a>。重試放大、次數限制、重試預算與隨機指數退避。</li>
+<li><a href="https://sre.google/sre-book/handling-overload/">Google SRE：Handling Overload</a>。過載時的容量保護與妥善拒絕；具體策略仍須按工作負載驗證。</li>
+<li><a href="https://watch.afi.com/movie/collateral-damage">AFI：Collateral Damage</a>、<a href="https://www.warnerbros.com/movies/collateral-damage">Warner Bros. 電影頁</a>、<a href="https://www.ccr.com.tw/goods/62191">臺灣 DVD 發行資料</a>。核對年份、劇情起點與《間接傷害》片名；電影不作科學證據。</li>
+<li><a href="https://docs.github.com/en/copilot/responsible-use/agents">GitHub：Copilot Agents application card</a>。官方記載審查漏判、誤判與不準確建議，要求審查及測試；不是不同 AI 工具的比較研究。</li>
+<li><a href="https://dora.dev/research/2025/dora-report/">DORA：2025 年研究摘要</a>、<a href="https://services.google.com/fh/files/misc/2025_dora_ai_capabilities_model.pdf">AI Capabilities Model 報告，PDF</a>。摘要與方法介紹支持組織脈絡、小批次及本地驗證的討論；問卷與質性研究不作單一工具或個案的因果保證。</li>
+</ol>
+]]></content:encoded></item></channel></rss>

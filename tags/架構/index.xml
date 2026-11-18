@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>架構 on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/%E6%9E%B6%E6%A7%8B/</link><description>Recent content in 架構 on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Thu, 05 Nov 2026 13:25:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/%E6%9E%B6%E6%A7%8B/index.xml" rel="self" type="application/rss+xml"/><item><title>從一張 Hash 表到一萬臺伺服器：讀李智慧，理解後端技術的第一性原理</title><link>https://d94807974-commits.github.io/posts/li-zhihui-first-principles-architecture/</link><pubDate>Wed, 04 Nov 2026 14:26:02 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/li-zhihui-first-principles-architecture/</guid><description>通讀李智慧的《大型網站技術架構》、《從0開始學大數據》、《後端技術面試38講》和《高併發架構實戰課》，我發現他反覆講的其實是同一件事：技術不是一堆孤立的知識點，而是少數幾條原理在不同尺度上的反覆出現。本文用這條主線串起軟體設計、網站架構、大數據和技術人成長，配上可執行的 Go 程式碼，也談談這些觀點在今天的侷限。</description><content:encoded><![CDATA[<div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>技術世界裡真正需要掌握的原理並不多，它們只是在不同尺度上一遍遍出現。架構師的本事，是在新問題裡認出老原理。</p>
+</div><figure>
+<img src="/images/li-zhihui-first-principles-architecture/servers.jpg" alt="機架伺服器" loading="lazy" width="700">
+<figcaption>圖片：VPSExpertYuri / <a href="https://commons.wikimedia.org/wiki/File:Servers.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>。從一張 Hash 表到一排機架，變的是尺度，不變的是原理。</figcaption>
+</figure>
+<h2 id="寫在前面">寫在前面</h2>
+<p>李智慧這個名字，很多後端工程師最早是在一本書的封面上看到的：2013 年電子工業出版社出版的《大型網站技術架構：核心原理與案例分析》。後來他在極客時間陸續開了《從 0 開始學大數據》《後端技術面試 38 講》和《李智慧 · 高併發架構實戰課》。按極客時間上的介紹，他做過阿里巴巴技術專家、Intel 亞太研發中心架構師、宅米和 WiFi 萬能鑰匙 CTO，後來任同程旅行交通首席架構師，也給 Apache Spark 貢獻過程式碼。</p>
+<p>把這些書和專欄放在一起讀，最強烈的感受是：<strong>他講的東西看起來跨度很大，從 Hash 表、JVM、設計模式，到負載均衡、HDFS、秒殺系統，再到德雷福斯模型，其實一直在用同一種方式拆問題。</strong></p>
+<p>我想用一句話來概括這篇文章的主線：</p>
+<blockquote>
+  <p><strong>技術世界裡真正需要掌握的原理並不多，它們只是在不同尺度上一遍遍出現。架構師的本事，是在新問題裡認出老原理。</strong></p>
+
+</blockquote><p>下面按&quot;方法 → 軟體設計 → 系統架構 → 大數據 → 人&quot;的順序展開，最後談談我認為這些觀點在今天有哪些侷限。</p>
+<h2 id="一方法第一性原理把學習變成驗證">一、方法：第一性原理，把&quot;學習&quot;變成&quot;驗證&quot;</h2>
+<p>《後端技術面試 38 講》的開篇詞就叫《掌握軟體開發技術的第一性原理》。他的出發點是：新技術層出不窮，每次從頭學都很痛苦，以至於行業裡流傳著&quot;35歲以後就不能寫程式碼了&quot;的說法。而他認為&quot;太陽底下沒有新鮮事，絕大多數新技術其實都脫胎於一些既有的技術體系&quot;。</p>
+<p>他對理想狀態的描述，我覺得是整個專欄最有價值的一段：建立了自己的技術思維體系之後，再碰到新技術，&ldquo;這個時候你其實不需要去學習這個新技術了，而是去驗證這個新技術&rdquo;。也就是先根據原理推導它大概會怎麼實現，再去看文件和程式碼，驗證自己猜得對不對。</p>
+<p>落到操作層面，他在《從 0 開始學大數據》的答疑裡給過一個很具體的方法，叫 <strong>5-20-2 法則</strong>：</p>
+<ul>
+<li>用 5 分鐘瞭解新知識的特點、應用場景和要解決的問題；</li>
+<li>用 20 分鐘理解它的主要設計原理、核心思想和思路；</li>
+<li>再花 2 個小時看關鍵設計細節，嘗試使用或者寫個 demo。</li>
+</ul>
+<p>每一步過不去就先放下。順序很重要：**先問它解決什麼問題，最後才看細節。**多數人正好反過來，於是知識永遠是孤立的點。</p>
+<p>他在同一篇答疑裡還有一句話，我把它當作這套方法的目標：要做工具的主人，而不是工具的奴隸，&ldquo;最終的目標是要超越 Hadoop，打造適合自己業務場景的大數據解決方案&rdquo;。</p>
+<h2 id="二軟體設計好程式碼的唯一標準是能扛住變化">二、軟體設計：好程式碼的唯一標準是&quot;能扛住變化&quot;</h2>
+<h3 id="21-糟糕的設計會腐壞">2.1 糟糕的設計會&quot;腐壞&quot;</h3>
+<p>在《軟體設計的目的：糟糕的程式設計師比優秀的程式設計師差在哪裡？》裡，他給出了一個很鋒利的判斷：**好的設計和壞的設計最大的差別，體現在應對需求變更的能力上。**差的程式設計師害怕需求變更，好的程式設計師歡迎需求變更，因為他們一開始就是針對變更去設計的。</p>
+<p>他列了糟糕設計的五個特徵：<strong>僵化性</strong>（改一處牽動一大片）、<strong>脆弱性</strong>（改了這裡，莫名其妙壞了那裡）、<strong>牢固性</strong>（想複用一部分，卻拆不出來）、<strong>粘滯性</strong>（壞的改法比好的改法更容易實施，於是軟體越改越爛）、<strong>晦澀性</strong>（程式碼看不懂，後人只能亂改）。</p>
+<p>他用的例子極其樸素：一個把鍵盤輸入複製到印表機的 <code>copy()</code> 函式。第一次需求變更要支援紙帶機輸入，加了一個布林變數 <code>ptFlag</code>；第二次要支援輸出到紙帶機，又加了 <code>ptFlag2</code>，還配了一行註釋&quot;使用前請重置這些flag&quot;。兩次變更以後，一段清晰的程式碼就同時具備了僵化、脆弱、粘滯、晦澀四種病。</p>
+<p>解法是把輸入和輸出抽象成 <code>Reader</code> 和 <code>Writer</code> 介面，<code>copy</code> 只依賴介面。有意思的是，用 Go 寫這個例子時，<strong>標準庫已經替你做好了這件事</strong>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// copyChars 只依赖抽象：任何 io.Reader 到任何 io.Writer。</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 键盘、文件、网络连接、内存缓冲……都不需要改这一行代码。</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">copyChars</span>(<span style="color:#a6e22e">r</span> <span style="color:#a6e22e">io</span>.<span style="color:#a6e22e">Reader</span>, <span style="color:#a6e22e">w</span> <span style="color:#a6e22e">io</span>.<span style="color:#a6e22e">Writer</span>) <span style="color:#66d9ef">error</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">br</span>, <span style="color:#a6e22e">bw</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">bufio</span>.<span style="color:#a6e22e">NewReader</span>(<span style="color:#a6e22e">r</span>), <span style="color:#a6e22e">bufio</span>.<span style="color:#a6e22e">NewWriter</span>(<span style="color:#a6e22e">w</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">bw</span>.<span style="color:#a6e22e">Flush</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">c</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">br</span>.<span style="color:#a6e22e">ReadByte</span>()
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">==</span> <span style="color:#a6e22e">io</span>.<span style="color:#a6e22e">EOF</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">bw</span>.<span style="color:#a6e22e">WriteByte</span>(<span style="color:#a6e22e">c</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><code>io.Reader</code>/<code>io.Writer</code> 之所以成為 Go 生態裡最成功的兩個介面，原因和李智慧講的完全一樣：它們把&quot;變化的東西&quot;（裝置）和&quot;不變的東西&quot;（複製邏輯）隔開了。</p>
+<h3 id="22-物件導向的本質是多型框架的本質是依賴倒置">2.2 物件導向的本質是多型，框架的本質是依賴倒置</h3>
+<p>我認為《後端技術面試 38 講》裡寫得最透的是第 12 篇和第 16 篇。</p>
+<p>第 16 篇指出，C 語言用結構體和函式指標也能實現封裝、繼承和多型，只是沒有語法和編譯上的約束，很危險。所以他的結論是：<strong>多型才是物件導向程式設計的本質，設計模式的精髓就是對多型的靈活應用。</strong></p>
+<p>第 12 篇講依賴倒置原則，最有價值的一點是他強調了一個很多人忽略的細節：**依賴倒置的關鍵不是&quot;依賴介面&quot;，而是&quot;介面歸誰所有&quot;。**Service 層依賴 DAO 層定義的介面，這不叫依賴倒置；只有介面由高層（Service）定義、低層（DAO）去實現，才算倒置。他的 <code>Button</code>/<code>Lamp</code> 例子裡，抽象介面叫 <code>ButtonServer</code>，歸高層的 Button 所有，&ldquo;我們從命名上也能看的出來，這正是依賴倒置原則的精髓所在&rdquo;。</p>
+<p>由此他回答了一個看似神奇的問題：為什麼我們的程式不呼叫 Tomcat、Spring 的程式碼，卻能用上它們的功能？因為框架遵循的是好萊塢原則，&ldquo;Don&rsquo;t call me, I will call you&rdquo;：應用實現框架定義的介面（比如 <code>Servlet</code>），由框架來呼叫應用。</p>
+<p>第 17 篇順勢給出了框架和工具的區別：**框架呼叫你的程式碼，工具被你的程式碼呼叫。**Tomcat 是框架，Log4J 是工具。</p>
+<p>這裡我想補充一個他在第 7 篇裡沒有展開的觀察。他在講程式語言演化時，把 Go 的隱式介面當作&quot;物件的邊界和封裝性開始模糊&quot;的例子。但從依賴倒置的角度看，<strong>Go 的隱式介面反而讓&quot;介面歸高層所有&quot;變得最自然</strong>：呼叫方可以在自己的包裡宣告一個只含所需方法的小介面，被呼叫方完全不需要知道它的存在，也不用 import 它。Go 社群&quot;在使用方定義介面&quot;的慣例，本質上就是第 12 篇講的介面所有權倒置。同一個原理，在不同的語言裡有不同的落地方式。</p>
+<h2 id="三系統架構高併發是根源三板斧是手段">三、系統架構：高併發是根源，三板斧是手段</h2>
+<h3 id="31-大型網站是演化出來的">3.1 大型網站是演化出來的</h3>
+<p>《大型網站技術架構》第一章畫了一條演化路徑：從單機網站開始，經過應用與資料分離、快取、叢集、讀寫分離、CDN、分散式儲存、業務拆分，最終走到分散式服務。</p>
+<p>比路徑本身更重要的是這一章的&quot;價值觀&quot;和&quot;誤區&quot;兩節。價值觀有兩條：**大型網站架構技術的核心價值是隨網站所需靈活應對；驅動大型網站技術發展的主要力量是網站的業務發展。**誤區有三條：**一味追隨大公司的解決方案、為了技術而技術、企圖用技術解決所有問題。**據讀者整理的讀書筆記，這本書的後記還有一句很有名的話：大型網站不是設計出來的，而是逐步演化出來的。</p>
+<p>這和第二節講的軟體設計是同一個道理：<strong>不要試圖一次性預測所有變化，而是讓系統在每一個階段都保留應對下一次變化的能力。</strong></p>
+<h3 id="32-五個要素以及它們之間的關係">3.2 五個要素，以及它們之間的關係</h3>
+<p>書中第三章提出，除了功能需求，軟體架構還要關注<strong>效能、可用性、伸縮性、擴充性、安全性</strong>五個要素，&ldquo;架構設計過程中需要平衡這 5 個要素之間的關係&rdquo;。幾個定義很值得記住：</p>
+<ul>
+<li><strong>可用性</strong>的前提是伺服器必然會宕機，主要手段是冗餘。</li>
+<li><strong>伸縮性</strong>指通過往集群裡加伺服器來應對增長；快取叢集加機器可能導致路由失效，需要改進路由演算法。</li>
+<li><strong>擴充性</strong>直接關注功能需求，主要手段是事件驅動架構和分散式服務。</li>
+</ul>
+<p>我的理解是：**伸縮性是對&quot;量&quot;的變化開放，擴充性是對&quot;功能&quot;的變化開放。**後者本質上就是開閉原則在系統層面的版本。</p>
+<p>到了《高併發架構實戰課》，他進一步釐清了&quot;三高&quot;的關係：**高併發、高效能、高可用並不是平行的，高併發是根源和核心。**大量使用者同時請求導致資源快速消耗、響應變慢，這是效能問題；效能繼續惡化導致資源耗盡、系統崩潰，這就是可用性問題。</p>
+<h3 id="33-水平伸縮與三板斧">3.3 水平伸縮與&quot;三板斧&quot;</h3>
+<p>應對高併發，他把方案分成兩類：<strong>垂直伸縮</strong>（換更強的機器）和<strong>水平伸縮</strong>（用更多機器組成叢集）。網際網路走的是後一條路，因為它有天然的彈性，可以&quot;一臺伺服器一臺伺服器地新增資源&quot;，而網際網路應用很難提前估計會有多少使用者、在什麼時候來訪問。</p>
+<p>在《高效能架構的三板斧》裡，他先給出一個簡單的關係：<strong>吞吐量 = 併發數 ÷ 響應時間</strong>。隨著併發增加，系統依次經歷效能測試區間（吞吐量上升、響應時間基本不變）、負載測試區間（吞吐量見頂後下降、響應時間上升）和壓力測試區間（直到崩潰，吞吐量為 0）。</p>
+<p>架構層面的三板斧是：</p>
+<table>
+	<thead>
+			<tr>
+					<th>手段</th>
+					<th>解決什麼壓力</th>
+					<th>關鍵點</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>負載均衡</td>
+					<td>單臺伺服器的併發壓力</td>
+					<td>應用層負載均衡會成為瓶頸；大規模叢集多用鏈路層負載均衡，響應不再經過負載均衡伺服器</td>
+			</tr>
+			<tr>
+					<td>分散式快取</td>
+					<td>讀壓力</td>
+					<td>包括 CDN、反向代理、分散式物件快取；快取只能改善讀，不能改善寫</td>
+			</tr>
+			<tr>
+					<td>訊息佇列</td>
+					<td>寫壓力</td>
+					<td>寫操作非同步化，&ldquo;削峰填谷&rdquo;</td>
+			</tr>
+	</tbody>
+</table>
+<p>但他馬上補了一句，我認為比三板斧本身更重要：&ldquo;不問青紅皂白，不管三七二十一，上來就是三板斧，那做架構師也未免太容易了些。&ldquo;效能最佳化要從效能測試開始：測出指標，分析瓶頸，最佳化，再測試驗證。</p>
+<h3 id="34-限流器一個看得見原理的小例子">3.4 限流器：一個看得見原理的小例子</h3>
+<p>《限流器設計》這一講以一個叫 Diana 的限流器元件為例，講了四種演算法：固定視窗、滑動視窗、漏桶、令牌桶。他特別指出了固定視窗的缺陷：在視窗邊界前後各來一波請求，短時間內通過的請求數可能是限額的兩倍。</p>
+<p>他給的令牌桶虛擬碼有一個很巧妙的地方：**不需要後臺執行緒往桶裡放令牌，取令牌時按時間差&quot;補算&quot;即可。**下面用 Go 實現這兩種演算法，並把&quot;邊界突發&quot;場景跑一遍：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// 固定窗口：窗口切换时计数器清零</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">f</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">FixedWindow</span>) <span style="color:#a6e22e">Allow</span>(<span style="color:#a6e22e">now</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Time</span>) <span style="color:#66d9ef">bool</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">mu</span>.<span style="color:#a6e22e">Lock</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">mu</span>.<span style="color:#a6e22e">Unlock</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">now</span>.<span style="color:#a6e22e">Sub</span>(<span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">winStart</span>) <span style="color:#f92672">&gt;=</span> <span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">size</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">winStart</span> = <span style="color:#a6e22e">now</span>.<span style="color:#a6e22e">Truncate</span>(<span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">size</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">count</span> = <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">count</span> <span style="color:#f92672">&gt;=</span> <span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">limit</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">f</span>.<span style="color:#a6e22e">count</span><span style="color:#f92672">++</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 令牌桶：按距离上次计算的时间差补发令牌，上限为桶容量</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">b</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">TokenBucket</span>) <span style="color:#a6e22e">Allow</span>(<span style="color:#a6e22e">now</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Time</span>) <span style="color:#66d9ef">bool</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">mu</span>.<span style="color:#a6e22e">Lock</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">mu</span>.<span style="color:#a6e22e">Unlock</span>()
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">tokens</span> <span style="color:#f92672">+=</span> <span style="color:#a6e22e">now</span>.<span style="color:#a6e22e">Sub</span>(<span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">last</span>).<span style="color:#a6e22e">Seconds</span>() <span style="color:#f92672">*</span> <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">rate</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">tokens</span> &gt; <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">capacity</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">tokens</span> = <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">capacity</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">last</span> = <span style="color:#a6e22e">now</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">tokens</span> &lt; <span style="color:#ae81ff">1</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">b</span>.<span style="color:#a6e22e">tokens</span><span style="color:#f92672">--</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>限額都設為每秒 100 個請求，在第 0.99 秒和第 1.00 秒各湧入 100 個請求，執行結果是：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>fixed window, 10ms 內放行: 200
+</span></span><span style="display:flex;"><span>token bucket, 10ms 內放行: 101
+</span></span></code></pre></div><p>固定視窗在 10 毫秒裡放行了 200 個，正是限額的兩倍；令牌桶放行了滿桶的 100 個，加上這 10 毫秒裡新補的 1 個。這也解釋了為什麼他建議&quot;通常場景中優先使用&quot;令牌桶，Diana 的預設演算法也是令牌桶。</p>
+<h3 id="35-秒殺用架構繞開問題而不是硬扛問題">3.5 秒殺：用架構繞開問題，而不是硬扛問題</h3>
+<p>秒殺系統 Apollo 的設計，我最欣賞的是它處處體現&quot;不硬扛&rdquo;：</p>
+<ul>
+<li>秒殺<strong>獨立部署</strong>，甚至使用獨立域名；</li>
+<li>頁面走<strong>多級快取</strong>（瀏覽器、CDN、伺服器），重新整理基本打不到伺服器；</li>
+<li>用一個<strong>不被快取的小 JavaScript 檔案</strong>控制按鈕是否點亮，並下發帶隨機數的下單 URL；</li>
+<li>每臺下單伺服器只放行少量請求，其餘直接進入秒殺結束頁。</li>
+</ul>
+<p>秒殺的核心不是&quot;如何處理一百萬個請求&rdquo;，而是&quot;如何讓一百萬個請求根本不需要被處理&quot;。</p>
+<p>這一講的結尾講了一個故事：某大廠要臨時做一場秒殺，時間太短、併發太高，參會的架構師面面相覷，最後一位架構師站出來接下專案並完成了任務，幾年後晉升為集團副總裁。他的點評是：&ldquo;對一個架構師而言，精通技術是重要的，而用技術建立起自己的信心，在關鍵時刻有勇氣面對挑戰更重要。&rdquo;</p>
+<h2 id="四大數據同一個原理換了一個尺度">四、大數據：同一個原理，換了一個尺度</h2>
+<p>如果說前面講的是&quot;用更多機器處理更多請求&quot;，那麼大數據講的就是&quot;用更多機器處理更多資料&quot;。他在《後端技術面試 38 講》第 31 篇裡說得很直接：大數據技術是分散式技術在資料處理領域的創新性應用，本質和此前講的分散式技術&quot;一脈相承&quot;。</p>
+<h3 id="41-從-raid-到-hdfs垂直伸縮到水平伸縮">4.1 從 RAID 到 HDFS：垂直伸縮到水平伸縮</h3>
+<p>《從 0 開始學大數據》第 5 講用 RAID 作為引子：大規模儲存要解決容量、讀寫速度、可靠性三個問題。RAID 在一臺伺服器的多塊磁碟上通過分片併發讀寫和冗餘校驗解決它們，是<strong>垂直伸縮</strong>；把同樣的思想搬到伺服器叢集上，就是 HDFS，是<strong>水平伸縮</strong>。&ldquo;垂直伸縮總有盡頭，水平伸縮理論上是沒有止境的。&rdquo;</p>
+<h3 id="42-移動計算比行動數據更划算">4.2 移動計算比行動數據更划算</h3>
+<p>第 4 講的核心思想是：程式比資料小得多，所以把程式分發到資料所在的伺服器上執行，而不是把 PB 級的資料搬到程式那裡。各節點的任務程序下載程式包，通過反射載入，再讀取本機的資料分片進行計算。</p>
+<p>而第 7 講的標題本身就是一個洞見：**MapReduce 既是程式設計模型，又是計算框架。**開發者只寫 <code>map</code> 和 <code>reduce</code> 兩個函式，切分、排程、shuffle、容錯都交給框架。</p>
+<p>讀到這裡我意識到，**這其實就是第二節講的依賴倒置和好萊塢原則，只是尺度從一個程序變成了一萬臺伺服器。**你不呼叫 Hadoop，Hadoop 呼叫你。下面這個幾十行的 Go 程式把這層關係剝離出來：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">MapFunc</span> <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">line</span> <span style="color:#66d9ef">string</span>) []<span style="color:#a6e22e">KV</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">ReduceFunc</span> <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">key</span> <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">values</span> []<span style="color:#66d9ef">int</span>) <span style="color:#a6e22e">KV</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// &#34;框架&#34;掌握主流程：map -&gt; shuffle -&gt; reduce，用户只提供两个函数</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">Run</span>(<span style="color:#a6e22e">splits</span> [][]<span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">m</span> <span style="color:#a6e22e">MapFunc</span>, <span style="color:#a6e22e">r</span> <span style="color:#a6e22e">ReduceFunc</span>) []<span style="color:#a6e22e">KV</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">mapped</span> []<span style="color:#a6e22e">KV</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">split</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">splits</span> { <span style="color:#75715e">// 真实系统中，每个分片在数据所在的节点上计算</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">line</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">split</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#a6e22e">mapped</span> = append(<span style="color:#a6e22e">mapped</span>, <span style="color:#a6e22e">m</span>(<span style="color:#a6e22e">line</span>)<span style="color:#f92672">...</span>)
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">groups</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">map</span>[<span style="color:#66d9ef">string</span>][]<span style="color:#66d9ef">int</span>{} <span style="color:#75715e">// shuffle：相同 key 汇聚到一起</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">kv</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">mapped</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">groups</span>[<span style="color:#a6e22e">kv</span>.<span style="color:#a6e22e">Key</span>] = append(<span style="color:#a6e22e">groups</span>[<span style="color:#a6e22e">kv</span>.<span style="color:#a6e22e">Key</span>], <span style="color:#a6e22e">kv</span>.<span style="color:#a6e22e">Value</span>)
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">out</span> []<span style="color:#a6e22e">KV</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">k</span>, <span style="color:#a6e22e">vs</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">groups</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">out</span> = append(<span style="color:#a6e22e">out</span>, <span style="color:#a6e22e">r</span>(<span style="color:#a6e22e">k</span>, <span style="color:#a6e22e">vs</span>))
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">sort</span>.<span style="color:#a6e22e">Slice</span>(<span style="color:#a6e22e">out</span>, <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">i</span>, <span style="color:#a6e22e">j</span> <span style="color:#66d9ef">int</span>) <span style="color:#66d9ef">bool</span> { <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">out</span>[<span style="color:#a6e22e">i</span>].<span style="color:#a6e22e">Key</span> &lt; <span style="color:#a6e22e">out</span>[<span style="color:#a6e22e">j</span>].<span style="color:#a6e22e">Key</span> })
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">out</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>對兩個資料塊執行 WordCount，輸出 <code>[{hadoop 1} {hello 3} {spark 1} {world 1}]</code>。真實的 MapReduce 複雜得多，但控制權的結構一樣。</p>
+<p>而 shuffle 那一步裡的 <code>map[string][]int</code>，又回到了他面試過上千人的那道題：Hash 表為什麼是 O(1)。同一個&quot;按 key 分組&quot;的思想，一個在記憶體裡，一個跨越整個叢集。</p>
+<h3 id="43-spark同樣的本質更好的實現">4.3 Spark：同樣的本質，更好的實現</h3>
+<p>第 13 講的標題是《同樣的本質，為何Spark可以更高效？》。他的回答是：Spark &ldquo;可以算作是一種MapReduce計算模型的不同實現&rdquo;，以 shuffle 為界把計算切成多個階段並組織成 DAG，把前一個 Reduce 和後一個 Map 連起來連續計算，並且優先用記憶體儲存中間結果。他還指出，Spark 在 2012 年左右流行，是因為記憶體成本降低了一個數量級，而機器學習又需要大量迭代計算。</p>
+<p><strong>新技術往往不是推翻舊原理，而是在新的約束條件下換一種方式實現它。</strong></p>
+<h3 id="44-兩種架構模式的對照">4.4 兩種架構模式的對照</h3>
+<p>在 Hadoop 模組的答疑裡，他指出 HDFS（NameNode/DataNode）、MapReduce 1（JobTracker/TaskTracker）、Yarn（ResourceManager/NodeManager）都是一主多從，並總結出大數據領域的架構模式：&ldquo;集中管理，分佈儲存與計算&rdquo;。原因是大數據要對資料和任務統一管理；而線上應用的每個請求都相互獨立，為了高效能和便於伸縮，&ldquo;會盡量避免有全域管理者&rdquo;。</p>
+<p>同樣是分散式，<strong>有沒有全域管理者，取決於任務之間有沒有關聯</strong>。</p>
+<h2 id="五人從高階新手到專家">五、人：從高階新手到專家</h2>
+<p>《技術修煉之道》借用了<strong>德雷福斯模型</strong>：新手、高階新手、勝任者、精通者、專家五個階段。最扎心的結論是：新手會自然進入高階新手階段，但高階新手不會自然進入後面的階段；超過半數的人終其一生都停留在高階新手階段，而&quot;其中一個重要的原因是：高階新手不知道自己是高階新手&quot;。高階新手把規則當作普適真理，精通者則明白&quot;所有的規則都只在特定的場景中才會有效&quot;。他給了三條建議：<strong>勇於承擔責任、在實踐中保持技能（摘&quot;跳起來能夠得著&quot;的蘋果）、關注問題場景。</strong></p>
+<p>《技術落地之道》講了一個隧道車燈的故事：入口立牌&quot;請開啟車燈&quot;，帶來了遊客忘關燈的新問題，幾輪修補之後，最後的解法是在出口寫一句&quot;你的燈亮著嗎？&quot;，**提醒問題的存在，讓該解決問題的人自己去解決。**他還給了一個公式：<strong>問題 = 期望 − 體驗</strong>。</p>
+<p>《技術進階之道》畫了一個按二八定律劃分的影響力金字塔，從團隊、公司、全國、全球影響者一路到行業開創者。他提到寫部落格、演講、出書可以作為獲得全國影響力的&quot;捷徑&quot;，但也強調&quot;技術影響力的前提是真正的技術實力&quot;。</p>
+<p>《高併發架構實戰課》的結束語寫了一個架構師的一天，總結是：&ldquo;架構師最核心的事情是要控制技術局面，讓事情有節奏地推進&rdquo;，而&quot;做事情要想看起來毫不費力，必須要在看不到的地方費很大力氣&quot;。</p>
+<h2 id="六我的反思這些觀點的邊界在哪裡">六、我的反思：這些觀點的邊界在哪裡</h2>
+<p>以下是我自己的看法。</p>
+<p>**1. 案例帶有鮮明的時代印記。**書中的大量例子來自 Java Web 和 Hadoop 1.x 時代：Servlet、繼承 <code>TestCase</code> 的 JUnit 3、JobTracker。原理沒有過時，但需要讀者自己&quot;翻譯&quot;。比如今天很多批處理跑在存算分離的架構上，網路頻寬大幅提升之後，&ldquo;移動計算比行動數據更划算&quot;不再是一條鐵律，而成了一個需要重新計算的權衡。不過這恰恰印證了他自己的方法：Spark 勝出是因為記憶體變便宜了，存算分離興起是因為網路變快了，<strong>變的是約束條件，不變的是&quot;在約束下做權衡&quot;這件事。</strong></p>
+<p>**2. 有些經驗法則需要還原到場景中。**比如單一職責原則在專欄裡被通俗化為&quot;類檔案儘量不要太大，最好不要超過一屏&rdquo;，Hash 表也被當作面試的&quot;分水嶺&quot;。作為教學，這些簡化很有效（他自己也承認&quot;O(1)&ldquo;這個說法並不嚴謹，極端情況下會退化為連結串列）。但按他自己的德雷福斯模型，把規則當作普適真理正是高階新手的特徵。真正值得學的不是&quot;一屏&quot;這個數字，而是&quot;一個類只應有一個引起它變化的原因&quot;背後的耦合觀。</p>
+<p>**3. 漏桶並非總不推薦。**他認為漏桶&quot;即使系統資源很空閒&quot;也會一個接一個慢慢處理請求，因此&quot;除非有特別的場景需求&quot;否則不推薦。這個判斷站在&quot;保護自身、最大化利用資源&quot;的視角是對的。但如果你是呼叫方，下游第三方介面要求嚴格平滑的呼叫速率，漏桶的&quot;整形&quot;特性恰恰就是你需要的。**令牌桶限的是總量、允許突發；漏桶限的是速率、消除突發。**選哪個，取決於你在保護誰。</p>
+<p><strong>4. 影響力金字塔有幸存者偏差的風險。</strong>&ldquo;寫部落格成為全國影響者&quot;的路徑確實存在，但他自己也提醒要有眼光。對大多數人來說，先在團隊內成為出了重要問題會被想到的人，比追求外部影響力更現實。</p>
+<p><strong>5. &ldquo;演化&quot;不等於&quot;不設計&rdquo;。</strong>&ldquo;大型網站是演化出來的&quot;常被誤讀為&quot;不需要前期設計&rdquo;。但他在《高併發架構實戰課》裡反覆做的恰恰是前期估算，並說&quot;技術指標估算能力是架構師的一個重要能力&rdquo;。我的理解是：**演化論反對的是過度設計，不反對估算。**知道系統大概會長成什麼樣，才能在當前階段留出恰當的擴充點。</p>
+<h2 id="七可以馬上開始做的幾件事">七、可以馬上開始做的幾件事</h2>
+<ol>
+<li>**用 5-20-2 法則重學一門你&quot;會用&quot;的技術。**先用一句話寫下它解決的問題，再寫出它的核心原理，最後才去看細節。寫不出第一句，說明你只會 API。</li>
+<li>**用五個特徵給一段改過多次的程式碼&quot;體檢&rdquo;。**看到 <code>xxxFlag</code> 時，想想 <code>copy()</code> 的故事。</li>
+<li>**檢查一個介面歸誰所有。**挑一個 Service 和 DAO 之間的介面，問問它應該放在哪個包裡。在 Go 裡試著把介面挪到使用方。</li>
+<li>**給你的系統畫一條效能特性曲線。**壓測出吞吐量和響應時間隨併發變化的拐點，再決定要不要上&quot;三板斧&quot;，以及先上哪一斧。</li>
+<li><strong>為入口加上一個令牌桶限流器，並寫清降級策略</strong>，比如 Redis 不可用時降級為本地限流。</li>
+<li><strong>開需求會時先問&quot;我們要解決的問題是什麼&quot;</strong>，用&quot;問題 = 期望 − 體驗&quot;檢驗它。</li>
+<li>**每季度問自己：我在德雷福斯模型的哪一級？**如果今年和去年做的事幾乎一樣，答案多半是高階新手。</li>
+</ol>
+<h2 id="結語">結語</h2>
+<p>從一張 Hash 表的按 key 定位，到 MapReduce 的按 key shuffle；從 <code>copy()</code> 依賴 <code>Reader</code> 介面，到 Tomcat 呼叫你的 <code>Servlet</code>，再到 Hadoop 把你的 <code>map</code> 函式分發到一萬臺機器上；從 RAID 的多盤併發，到 HDFS 的多機併發。李智慧的寫作反覆示範的，是同一個動作：<strong>把新問題還原成老原理。</strong></p>
+<p>他在開篇詞裡說，如果具體的技術是一朵花，那麼技術思維體系就是一棵樹。對我來說，這篇文章就是給自己的那棵樹修一次枝。</p>
+<h2 id="參考資料">參考資料</h2>
+<ul>
+<li>李智慧.《大型網站技術架構：核心原理與案例分析》，電子工業出版社，2013（目錄與簡介見 <a href="https://baike.baidu.com/item/%E5%A4%A7%E5%9E%8B%E7%BD%91%E7%AB%99%E6%8A%80%E6%9C%AF%E6%9E%B6%E6%9E%84%EF%BC%9A%E6%A0%B8%E5%BF%83%E5%8E%9F%E7%90%86%E4%B8%8E%E6%A1%88%E4%BE%8B%E5%88%86%E6%9E%90">百度百科</a>）</li>
+<li>李智慧.《這幾個問題解決了，大型網站架構設計不再是困難》（&ldquo;什麼是架構&quot;與&quot;軟體架構的五要素&rdquo;，節選自上書；<a href="https://blog.51cto.com/u_16099270/13027287">51CTO 轉載</a>）</li>
+<li>極客時間專欄 <a href="https://time.geekbang.org/column/intro/100040201">《後端技術面試 38 講》</a>：開篇詞、02 Hash 表、07 程式語言原理、10 軟體設計的目的、12 依賴倒置原則、16 設計模式基礎、17 程式設計框架中的設計模式、31 大數據架構、34 技術修煉之道、35 技術進階之道、36 技術落地之道（文本見 <a href="https://learn.lianglianglee.com/%E4%B8%93%E6%A0%8F/%E5%90%8E%E7%AB%AF%E6%8A%80%E6%9C%AF%E9%9D%A2%E8%AF%9538%E8%AE%B2/">lianglianglee 存檔</a>）</li>
+<li>極客時間專欄《從 0 開始學大數據》：<a href="https://time.geekbang.org/column/article/65106">04 移動計算比行動數據更划算</a>、05 從 RAID 看垂直伸縮到水平伸縮的演化、07 MapReduce 既是程式設計模型又是計算框架、10 模組答疑：我們能從 Hadoop 學到什麼、13 同樣的本質，為何 Spark 可以更高效（文本見 <a href="https://learn.lianglianglee.com/%E4%B8%93%E6%A0%8F/%E4%BB%8E0%E5%BC%80%E5%A7%8B%E5%AD%A6%E5%A4%A7%E6%95%B0%E6%8D%AE/">lianglianglee 存檔</a>）</li>
+<li>極客時間專欄 <a href="https://time.geekbang.org/column/intro/100105701">《李智慧 · 高併發架構實戰課》</a>：<a href="https://time.geekbang.org/column/article/486682">開篇詞</a>、02 高併發架構設計方法、08 秒殺系統設計、12 高效能架構的三板斧、15 限流器設計、結束語 一個架構師的一天（文本見 <a href="https://learn.lianglianglee.com/%E4%B8%93%E6%A0%8F/%E6%9D%8E%E6%99%BA%E6%85%A7%20%C2%B7%20%E9%AB%98%E5%B9%B6%E5%8F%91%E6%9E%B6%E6%9E%84%E5%AE%9E%E6%88%98%E8%AF%BE/">lianglianglee 存檔</a>）</li>
+<li>文中 Go 程式碼均為本文作者根據上述文章思路編寫，已在本地編譯執行。</li>
+</ul>
+]]></content:encoded></item><item><title>技術人的底層修養：從左耳朵耗子的文章裡讀出的工程哲學</title><link>https://d94807974-commits.github.io/posts/engineering-philosophy-from-coolshell/</link><pubDate>Wed, 04 Nov 2026 14:20:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/engineering-philosophy-from-coolshell/</guid><description>重讀陳皓（左耳朵耗子）在 CoolShell 與《左耳聽風》裡留下的文字，把散落的觀點串成一套框架：學習觀、程式設計觀、架構觀與職業觀。核心只有一句話——把精力花在本質上，把控制交給系統。</description><content:encoded><![CDATA[<div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>陳皓在 CoolShell 留下的學習觀、程式設計觀、架構觀與職業觀，可以收成一句話：把精力花在本質上，把控制交給系統。</p>
+</div><blockquote>
+  <p>芝蘭生於空谷，不以無人而不芳。
+—— 陳皓的 GitHub 個人簡介</p>
+
+</blockquote><figure>
+<img src="/images/engineering-philosophy-from-coolshell/bookcase.jpg" alt="公共書櫃" loading="lazy" width="700">
+<figcaption>圖片：Sir James / <a href="https://commons.wikimedia.org/wiki/File:Public_bookcase_germany_bonn_poppelsdorf_2008_08_10a.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>。技術文章像開放書櫃：精華在於被反覆取用的那幾本。</figcaption>
+</figure>
+<h2 id="引子為什麼今天還要讀-coolshell">引子：為什麼今天還要讀 CoolShell</h2>
+<p>2023 年 5 月，陳皓（網名「左耳朵耗子」，很多人叫他「耗子叔」）因突發心肌梗塞離世，年僅 47 歲。他留下的 CoolShell（酷殼）部落格，從 C++ 虛擬函式表一直寫到 Kubernetes 網路排障、Go 程式設計模式、系統架構原則，二十年裡影響了一代中國程式設計師。</p>
+<p>三年後的今天，技術圈的熱詞換了一輪又一輪，AI 寫程式碼已是日常。重讀他的文章，我發現真正「不過時」的不是某個具體技術，而是他反覆講的一套<strong>底層修養</strong>：怎麼學、怎麼寫、怎麼設計、怎麼對待自己的職業。這些觀點散落在幾百篇文章裡，單獨看像是經驗之談，放在一起看，背後其實是同一個思路：</p>
+<p><strong>分清什麼是本質、什麼是控制；把人的精力花在本質上，把控制交給系統和工具。</strong></p>
+<p>下面我試著用這條線，把他的學習觀、程式設計觀、架構觀和職業觀串起來，並在每部分寫下我自己的理解和打算。</p>
+<h2 id="一學習觀從認知到技能中間沒有捷徑">一、學習觀：從「認知」到「技能」，中間沒有捷徑</h2>
+<h3 id="1-三級轉換認知--知識--技能">1. 三級轉換：認知 → 知識 → 技能</h3>
+<p>在《如何超過大多數人》裡，耗子叔把一個人的能力拆成三層：先有零碎的<strong>認知</strong>，再通過系統學習變成<strong>知識</strong>，最後通過訓練和實踐變成<strong>技能</strong>。每一層都要花時間，大多數人就倒在半路上。</p>
+<p>針對每一層，他都給了具體的方法：</p>
+<ul>
+<li><strong>認知層看資訊源</strong>：資訊渠道（能否拿到一手資訊）、資訊品質（garbage in, garbage out）、資訊密度（好的資訊會逼著你去查資料、思考、動手驗證）。</li>
+<li><strong>知識層看結構</strong>：要建<strong>知識樹</strong>，而不是背零散的知識點；要追問<strong>知識的緣由</strong>，弄清它的來龍去脈；最重要的是學到<strong>方法套路</strong>。他說：「學習不是為了找到答案，而是找到方法。」</li>
+<li><strong>技能層看訓練方式</strong>：精益求精（每次重複都要找更好的做法，否則只是「搬磚」）、允許自己犯錯、找高手切磋。</li>
+</ul>
+<p>這和 2011 年那篇著名的《程式設計師技術練級攻略》一脈相承。那篇文章開頭就提醒：不要亂買書，不要亂追新技術新名詞，基礎的東西會在未來至少 10 年裡通用；要回顧技術的發展歷史；例子再簡單也要親手敲一遍；要多想「為什麼是這樣而不是那樣」。</p>
+<h3 id="2-一手資料與英文">2. 一手資料與英文</h3>
+<p>他多次強調英文能力和一手資料的重要性。在《如何超過大多數人》裡，他提醒只能拿到二手、三手資訊的人，得到的是被別人解讀過的東西，三傳兩遞之後必然失真，甚至會被傳遞資訊的「中間人」篡改；在《別讓自己「牆」了自己》裡，他又把英文能力看作能否融入世界的決定性因素。他推薦的學習材料幾乎都是英文原著、論文和官方文件，比如在講 Pipeline 時直接引用 Rob Pike 的部落格，講呼叫鏈追蹤時直接讓人去讀 Google Dapper 論文。</p>
+<h3 id="3-建一個自己的實驗室">3. 建一個自己的「實驗室」</h3>
+<p>在介紹《程式設計師練級攻略（2018）》怎麼用時，他給的第一條建議是：<strong>建一個自己的實驗室</strong>。徒手把環境搭起來，寫實驗性的小程式去驗證一個技術點，出了問題自己除錯。他甚至說，不要在他的專欄裡學習，要把專欄當嚮導和跳板，真正的學習要線上下系統地做。</p>
+<h3 id="我的反思">我的反思</h3>
+<p>AI 時代，「拿到答案」的成本幾乎降到了零。這讓耗子叔那句「學習不是為了找到答案，而是找到方法」更加刺耳。如果我只會讓 AI 給出答案，我得到的只是<strong>認知</strong>，連<strong>知識</strong>都算不上，更不用說<strong>技能</strong>。我的做法是：遇到 AI 給的方案，至少追問一層「為什麼」，然後在本地實驗室裡把關鍵結論驗證一遍。</p>
+<h2 id="二程式設計觀程式--邏輯--控制">二、程式設計觀：程式 = 邏輯 + 控制</h2>
+<h3 id="1-程式設計的本質">1. 程式設計的本質</h3>
+<p>《左耳聽風》裡的「程式設計範式遊記」系列，從 C 的泛型講到函式式、物件導向、Go 的委託，最後落到一篇《程式設計的本質》。他把 Niklaus Wirth 的「程式 = 演算法 + 資料結構」和 Robert Kowalski 1979 年論文裡的「演算法 = 邏輯 + 控制」合在一起：</p>
+<pre tabindex="0"><code>Program = Logic + Control + Data Structure
+</code></pre><p><strong>Logic</strong> 是業務要解決的問題，<strong>Control</strong> 是解決問題的策略：遍歷還是遞迴、序列還是並行、同步還是非同步、怎麼重試、怎麼排程。他的判斷很直接：絕大多數程式混亂不堪，根本原因就是業務邏輯和控制邏輯糾纏在一起。他在文中把這句話連寫了三遍：</p>
+<blockquote>
+  <p>有效地分離 Logic、Control 和 Data 是寫出好程式的關鍵所在！</p>
+
+</blockquote><p>各種程式設計範式，本質上都是在做這種分離。Map/Reduce/Filter 是控制，傳進去的 lambda 才是邏輯；介面抽象了邏輯，多型和依賴注入負責控制；用 DSL 描述表單校驗規則（Logic），再寫一個通用的 <code>check_form</code>（Control），程式碼立刻乾淨了。</p>
+<h3 id="2-從-guard-clauses-到-functional-options">2. 從 Guard Clauses 到 Functional Options</h3>
+<p>這條線貫穿了他很多講程式碼的文章。</p>
+<p>**《如何重構「箭頭型」程式碼》**裡，層層巢狀的 <code>if-else</code> 之所以難讀，是因為錯誤檢查（控制）把正常流程（邏輯）擠到了最深處。他的解法是 Guard Clauses：<strong>讓出錯的程式碼先返回</strong>，剩下的就是正常流程；再把語句塊抽成函式。他還特意反駁了「程式碼不共享就不要抽函式」的說法：函式的作用是遮蔽細節，不只是複用。</p>
+<p>**《Go 程式設計模式：Functional Options》**則是同一思想在 API 設計上的體現。一個 <code>Server</code> 有必填參數和一堆可選參數：寫一組 <code>NewXXXServer</code> 很囉嗦，用 <code>Config</code> 結構體又得糾結傳 <code>nil</code> 還是 <code>Config{}</code>，用 Builder 還要多一個包裝型別。函式式選項把「怎麼配置」變成了可組合的函式：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Option</span> <span style="color:#66d9ef">func</span>(<span style="color:#f92672">*</span><span style="color:#a6e22e">Server</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">Timeout</span>(<span style="color:#a6e22e">d</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Duration</span>) <span style="color:#a6e22e">Option</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">s</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Server</span>) { <span style="color:#a6e22e">s</span>.<span style="color:#a6e22e">Timeout</span> = <span style="color:#a6e22e">d</span> }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">NewServer</span>(<span style="color:#a6e22e">addr</span> <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">port</span> <span style="color:#66d9ef">int</span>, <span style="color:#a6e22e">opts</span> <span style="color:#f92672">...</span><span style="color:#a6e22e">Option</span>) (<span style="color:#f92672">*</span><span style="color:#a6e22e">Server</span>, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">srv</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">Server</span>{<span style="color:#a6e22e">Addr</span>: <span style="color:#a6e22e">addr</span>, <span style="color:#a6e22e">Port</span>: <span style="color:#a6e22e">port</span>, <span style="color:#a6e22e">Protocol</span>: <span style="color:#e6db74">&#34;tcp&#34;</span>, <span style="color:#a6e22e">Timeout</span>: <span style="color:#ae81ff">30</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>}
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">opt</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">opts</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">opt</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">srv</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">srv</span>, <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">s</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">NewServer</span>(<span style="color:#e6db74">&#34;0.0.0.0&#34;</span>, <span style="color:#ae81ff">8080</span>, <span style="color:#a6e22e">Timeout</span>(<span style="color:#ae81ff">300</span><span style="color:#f92672">*</span><span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>))
+</span></span></code></pre></div><p>**《Go 程式設計模式：Pipeline》**更進一步：用 channel 把 <code>echo → odd → sq → sum</code> 串起來，就像 Unix 管道 <code>echo $nums | sq | sum</code>；HTTP 中介軟體則用一個 <code>Handler(h, decors...)</code> 把鑑權、日誌等橫切關注點拼裝起來。每個小函式只做一件事，組合方式就是控制。</p>
+<h3 id="3-把兩個模式合起來重試就是控制">3. 把兩個模式合起來：重試就是「控制」</h3>
+<p>我自己做了個小練習，把耗子叔的兩個觀點合在一起：<strong>重試是典型的控制邏輯</strong>，它不應該散落在每個業務函數裡，而應該是一個可配置、可複用的「控制器」，配置方式正好用 Functional Options。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">retryPolicy</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">maxAttempts</span>         <span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">baseDelay</span>, <span style="color:#a6e22e">maxDelay</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Duration</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">retryable</span>           <span style="color:#66d9ef">func</span>(<span style="color:#66d9ef">error</span>) <span style="color:#66d9ef">bool</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">RetryOption</span> <span style="color:#66d9ef">func</span>(<span style="color:#f92672">*</span><span style="color:#a6e22e">retryPolicy</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">MaxAttempts</span>(<span style="color:#a6e22e">n</span> <span style="color:#66d9ef">int</span>) <span style="color:#a6e22e">RetryOption</span> { <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">p</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">retryPolicy</span>) { <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">maxAttempts</span> = <span style="color:#a6e22e">n</span> } }
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">Backoff</span>(<span style="color:#a6e22e">base</span>, <span style="color:#a6e22e">max</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Duration</span>) <span style="color:#a6e22e">RetryOption</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">p</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">retryPolicy</span>) { <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">baseDelay</span>, <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">maxDelay</span> = <span style="color:#a6e22e">base</span>, <span style="color:#a6e22e">max</span> }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">RetryIf</span>(<span style="color:#a6e22e">f</span> <span style="color:#66d9ef">func</span>(<span style="color:#66d9ef">error</span>) <span style="color:#66d9ef">bool</span>) <span style="color:#a6e22e">RetryOption</span> { <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">p</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">retryPolicy</span>) { <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">retryable</span> = <span style="color:#a6e22e">f</span> } }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Retry 只关心“怎么重试”（Control），fn 只关心“做什么”（Logic）。</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">Retry</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">fn</span> <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>) <span style="color:#66d9ef">error</span>, <span style="color:#a6e22e">opts</span> <span style="color:#f92672">...</span><span style="color:#a6e22e">RetryOption</span>) <span style="color:#66d9ef">error</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">p</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">retryPolicy</span>{<span style="color:#a6e22e">maxAttempts</span>: <span style="color:#ae81ff">3</span>, <span style="color:#a6e22e">baseDelay</span>: <span style="color:#ae81ff">100</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Millisecond</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">maxDelay</span>: <span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>, <span style="color:#a6e22e">retryable</span>: <span style="color:#66d9ef">func</span>(<span style="color:#66d9ef">error</span>) <span style="color:#66d9ef">bool</span> { <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span> }}
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">o</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">opts</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">o</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">p</span>)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">var</span> <span style="color:#a6e22e">err</span> <span style="color:#66d9ef">error</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">maxAttempts</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">fn</span>(<span style="color:#a6e22e">ctx</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> <span style="color:#f92672">||</span> !<span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">retryable</span>(<span style="color:#a6e22e">err</span>) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">d</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">baseDelay</span> <span style="color:#f92672">&lt;&lt;</span> <span style="color:#a6e22e">i</span> <span style="color:#75715e">// 指数退避</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">d</span> &gt; <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">maxDelay</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#a6e22e">d</span> = <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">maxDelay</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#a6e22e">d</span> = <span style="color:#a6e22e">d</span><span style="color:#f92672">/</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Duration</span>(<span style="color:#a6e22e">rand</span>.<span style="color:#a6e22e">Int63n</span>(int64(<span style="color:#a6e22e">d</span><span style="color:#f92672">/</span><span style="color:#ae81ff">2</span>)<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>)) <span style="color:#75715e">// 抖动，避免重试风暴</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">After</span>(<span style="color:#a6e22e">d</span>):
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">ctx</span>.<span style="color:#a6e22e">Done</span>():
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">ctx</span>.<span style="color:#a6e22e">Err</span>()
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>業務程式碼只需要寫 <code>Retry(ctx, callPayment, MaxAttempts(5), RetryIf(isTimeout))</code>。以後想加熔斷、加監控埋點，改的都是控制層，業務函式一行不動。</p>
+<h2 id="三架構觀為失敗而設計把控制收口">三、架構觀：為失敗而設計，把控制收口</h2>
+<h3 id="1-彈力設計故障是常態">1. 彈力設計：故障是常態</h3>
+<p>《左耳聽風》的分散式系統系列裡，「彈力設計」是我讀得最多的一組。他的出發點很樸素：在分散式系統裡，故障不可避免，所以設計的目標不是「不出故障」，而是<strong>出了故障能自我保護、快速恢復</strong>。這正是 AWS 說的 Design for Failure。</p>
+<p>在總結篇裡，他把彈力設計歸成三大塊：</p>
+<ol>
+<li><strong>冗餘服務</strong>：消除單點，靠負載均衡、服務發現、動態路由和健康檢查。</li>
+<li><strong>服務解耦</strong>：橫向做隔離（Bulkheads，按業務分片、按使用者做多租戶），縱向用非同步通訊；一致性問題靠補償交易做「反向交易」。</li>
+<li><strong>服務容錯</strong>：重試、冪等、熔斷、限流、降級。</li>
+</ol>
+<p>這幾個模式之間是有依賴的，這是我覺得最有價值的地方：</p>
+<ul>
+<li><strong>重試必須配合冪等</strong>。呼叫超時的時候，你不知道對方到底成功沒有，安全的重試前提是「同一個請求執行多少次，結果都一樣」。通常的做法是給每次呼叫一個全域唯一 ID，服務端據此判斷請求是否已處理過：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// 用 requestID 做幂等：重复请求直接返回第一次的结果，不会重复扣款</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">Pay</span>(<span style="color:#a6e22e">ctx</span> <span style="color:#a6e22e">context</span>.<span style="color:#a6e22e">Context</span>, <span style="color:#a6e22e">s</span> <span style="color:#a6e22e">Store</span>, <span style="color:#a6e22e">requestID</span> <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">doPay</span> <span style="color:#66d9ef">func</span>() (<span style="color:#66d9ef">string</span>, <span style="color:#66d9ef">error</span>)) (<span style="color:#66d9ef">string</span>, <span style="color:#66d9ef">error</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">r</span>, <span style="color:#a6e22e">loaded</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">s</span>.<span style="color:#a6e22e">PutIfAbsent</span>(<span style="color:#a6e22e">ctx</span>, <span style="color:#a6e22e">requestID</span>, <span style="color:#e6db74">&#34;PROCESSING&#34;</span>); <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;&#34;</span>, <span style="color:#a6e22e">err</span>
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">loaded</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">r</span>, <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">doPay</span>() <span style="color:#75715e">// 完成后把最终结果回写到 requestID 对应的记录</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li><strong>熔斷是對重試的保護</strong>：下游已經掛了還在拼命重試，只會把它壓得更死。熔斷器在 Closed、Open、Half-Open 三種狀態間切換，給下游喘息的時間。</li>
+<li><strong>限流和降級是對自己的保護</strong>。他講降級時舉過一個例子：倫敦諾丁山狂歡節和阿森納球賽散場時，公交地鐵全部免費，犧牲一點收入，換來人群最快疏散。系統也一樣，資源不夠時要主動犧牲一些東西：一致性（強一致退為最終一致）、次要功能、返回資料的完整度。他特別提醒，降級必須事先梳理清楚哪些功能必須保住、哪些可以犧牲，並把預案寫成可以自動或半自動執行的程式碼。</li>
+</ul>
+<h3 id="2-架構原則控制邏輯要收口">2. 架構原則：控制邏輯要「收口」</h3>
+<p>2021 年的《我做系統架構的一些原則》是他架構思想的集大成之作，共十一條。其中<strong>原則七「對控制邏輯進行全面收口」</strong>，和前面「程式 = 邏輯 + 控制」完全呼應，只是放大到了系統層面：服務發現、重試、熔斷、限流、監控、排程、灰度釋出，這些都是控制邏輯，應該統一收到閘道、SDK、Service Mesh、Kubernetes 這類基礎設施裡，而不是讓每個業務團隊各寫一遍。</p>
+<p>他創辦的 MegaEase 做的開源流量排程系統 Easegress（現在是 CNCF 專案），某種意義上就是這個理念的產品化：把流量控制從業務程式碼裡剝離出來。</p>
+<p>其餘幾條，我認為對日常工作最有指導意義的是：</p>
+<ul>
+<li><strong>關注真正的收益，而不是技術本身</strong>：能否讓團隊並行開發、讓系統更穩定、通過簡化和自動化降低成本。三者都不沾的架構沒有意義。</li>
+<li><strong>完備性比效能更重要</strong>：先用支援 ACID 的關係型資料庫，NoSQL 作補充，也就是「先緊後松」。他的經驗是，效能問題總是有解，而丟掉的完備性很難找回來。</li>
+<li><strong>不要依賴自己的經驗，要依賴資料和學習</strong>：他說，如果有一天你開始憑以往經驗做技術決定，你就已經不可能再成長了。</li>
+<li><strong>小心 X-Y 問題，追問原始需求</strong>：很多人來問「大數據流式處理怎麼做」，追問下去發現只需要做一下效能調優。</li>
+<li><strong>不要遷就技術債務</strong>：與其花大力氣遷就，不如直接還；還不了就建一個「新城區」，用防腐層隔開。</li>
+</ul>
+<h3 id="3-效能先定義再測量最後才最佳化">3. 效能：先定義，再測量，最後才最佳化</h3>
+<p>在《效能調優攻略》裡，他先定義效能：效能就是**吞吐量（Throughput）<strong>和</strong>延遲（Latency）**兩個指標，缺一不可。能扛一百萬併發但延遲兩分鐘，毫無意義。然後是方法論：系統出問題時，先別急著看程式碼，先看作業系統報告：CPU、記憶體、磁碟 IO、網路 IO；再用 Profiler 找熱點；常用的最佳化策略無非是空間換時間、時間換空間、簡化程式碼、並行處理。</p>
+<p>這一點和他「依賴資料而不是經驗」的原則是同一件事。</p>
+<h3 id="我的反思-1">我的反思</h3>
+<p>我以前做架構評審，最常犯的錯是一上來就討論「用什麼」：上不上 MQ、用不用 Redis。耗子叔的原則逼著我先回答三個問題：**收益是什麼？失敗了怎麼辦？控制邏輯放在哪？**這三個問題答清楚了，選型往往自然就定了。</p>
+<h2 id="四職業觀效率投資與別牆了自己">四、職業觀：效率、投資與「別牆了自己」</h2>
+<h3 id="1-效率不是幹得多而是價值大">1. 效率不是幹得多，而是價值大</h3>
+<p>2013 年的《加班與效率》裡，他對「靠加班超越對手」的說法批評得非常尖銳：這說明管理者已經想不出自己公司的核心價值了。他給效率下的定義是：</p>
+<blockquote>
+  <p>效率不是比誰幹的活多，而是比誰幹得活有更大的價值。</p>
+
+</blockquote><p>他用「有用功 / 總功」來拆解效率：增加有用功（多問需求方為什麼要做、能不能簡化，「有用功的來源不是拼命做需求，而是砍需求」），降低總功（減少支援性和重複性的工作），形成合力（整個團隊對整個產品負責）。他還介紹了 Amazon 的 T-Shirt Size 估算：業務影響力和投入成本各估一個尺碼，影響小、成本大的需求直接砍掉。</p>
+<p>在《什麼是工程師文化？》裡，他把工程師文化概括為<strong>自由 + 效率</strong>，並認為在自由的環境下痴迷於提升效率，創新就會自然發生。效率的具體做法包括：簡化（「簡化不是簡陋」）、無情地推行自動化、正確的抽象、高品質的產品、持續改進。</p>
+<h3 id="2-20-到-30-歲練學習能力和解決問題的能力">2. 20 到 30 歲，練學習能力和解決問題的能力</h3>
+<p>《技術人員的發展之路》寫於他 40 歲那年。他認為 20 到 30 歲是最關鍵的十年，首要任務是練就<strong>高效的學習能力</strong>和<strong>解決難題的能力</strong>，標誌是在團隊裡顯現出 Leadership。他特別強調，Leadership 不是當領導和經理，而是一種特徵：大家遇到問題時，總是你能站出來說該怎麼辦（幫人解問題）；大家做關鍵決定時，會來徵求你的意見（被人所依賴）。一旦進入「能力強 → 解決更難的問題 → 學到更多」的正迴圈，人生的可能性就會大大增加。</p>
+<p>《程式設計師如何把控自己的職業》延續了這個思路：看清趨勢（他認為技術演進的規律就是自動化加規模化），打牢基礎以不變應萬變，提升成長的效率。他把技術人分成技工、特種工、工程師、設計師/架構師、經理幾類，懂原理的「特種工」不容易隨著某項技術一起被淘汰。</p>
+<h3 id="3-投資而不是投機">3. 投資而不是投機</h3>
+<p>《別讓自己「牆」了自己》裡有一段我很認同：大多數人只會算自己短期會失去什麼，優秀的人算的是投入以後未來能得到什麼，前者是投機，後者是投資。他勸人做有價值的事，開啟眼界，站在更高的維度思考：與其焦慮薪水、地點、戶口這些低維度的東西，不如關心自己的可能性是否更多、能否解決更大更難的問題。</p>
+<h3 id="不是聖經是一種思考方式">不是聖經，是一種思考方式</h3>
+<p>公平地說，耗子叔的很多觀點相當犀利，有些也很有爭議，比如「企業級架構選 Java 基本不會錯」，比如對國內一些網際網路產品的批評。他自己也在文章裡說明，這些架構原則適用於比較複雜的業務，簡單應用可能會得出相反的結論。讀他的文章，我覺得最好的方式不是全盤照搬結論，而是學他得出結論的方法：追問本質、看資料、看歷史、看一手資料，然後自己判斷。這本身也是他一直倡導的獨立思考。</p>
+<h2 id="五我的行動清單">五、我的行動清單</h2>
+<p>把上面這些落到自己身上，我給自己定了幾條可以檢查的規矩：</p>
+<ol>
+<li><strong>每學一個新技術，畫出知識樹，並追溯它要解決的原始問題</strong>。說不清「它為什麼出現」，就不算學會。</li>
+<li><strong>一手資料優先</strong>：官方文件、RFC、論文、原作者部落格，二手解讀只作索引。</li>
+<li><strong>維護一個個人實驗室倉庫</strong>，每個重要結論配一個能跑的最小實驗。</li>
+<li>**寫程式碼時先問：這行是 Logic 還是 Control？**能抽出去的控制邏輯（重試、超時、校驗、日誌）儘量抽成可複用的元件。</li>
+<li><strong>設計評審必答三問</strong>：收益是什麼？失敗時如何降級？控制邏輯收口在哪？</li>
+<li><strong>做決策前先拿資料</strong>：壓測、Profiler、監控，而不是憑感覺或憑經驗。</li>
+<li><strong>用「有用功 / 總功」審視自己的一週</strong>：哪些需求該砍，哪些重複勞動該自動化。</li>
+<li><strong>每年做一次「投資復盤」</strong>：今年的時間投在了哪裡，有沒有讓自己的可能性變多。</li>
+</ol>
+<h2 id="結語燈熄了光還在">結語：燈熄了，光還在</h2>
+<p>耗子叔離開之後，很多人自發寫文章悼念他。我和他素未謀面，只是一個讀著 CoolShell 成長起來的普通程式設計師。他的文字裡沒有「速成」。在 2018 版練級攻略裡，他坦言是故意把內容寫得讓人望而生畏，因為本來就沒有捷徑，很多知識是硬骨頭，只能一口一口地啃。他相信基礎、相信動手、相信效率、相信開放，也身體力行地把自己的技術寫出來、開源出來，分享給所有人。</p>
+<p>他在 GitHub 的個人簡介寫著：「芝蘭生於空谷，不以無人而不芳。」我想，對一個技術人最好的紀念，大概就是把他講過的那些樸素道理，認真地用在自己每天寫的程式碼和做的設計裡。</p>
+<p>謹以此文，紀念陳皓（1976—2023）。</p>
+<h2 id="參考資料">參考資料</h2>
+<ul>
+<li>陳皓，<a href="https://coolshell.cn/articles/4990.html">《程式設計師技術練級攻略》</a>，CoolShell，2011</li>
+<li>陳皓，<a href="https://coolshell.cn/articles/18360.html">《程式設計師練級攻略（2018) 與我的專欄》</a>，CoolShell，2018</li>
+<li>陳皓，<a href="https://coolshell.cn/articles/19464.html">《如何超過大多數人》</a>，CoolShell，2019</li>
+<li>陳皓，<a href="https://coolshell.cn/articles/20276.html">《別讓自己「牆」了自己》</a>，CoolShell，2019</li>
+<li>陳皓，<a href="https://coolshell.cn/articles/21146.html">《Go 程式設計模式：Functional Options》</a>，CoolShell，2020</li>
+<li>陳皓，《Go 程式設計模式：Pipeline》，CoolShell，2020（<a href="https://time.geekbang.org/column/article/332610">極客時間版</a>）</li>
+<li>陳皓，<a href="https://coolshell.cn/articles/17757.html">《如何重構「箭頭型」程式碼》</a>，CoolShell，2017</li>
+<li>陳皓，<a href="https://coolshell.cn/articles/21672.html">《我做系統架構的一些原則》</a>，CoolShell，2021</li>
+<li>陳皓，<a href="https://coolshell.cn/articles/7490.html">《效能調優攻略》</a>，CoolShell，2012</li>
+<li>陳皓，<a href="https://coolshell.cn/articles/10217.html">《加班與效率》</a>，CoolShell，2013</li>
+<li>陳皓，<a href="https://coolshell.cn/articles/17497.html">《什麼是工程師文化？》</a>，CoolShell，2016</li>
+<li>陳皓，<a href="https://coolshell.cn/articles/17583.html">《技術人員的發展之路》</a>，CoolShell，2016</li>
+<li>陳皓，<a href="https://coolshell.cn/articles/20977.html">《程式設計師如何把控自己的職業》</a>，CoolShell，2020</li>
+<li>陳皓，<a href="https://time.geekbang.org/column/48">《左耳聽風》專欄</a>，極客時間：<a href="https://time.geekbang.org/column/article/3912">《彈力設計：認識故障和彈力設計》</a>、<a href="https://time.geekbang.org/column/article/3917">《彈力設計：隔離設計》</a>、<a href="https://learn.lianglianglee.com/%e4%b8%93%e6%a0%8f/%e5%b7%a6%e8%80%b3%e5%90%ac%e9%a3%8e/038%20%20%e7%bc%96%e7%a8%8b%e8%8c%83%e5%bc%8f%e6%b8%b8%e8%ae%b0%ef%bc%889%ef%bc%89-%20%e7%bc%96%e7%a8%8b%e7%9a%84%e6%9c%ac%e8%b4%a8.md">《程式設計範式遊記（9）：程式設計的本質》</a>、<a href="https://www.lianglianglee.com/%E4%B8%93%E6%A0%8F/%E5%B7%A6%E8%80%B3%E5%90%AC%E9%A3%8E/051%20%20%E5%BC%B9%E5%8A%9B%E8%AE%BE%E8%AE%A1%E7%AF%87%E4%B9%8B%E2%80%9C%E5%BC%B9%E5%8A%9B%E8%AE%BE%E8%AE%A1%E6%80%BB%E7%BB%93%E2%80%9D.md">《彈力設計總結》</a>、<a href="https://learn.lianglianglee.com/%E4%B8%93%E6%A0%8F/%E5%B7%A6%E8%80%B3%E5%90%AC%E9%A3%8E/050%20%20%E5%BC%B9%E5%8A%9B%E8%AE%BE%E8%AE%A1%E7%AF%87%E4%B9%8B%E2%80%9C%E9%99%8D%E7%BA%A7%E8%AE%BE%E8%AE%A1%E2%80%9D.md">《降級設計》</a>（後三篇為第三方存檔）</li>
+<li>Robert Kowalski, <em>Algorithm = Logic + Control</em>, Communications of the ACM, 1979</li>
+<li>Rob Pike, <a href="https://go.dev/blog/pipelines">Go Concurrency Patterns: Pipelines and cancellation</a></li>
+<li><a href="https://github.com/haoel">haoel 的 GitHub 主頁</a>、<a href="https://github.com/haoel/leetcode">haoel/leetcode</a>、<a href="https://github.com/easegress-io/easegress">Easegress</a></li>
+<li><a href="https://github.com/slan-ning/coolshell-markdown">CoolShell 全站 Markdown 備份（slan-ning/coolshell-markdown）</a></li>
+<li>陳皓離世相關報道：<a href="https://www.thepaper.cn/newsDetail_forward_23100097">澎湃新聞</a>、<a href="https://news.cnr.cn/native/gd/20230516/t20230516_526252880.shtml">央廣網</a>（2023-05）；<a href="https://zh.wikipedia.org/zh-cn/%E5%B7%A6%E8%80%B3%E6%9C%B5%E8%80%97%E5%AD%90">維基百科：左耳朵耗子</a></li>
+</ul>
+]]></content:encoded></item></channel></rss>

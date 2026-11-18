@@ -1,0 +1,558 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Flink CDC on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/flink-cdc/</link><description>Recent content in Flink CDC on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Thu, 05 Nov 2026 14:45:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/flink-cdc/index.xml" rel="self" type="application/rss+xml"/><item><title>開源即時 CDC 同步選型：帶 Web 設定、MySQL/SQL Server→Kafka/Doris/ClickHouse、全量+增量（2026-11 核實）</title><link>https://d94807974-commits.github.io/posts/realtime-cdc-sync-opensource-comparison/</link><pubDate>Thu, 05 Nov 2026 13:52:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/realtime-cdc-sync-opensource-comparison/</guid><description>按「Web 可配 + MySQL/SQL Server 源 + Kafka/Doris/ClickHouse 目標 + 全量+增量 + star&amp;gt;1k + 開源」條件核實候選；對比 SeaTunnel(+Web)、InLong、Flink CDC(+Dinky/StreamPark)、TIS，並特別原始碼走讀 DBSyncer 2.1.6（star 954，功能匹配但未過 1k 門檻）及衍生倉 Zhh9126/DBSYNC。資料核實：2026-11-05（Asia/Singapore）。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/realtime-cdc-sync-opensource-comparison.html">目標鏈路、全量切增量流程與橫向對比</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>要用一條帶 Web 設定的鏈路把 MySQL 與 SQL Server 全量加增量同步到 Kafka、Doris、ClickHouse，優先選 SeaTunnel 加 SeaTunnel Web；已有 Flink 平臺就選 Flink CDC 搭配 Dinky 或 StreamPark。DBSyncer 功能吻合但 star 未過 1k，只適合能接受自行加固的單機場景。</p>
+</div><blockquote>
+  <p><strong>調研邊界（請先讀）</strong>：本文只討論同時滿足下列條件的開源專案——① 有 Web 頁面可配置任務；② 源端至少覆蓋 <strong>MySQL 與 SQL Server</strong>；③ 目標端覆蓋 <strong>Kafka、Apache Doris、ClickHouse</strong>（或可明確組合達成）；④ 支援 <strong>全量 + 增量</strong>（CDC / binlog / CDC 日誌類，而非僅定時 JDBC 批抽）；⑤ GitHub <strong>stargazers_count &gt; 1000</strong>；⑥ OSI/ASF 友好開源許可（Apache-2.0 等）。Star、license、最近 push 一律以 <code>gh api repos/&lt;owner&gt;/&lt;repo&gt;</code> 在 <strong>2026-11-05</strong> 拉取為準；功能以官方文件頁面為準，<strong>不憑記憶斷言</strong>。未能開啟或無法交叉驗證的點，會在文末「未能核實」列出。</p>
+
+</blockquote><figure>
+<img src="/images/realtime-cdc-sync-opensource-comparison/seatunnel-website-logo.jpg" alt="Apache SeaTunnel 官網 Logo" loading="lazy" width="720">
+<figcaption>圖片：Apache SeaTunnel 官網 <a href="https://seatunnel.apache.org/image/logo.png">logo.png</a>；專案許可證 <a href="https://github.com/apache/seatunnel/blob/dev/LICENSE">Apache-2.0</a>。已壓縮並本地託管於本站 <code>static/images/…</code>。</figcaption>
+</figure>
+<h2 id="一問題怎麼拆">一、問題怎麼拆</h2>
+<p>業務側常見訴求可以寫成一條鏈路：</p>
+<pre tabindex="0"><code>[OLTP] MySQL / SQL Server
+        |  (snapshot 全量 + binlog/CDC 增量)
+        v
+   同步引擎 / 平臺 (+ Web 配置)
+        |
+        +--&gt; Kafka（匯流排 / 解耦）
+        +--&gt; Apache Doris（分析型 OLAP）
+        +--&gt; ClickHouse（列存分析）
+</code></pre><p>工程上真正卡人的通常不是「能不能連上」，而是：</p>
+<ol>
+<li><strong>有沒有 Web</strong>：維運/資料同學是否必須手寫 YAML / Flink SQL。</li>
+<li><strong>SQL Server 是否一等公民</strong>：很多「國產 CDC」其實只做深了 MySQL。</li>
+<li><strong>三目標是否原生 sink</strong>：Kafka / Doris / ClickHouse 缺一就會被迫疊兩套棧。</li>
+<li><strong>全量切增量是否平滑</strong>：<code>startup.mode=initial</code>、checkpoint、exactly-once、DDL。</li>
+<li><strong>許可證與 star</strong>：商業分發、二次開發、社群活躍度。</li>
+</ol>
+<p>跨地域補充一句：若同步鏈路兩端跨大洲（例如控制面/作業在新加坡、Doris 在墨西哥），RTT 與跨洋頻寬會放大 checkpoint 與 Stream Load 延遲；選型時優先選<strong>可把 sink 寫路徑貼近目標叢集</strong>、或<strong>中間以同區域 Kafka 解耦</strong>的架構，而不是只看功能 checklist。</p>
+<h2 id="二入選專案滿足或組合滿足">二、入選專案（滿足或「組合滿足」）</h2>
+<p>下表 star / license / 最近 push 均為 <strong>2026-11-05</strong> 經 GitHub REST API 核實（UTC 時間已換算備註）。</p>
+<p><strong>表 1｜專案概況：倉庫、star、授權、活躍度與 Web 介面</strong></p>
+<table>
+	<thead>
+			<tr>
+					<th>方案</th>
+					<th>倉庫</th>
+					<th style="text-align: right">Stars</th>
+					<th>License</th>
+					<th>最近 push (UTC)</th>
+					<th>Web</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>SeaTunnel + SeaTunnel Web</td>
+					<td><a href="https://github.com/apache/seatunnel">apache/seatunnel</a> + <a href="https://github.com/apache/seatunnel-web">apache/seatunnel-web</a></td>
+					<td style="text-align: right"><strong>9788</strong> / <strong>888</strong></td>
+					<td>Apache-2.0</td>
+					<td>2026-11-04 / 2026-01-22</td>
+					<td>✅ Web（獨立倉）</td>
+			</tr>
+			<tr>
+					<td>Apache InLong</td>
+					<td><a href="https://github.com/apache/inlong">apache/inlong</a></td>
+					<td style="text-align: right"><strong>1507</strong></td>
+					<td>Apache-2.0</td>
+					<td>2026-09-16</td>
+					<td>✅ Dashboard</td>
+			</tr>
+			<tr>
+					<td>Flink CDC + Dinky</td>
+					<td><a href="https://github.com/apache/flink-cdc">apache/flink-cdc</a> + <a href="https://github.com/DataLinkDC/dinky">DataLinkDC/dinky</a></td>
+					<td style="text-align: right"><strong>6492</strong> / <strong>3779</strong></td>
+					<td>Apache-2.0</td>
+					<td>2026-11-05 / 2026-10-22</td>
+					<td>⚠️ CDC 本身無 Web；Dinky 提供</td>
+			</tr>
+			<tr>
+					<td>Flink CDC + StreamPark</td>
+					<td>同上 + <a href="https://github.com/apache/streampark">apache/streampark</a></td>
+					<td style="text-align: right"><strong>6492</strong> / <strong>4346</strong></td>
+					<td>Apache-2.0</td>
+					<td>同上 / 2026-10-31</td>
+					<td>⚠️ 同上，StreamPark 管 Flink 作業</td>
+			</tr>
+			<tr>
+					<td>TIS</td>
+					<td><a href="https://github.com/datavane/tis">datavane/tis</a></td>
+					<td style="text-align: right"><strong>1440</strong></td>
+					<td>Apache-2.0</td>
+					<td>2026-11-04</td>
+					<td>✅ Console</td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>表 2｜能力對比：來源端、目標端與全量+增量支援</strong></p>
+<table>
+	<thead>
+			<tr>
+					<th>方案</th>
+					<th>MySQL</th>
+					<th>SQL Server</th>
+					<th>Kafka</th>
+					<th>Doris</th>
+					<th>ClickHouse</th>
+					<th>全量+增量</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>SeaTunnel + SeaTunnel Web</td>
+					<td>✅ MySQL-CDC</td>
+					<td>✅ SqlServer-CDC</td>
+					<td>✅</td>
+					<td>✅</td>
+					<td>✅</td>
+					<td>✅ <code>startup.mode=initial</code></td>
+			</tr>
+			<tr>
+					<td>Apache InLong</td>
+					<td>✅ Extract</td>
+					<td>✅ Extract</td>
+					<td>✅ Load</td>
+					<td>✅ Load</td>
+					<td>✅ Load</td>
+					<td>✅ 同步場景</td>
+			</tr>
+			<tr>
+					<td>Flink CDC + Dinky</td>
+					<td>✅</td>
+					<td>✅ Pipeline 3.7</td>
+					<td>✅ Pipeline sink</td>
+					<td>✅ Pipeline sink</td>
+					<td>⚠️ Pipeline 無官方 CH sink，需 Flink SQL/其他</td>
+					<td>✅</td>
+			</tr>
+			<tr>
+					<td>Flink CDC + StreamPark</td>
+					<td>✅</td>
+					<td>✅</td>
+					<td>✅</td>
+					<td>✅</td>
+					<td>⚠️ 同上</td>
+					<td>✅</td>
+			</tr>
+			<tr>
+					<td>TIS</td>
+					<td>✅ Flink-CDC + DataX</td>
+					<td>✅ Flink-CDC + DataX</td>
+					<td>✅</td>
+					<td>✅</td>
+					<td>✅</td>
+					<td>✅ 批次 DataX + 即時 Flink-CDC</td>
+			</tr>
+	</tbody>
+</table>
+<blockquote>
+  <p><strong>關於 SeaTunnel Web 888★</strong>：單獨未過 1k，但它是 ASF 官方 Web 控制台，與引擎同屬 SeaTunnel 生態；本文按「引擎 star&gt;1k + 官方 Web」入選，並在對比裡標明 Web 倉活躍度（最近 push 停在 2026-01，需關注版本繫結）。</p>
+
+</blockquote><h3 id="1-apache-seatunnel-seatunnel-web">1. Apache SeaTunnel（+ SeaTunnel Web）</h3>
+<p><strong>能力依據（文件）</strong>：</p>
+<ul>
+<li>MySQL CDC：支援 snapshot + 增量，<code>startup.mode</code> 含 <code>initial</code>（先歷史後增量），可選 exactly-once、schema-changes。<a href="https://seatunnel.apache.org/docs/2.3.11/connector-v2/source/MySQL-CDC/">MySQL-CDC 文件</a></li>
+<li>SQL Server CDC：<a href="https://seatunnel.apache.org/docs/2.3.11/connector-v2/source/SqlServer-CDC/">SqlServer-CDC</a></li>
+<li>Sink： <a href="https://seatunnel.apache.org/docs/2.3.11/connector-v2/sink/Kafka/">Kafka</a>、<a href="https://seatunnel.apache.org/docs/2.3.11/connector-v2/sink/Doris/">Doris</a>、<a href="https://seatunnel.apache.org/docs/2.3.11/connector-v2/sink/Clickhouse/">Clickhouse</a> 均有獨立文件頁（HTTP 301→正式路徑，已確認存在）。</li>
+<li>Web： <a href="https://github.com/apache/seatunnel-web/blob/main/README.md">seatunnel-web README</a> 描述為管理指令碼、資料來源、任務並提交到 Zeta Engine；預設 UI <code>http://127.0.0.1:8801/ui/</code>（admin/admin）。<strong>Web 與引擎版本強繫結</strong>，部署要求客戶端與 Server 同 OS/同目錄結構。</li>
+</ul>
+<p><strong>架構示意</strong>：</p>
+<pre tabindex="0"><code>Browser ──► SeaTunnel Web (8801)
+                │  submit job
+                v
+         SeaTunnel Zeta Cluster
+      (MySQL-CDC / SqlServer-CDC)
+                │
+        ┌───────┼────────┐
+        v       v        v
+     Kafka    Doris   ClickHouse
+</code></pre><p><strong>適合</strong>：希望「一個引擎覆蓋三目標」、團隊接受 Zeta/Flink 引擎維運、中文文件友好。<br>
+<strong>坑</strong>：Web 倉 star 與活躍度弱於引擎；外掛 jar / <code>plugin-mapping.properties</code> / <code>SEATUNNEL_HOME</code> 配置易踩坑；CDC 權限（REPLICATION）與 GTID/binlog 格式要按文件開。</p>
+<h3 id="2-apache-inlong">2. Apache InLong</h3>
+<figure>
+<img src="/images/realtime-cdc-sync-opensource-comparison/inlong-architecture.jpg" alt="Apache InLong 標準架構圖" loading="lazy" width="900">
+<figcaption>圖片：Apache InLong 官方文件架構圖 <a href="https://inlong.apache.org/img/inlong-structure-en.png">inlong-structure-en.png</a>（見 <a href="https://inlong.apache.org/docs/introduction/">Introduction</a>）；Apache-2.0。本地壓縮託管。</figcaption>
+</figure>
+<p><strong>能力依據</strong>：<a href="https://inlong.apache.org/docs/introduction/">Introduction - Supported Data Nodes</a> 明確列出：</p>
+<ul>
+<li>Extract：MySQL、<strong>SQLServer</strong>（2012–2019）等</li>
+<li>Load：<strong>Kafka、Doris、ClickHouse</strong> 等</li>
+<li>模組含 <strong>inlong-dashboard</strong>（前端管控）、Manager、Sort、Agent 等</li>
+</ul>
+<p>最新 release 標籤 API 見 <code>2.4.0-RC0</code>（2026-08-21）；倉庫 push 至 2026-09-16，活躍度中等。</p>
+<p><strong>適合</strong>：需要「接入 + 同步 + 訂閱」一體、已有或願意上 TubeMQ/Pulsar/Kafka 作為中間緩衝、偏騰訊系大數據棧。<br>
+<strong>坑</strong>：完整架構元件多（Agent/DataProxy/MQ/Sort/Manager/Dashboard/Audit），輕量模式可用 Sort+Manager+Dashboard，但仍比「單二進位制同步工具」重；維運成本要提前評估。</p>
+<h3 id="3-flink-cdc--dinky--streampark組合方案">3. Flink CDC + Dinky / StreamPark（組合方案）</h3>
+<figure>
+<img src="/images/realtime-cdc-sync-opensource-comparison/flink-cdc-architecture.jpg" alt="Apache Flink CDC 架構圖" loading="lazy" width="900">
+<figcaption>圖片：來自 <a href="https://github.com/apache/flink-cdc">apache/flink-cdc</a> 文件靜態資源 <code>docs/static/fig/architecture.png</code>（Apache-2.0）。本地壓縮託管。</figcaption>
+</figure>
+<p><strong>能力依據</strong>：</p>
+<ul>
+<li>Flink CDC <strong>本身無 Web UI</strong>（官方定位是庫/連接器 + Pipeline YAML）。</li>
+<li>Pipeline Connectors Overview（stable / 3.7）：Source 含 <strong>MySQL、SQL Server</strong>；Sink 含 <strong>Kafka、Doris</strong> 等；<strong>未列出 ClickHouse pipeline sink</strong>。<a href="https://nightlies.apache.org/flink/flink-cdc-docs-stable/docs/connectors/pipeline-connectors/overview/">Overview</a></li>
+<li>寫 ClickHouse 需走 <strong>Flink SQL Connector / JDBC / 第三方</strong>，不算「Pipeline 一等 sink」，本文標 ⚠️。</li>
+<li>Web 層：
+<ul>
+<li><a href="https://github.com/DataLinkDC/dinky">Dinky</a>（3779★）：FlinkSQL 開發平臺，支援 CDCSOURCE 等作業管理（中文社群活躍）。</li>
+<li><a href="https://github.com/apache/streampark">StreamPark</a>（4346★，Apache-2.0）：Flink/Spark 應用管理平臺。</li>
+</ul>
+</li>
+</ul>
+<p>最新 Flink CDC release：<code>release-3.7.0</code>（2026-10-10）。</p>
+<p><strong>適合</strong>：已有 Flink 平臺、要強一致性/複雜轉換、接受「CDC 引擎 + 作業平臺」兩件套。<br>
+<strong>坑</strong>：ClickHouse 需額外確認連接器版本矩陣；SQL Server CDC 要開庫級 CDC、清理 job；平臺與 Flink/CDC 版本矩陣要鎖死。</p>
+<h3 id="4-tisdatavanetis">4. TIS（datavane/tis）</h3>
+<p><strong>能力依據</strong>：<a href="https://tis.pub/docs/">tis.pub 文件「支援的端型別」</a> 表格（核實於 2026-11-05）顯示：</p>
+<ul>
+<li><strong>SqlServer</strong>：DataX 讀/寫 + <strong>Flink-CDC Source</strong> + ChunJun Sink</li>
+<li><strong>MySQL</strong>：同上</li>
+<li><strong>Kafka</strong>：DataX 與即時 Pipeline sink</li>
+<li><strong>Doris</strong>：DataX 讀/寫 + ChunJun 即時 Sink；文件有「MySQL 同步 Doris」即時 Demo</li>
+<li><strong>Clickhouse</strong>：DataX Writer + ChunJun 即時 Sink；有「MySQL 匯入 Clickhouse」影片範例</li>
+</ul>
+<p>底層明確寫為 <strong>DataX / Flink-CDC</strong>（及 ChunJun）+ Web Console，滿足「有 Web 配全量+增量」。</p>
+<p><strong>適合</strong>：要強 Web/零程式碼、中文資料全、願意繫結 TIS 外掛生態與 Flink 叢集。<br>
+<strong>坑</strong>：外掛/SPI 體系學習曲線；即時鏈路實際依賴 Flink 叢集品質；社群體量小於 SeaTunnel/Flink CDC 主倉。</p>
+<h2 id="三橫向對比工程維度">三、橫向對比（工程維度）</h2>
+<table>
+	<thead>
+			<tr>
+					<th>維度</th>
+					<th>SeaTunnel+Web</th>
+					<th>InLong</th>
+					<th>Flink CDC+Dinky/StreamPark</th>
+					<th>TIS</th>
+					<th>DBSyncer 2.1.6（★954，未過 1k）</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>Web 配置成熟度</td>
+					<td>可用，但 Web 倉活躍偏弱</td>
+					<td>Dashboard 一等公民</td>
+					<td>取決於 Dinky/StreamPark</td>
+					<td>Console 強，偏零程式碼</td>
+					<td>✅ 內建 Thymeleaf 控制台</td>
+			</tr>
+			<tr>
+					<td>源：MySQL / SQL Server</td>
+					<td>雙 CDC 文件齊全</td>
+					<td>Extract 節點表齊全</td>
+					<td>Pipeline 3.7 雙源</td>
+					<td>Flink-CDC + DataX</td>
+					<td>✅ binlog / ✅ CDC(LSN)</td>
+			</tr>
+			<tr>
+					<td>目標三件套</td>
+					<td>三 sink 均有官方頁</td>
+					<td>三 Load 均列出</td>
+					<td>Kafka+Doris 原生；CH ⚠️</td>
+					<td>三端均在端型別表</td>
+					<td>✅ Kafka；✅ Doris Stream Load；✅ CH 寫（源=游標）</td>
+			</tr>
+			<tr>
+					<td>全量→增量</td>
+					<td><code>startup.mode=initial</code></td>
+					<td>同步場景支援</td>
+					<td>Snapshot + binlog/CDC</td>
+					<td>DataX 全量 + Flink 增量</td>
+					<td>✅ FullIncrementPuller 釘位點</td>
+			</tr>
+			<tr>
+					<td>DDL / Schema</td>
+					<td><code>schema-changes.enabled</code>（有限）</td>
+					<td>視 Sort/連接器</td>
+					<td>Pipeline 演進中，需查版本文件</td>
+					<td>依賴底層 Flink-CDC/ChunJun</td>
+					<td>MySQL ALTER 事件有程式碼；e2e 未測</td>
+			</tr>
+			<tr>
+					<td>部署依賴</td>
+					<td>Zeta 或 Flink + Web + DB</td>
+					<td>多元件或輕量 Sort</td>
+					<td>Flink 叢集 + 平臺</td>
+					<td>TIS + Flink(+DataX)</td>
+					<td>單程序 + H2/MySQL；叢集需驗證</td>
+			</tr>
+			<tr>
+					<td>許可證</td>
+					<td>Apache-2.0</td>
+					<td>Apache-2.0</td>
+					<td>Apache-2.0</td>
+					<td>Apache-2.0</td>
+					<td>Apache-2.0</td>
+			</tr>
+			<tr>
+					<td>中文/繁中資料</td>
+					<td>官網中英；iT 邦幫忙等有 CDC 概念文</td>
+					<td>中英文件</td>
+					<td>中文社群很強（Dinky）</td>
+					<td>中文文件/影片豐富</td>
+					<td>中文官網/社群友好</td>
+			</tr>
+			<tr>
+					<td>典型坑</td>
+					<td>Web/引擎版本鎖；外掛路徑</td>
+					<td>元件多、維運重</td>
+					<td>CH sink 非 pipeline；版本矩陣</td>
+					<td>外掛版本與 Flink 對齊</td>
+					<td>預設 admin/admin；Boot 2.5/Kafka 0.11；無 GH Actions</td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>繁體資料</strong>：臺灣 iT 邦幫忙有多篇 CDC 概念文（如 <a href="https://ithelp.ithome.com.tw/articles/10362458">變更資料擷取 CDC</a>、<a href="https://ithelp.ithome.com.tw/articles/10275451">Change Data Capture</a>），偏原理而非上述具體產品對比；產品級繁中文件仍以各專案官網中英為主。</p>
+<h2 id="四未入選及原因同樣經核實">四、未入選及原因（同樣經核實）</h2>
+<table>
+	<thead>
+			<tr>
+					<th>專案</th>
+					<th>Stars / License（2026-11-05）</th>
+					<th>未入選主因</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td><a href="https://github.com/alibaba/canal">alibaba/canal</a>（+canal-admin）</td>
+					<td>29746 / Apache-2.0</td>
+					<td><strong>源端以 MySQL 為主</strong>，不滿足 SQL Server 一等需求</td>
+			</tr>
+			<tr>
+					<td><a href="https://github.com/debezium/debezium">debezium/debezium</a></td>
+					<td>13317 / Apache-2.0</td>
+					<td>引擎強大，但官方 <a href="https://github.com/debezium/debezium-ui">debezium-ui</a> <strong>已 archived</strong>（351★，MIT），無活躍一等 Web</td>
+			</tr>
+			<tr>
+					<td><a href="https://github.com/alibaba/DataX">alibaba/DataX</a> + <a href="https://github.com/WeiYe-Jing/datax-web">WeiYe-Jing/datax-web</a></td>
+					<td>17382 / NOASSERTION；6023 / MIT</td>
+					<td><strong>批式同步為主，無真正 CDC 增量</strong>（增量需另棧）；DataX-Web 最近 push 停在 2024-06</td>
+			</tr>
+			<tr>
+					<td><a href="https://github.com/brokercap/Bifrost">brokercap/Bifrost</a></td>
+					<td>2092 / Apache-2.0</td>
+					<td><strong>MySQL 生態</strong>，不覆蓋 SQL Server 條件</td>
+			</tr>
+			<tr>
+					<td><a href="https://github.com/DTStack/chunjun">DTStack/chunjun</a></td>
+					<td>4106 / Apache-2.0</td>
+					<td>連接器能力強，但<strong>本身不是完整 Web 配置平臺</strong>（常被 TIS 等託管）</td>
+			</tr>
+			<tr>
+					<td><a href="https://github.com/airbytehq/airbyte">airbytehq/airbyte</a></td>
+					<td>22317 / <strong>ELv2 (NOASSERTION)</strong></td>
+					<td><strong>非 OSI 傳統開源</strong>（Elastic License 2.0）；Doris destination 社群狀態需單獨核（有 ARCHIVED 記錄），不作為本清單首選</td>
+			</tr>
+			<tr>
+					<td><a href="https://github.com/tapdata/tapdata">tapdata/tapdata</a></td>
+					<td><strong>662</strong> / Apache-2.0</td>
+					<td><strong>star &lt; 1k</strong></td>
+			</tr>
+			<tr>
+					<td><a href="https://github.com/86dbs/dbsyncer">86dbs/dbsyncer</a>（DBSyncer <strong>v2.1.6</strong>）</td>
+					<td><strong>954</strong> / Apache-2.0</td>
+					<td><strong>star &lt; 1k</strong>（門檻未過）；功能上 Web + MySQL binlog / SQL Server CDC → Kafka/Doris/ClickHouse + 全量+增量均有原始碼依據，見下文「特別分析」；勿與 <a href="https://github.com/Zhh9126/DBSYNC">Zhh9126/DBSYNC</a>（2.1.4 重新命名衍生）混淆</td>
+			</tr>
+			<tr>
+					<td><a href="https://github.com/apache/hop">apache/hop</a></td>
+					<td>1519 / Apache-2.0</td>
+					<td>ETL/視覺化強，<strong>CDC 通常外掛 Debezium</strong>，非本條件「內建訂閱三目標」主線</td>
+			</tr>
+			<tr>
+					<td>CloudCanal（ClouGence）</td>
+					<td>官方定位見 <a href="https://github.com/ClouGence/cloudcanal-issue">cloudcanal-issue</a></td>
+					<td><strong>社群版可免費使用但非開源</strong>；明確剔除</td>
+			</tr>
+			<tr>
+					<td><a href="https://github.com/lensesio/kafka-connect-ui">lensesio/kafka-connect-ui</a></td>
+					<td>519</td>
+					<td><strong>star &lt; 1k</strong>，且只是 Connect 管理 UI，不是端到端 CDC 平臺</td>
+			</tr>
+			<tr>
+					<td>seatunnel-web <strong>單獨</strong></td>
+					<td>888</td>
+					<td>不單獨過 1k；僅作為引擎配套計入</td>
+			</tr>
+	</tbody>
+</table>
+<h2 id="四附特別分析dbsyncer-216功能匹配star-未過-1k">四附、特別分析：DBSyncer 2.1.6（功能匹配，star 未過 1k）</h2>
+<blockquote>
+  <p><strong>口徑</strong>：仍列在「未入選」——本文硬門檻是 GitHub <strong>stars &gt; 1000</strong>；2026-11-05 核實 <a href="https://github.com/86dbs/dbsyncer">86dbs/dbsyncer</a> 為 <strong>954★ / 156 forks / Apache-2.0</strong>，最新 tag <strong><code>v2.1.6</code></strong>（annotated tag → commit <code>d0aa992e</code>，提交說明 <code>!621 pg增量调整</code>，UTC 2026-11-03 11:04；換算 Asia/Singapore = 2026-11-03 19:04）。<code>master</code> 在 tag 之後仍有數個「外掛增加刪除」提交（分析以 <strong>v2.1.6</strong> 檢出為準）。GitHub <strong>Releases 列表為空</strong>（發版靠 tag）；<strong>無 <code>.github/workflows</code> CI</strong>。貢獻者 API 前列：<code>86dbs</code>(2210)、<code>Pengnd</code>(519)、<code>lifejwang11</code>(66) 等。官網 <a href="https://dbsyncer.cn">dbsyncer.cn</a>。</p>
+
+</blockquote><h3 id="為何單獨寫一節">為何單獨寫一節</h3>
+<p>在「Web + MySQL/SQL Server → Kafka/Doris/ClickHouse + 全量+增量」這條鏈路上，DBSyncer <strong>原始碼能力與本文入選條件高度重合</strong>，僅差 star 門檻；中小團隊「單機開箱」場景經常會搜到它。下面結論均來自對 <code>v2.1.6</code> 樹的只讀走讀與一次 Linux <code>mvn -DskipTests package</code> 嘗試（不對上游倉庫做任何寫操作）。</p>
+<h3 id="架構ascii">架構（ASCII）</h3>
+<pre tabindex="0"><code>Browser ──► dbsyncer-web (Thymeleaf, 預設 :18686, README: admin/admin)
+                │
+                v
+           dbsyncer-biz / parser / plugin
+                │
+                v
+           dbsyncer-manager
+        FullPuller | IncrementPuller | FullIncrementPuller
+        (先 capture 位點 → 全量 → 增量；Meta snapshot 斷點)
+                │
+                v
+           dbsyncer-connector (SPI)
+   MySQL(binlog/shyiko)  SqlServer(CDC/LSN)
+   Kafka(writer)  Doris(Stream Load|JDBC)  ClickHouse(源=PK游標輪詢 / 目標=寫)
+                │
+                v
+           dbsyncer-storage
+        預設 H2 檔案庫；生產建議 MySQL
+        叢集開關 dbsyncer.cluster.enabled（須 storage=mysql）
+</code></pre><h3 id="核心同步鏈路檔案路徑">核心同步鏈路（檔案路徑）</h3>
+<table>
+	<thead>
+			<tr>
+					<th>環節</th>
+					<th>路徑 / 行為（v2.1.6）</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>全量+增量編排</td>
+					<td><code>dbsyncer-manager/.../FullIncrementPuller.java</code>：註釋寫明「先捕獲位點 → 全量 → 從位點啟動增量」；<code>prepareFullPhase</code> → <code>incrementPuller.captureAndSaveOffset</code></td>
+			</tr>
+			<tr>
+					<td>MySQL 增量</td>
+					<td><code>dbsyncer-connector-mysql/.../cdc/MySQLListener.java</code>：<code>BinaryLogClient</code> + binlog filename/position；<code>QueryEvent</code> → <code>DDLChangedEvent</code>（含 <code>parseAlter</code>）</td>
+			</tr>
+			<tr>
+					<td>SQL Server 增量</td>
+					<td><code>.../sqlserver/cdc/SqlServerListener.java</code>：<code>sys.fn_cdc_get_max_lsn</code> / <code>fn_cdc_get_all_changes_*</code>，位點鍵 <code>position</code></td>
+			</tr>
+			<tr>
+					<td>→ Kafka</td>
+					<td><code>.../kafka/KafkaConnector.java</code>：<code>writer</code> 逐條 <code>producer.send</code> + <code>flush</code>；<code>reader</code> 拋「Kafka暫不支援全量讀取」</td>
+			</tr>
+			<tr>
+					<td>→ Doris</td>
+					<td><code>.../doris/DorisConnector.java</code> + <code>load/DorisStreamLoadWriter.java</code>：配置為 Stream Load 模式且事件匹配時走 Stream Load，否則 JDBC；<code>buildUpsertSql</code> 退化為普通 INSERT（Unique/PK 覆蓋語義，程式碼註釋寫明）</td>
+			</tr>
+			<tr>
+					<td>ClickHouse</td>
+					<td>源：<code>.../clickhouse/cdc/ClickHouseListener.java</code> <strong>單數值主鍵游標輪詢</strong>（非 binlog/CDC）；目標：JDBC 寫 / 按 PK 批刪等。README 連接器表：源✔ 目標✔</td>
+			</tr>
+			<tr>
+					<td>Web / 埠</td>
+					<td><code>dbsyncer-web/.../application.properties</code>：<code>server.port=18686</code>；README 明確 <strong>admin/admin</strong></td>
+			</tr>
+			<tr>
+					<td>後設資料</td>
+					<td><code>dbsyncer.storage.type=h2</code>（預設）或 <code>mysql</code>；範例 <code>dbsyncer.storage.mysql.password=123</code></td>
+			</tr>
+	</tbody>
+</table>
+<h3 id="一致性與可靠性程式碼觀感">一致性與可靠性（程式碼觀感）</h3>
+<ul>
+<li><strong>Kafka</strong>：無交易 producer / 未見預設冪等強制；偏 <strong>at-least-once</strong>，需目標或業務冪等。客戶端依賴鎖定為 <strong><code>kafka.version=0.11.0.0</code></strong>（與現代 Broker 的相容與安全補丁均偏舊）。</li>
+<li><strong>Doris</strong>：依賴 Unique/Primary Key 模型下 INSERT 覆蓋；Stream Load 與 JDBC 雙路徑，配置錯誤時行為不同。</li>
+<li><strong>全量切增量</strong>：經典「先釘位點再灌歷史」；全量視窗內變更靠增量回放——需壓測與對帳。</li>
+<li><strong>DDL</strong>：MySQL 側有 ALTER 解析與事件下發；對 Kafka/Doris/CH 目標的端到端 DDL 同步<strong>未在本環境做 e2e</strong>（標未能核實）。</li>
+<li><strong>HA</strong>：存在 <code>ClusterService</code> SPI、<code>ClusterController</code>、以及 <code>application-node*.properties</code>（<code>dbsyncer.cluster.enabled=true</code>）；開源樹內預設實現為 <code>StandaloneService</code>（<code>@ConditionalOnMissingBean</code> + SPI）。<strong>多節點排程完整行為依賴 MySQL 儲存與 SPI 實現，本分析未拉起多節點叢集驗證。</strong> <code>MetaLockUtil</code> 僅為程序內 <code>String.intern</code> 鎖。</li>
+</ul>
+<h3 id="安全與依賴">安全與依賴</h3>
+<ul>
+<li>預設帳號：<strong>admin / admin</strong>（README；<code>UserConfigServiceImpl.DEFAULT_PASSWORD</code> = SHA1(<code>admin</code>) 的 Base64：<code>0DPiKuNIrrVmD8IUCuw1hQxNqZc=</code>，已本地複核）。</li>
+<li>SSL keystore 密碼預設 <strong><code>dbsyncer</code></strong>（<code>application.properties</code>）。</li>
+<li>棧：Java 8、<strong>Spring Boot 2.5.14</strong>（社群 EOL）、log4j2 <strong>2.17.1</strong>、mysql-binlog-connector <strong>0.30.1</strong>；<code>mysql.version=8.0.21</code>（偏舊）。無 NOTICE 檔案，有 Apache-2.0 <code>LICENSE</code>。</li>
+<li>測試：約 <strong>15</strong> 個 <code>src/test</code> Java 檔案 vs 約 <strong>1073</strong> 個 main；<strong>無 GitHub Actions</strong>。</li>
+</ul>
+<h3 id="構建結果本機-linuxasiasingapore-時段">構建結果（本機 Linux，Asia/Singapore 時段）</h3>
+<p>在隔離環境安裝 Temurin 11 + Maven 3.9.9，於 <code>/tmp/dbsyncer-up</code>（<code>git checkout v2.1.6</code>）執行 <code>mvn -DskipTests package</code>：<strong>成功</strong>，產出 <code>dbsyncer-web/target/dbsyncer-2.1.6.jar</code>（約 1.2MB 模組 jar；完整可執行包以專案 <code>build.sh</code>/assembly 為準）。模組名與目錄均為小寫 <code>dbsyncer-connector-*</code>，<strong>不存在</strong> Zhh9126/DBSYNC 那種 <code>DBDataSync-*</code> / <code>dbdatasync-*</code> 大小寫錯配。</p>
+<h3 id="優劣與適用場景">優劣與適用場景</h3>
+<p><strong>優勢</strong>：真正「下載解壓 + Web」；MySQL binlog 與 SQL Server CDC 同產品內；Kafka/Doris/CH 目的碼齊全；全量+增量編排清晰；中文社群與 <a href="https://dbsyncer.cn">dbsyncer.cn</a> 文件友好；相對 Flink/InLong 維運面小。</p>
+<p><strong>劣勢</strong>：star &lt; 1k、無 GitHub Releases/Actions；Boot 2.5 / Kafka 0.11 技術債；預設口令與範例庫密碼；ClickHouse「增量源」實為游標輪詢；一致性語義弱於 Flink CDC exactly-once 體系；開源叢集能力需自行驗證。</p>
+<p><strong>適合</strong>：中小團隊、單機/小叢集、要快速建立 MySQL 或 SQL Server → Kafka/Doris（及 CH 目標寫入）、可接受自行加固安全與依賴升級。<br>
+<strong>更適合改用入選方案的情況</strong>：要強 exactly-once、大規模多租戶、或必須 star/ASF 生態背書 → SeaTunnel / InLong / Flink CDC+Dinky / TIS。</p>
+<h3 id="生產補強清單若採用-216">生產補強清單（若採用 2.1.6）</h3>
+<ol>
+<li>立即改掉 admin 密碼；關閉或保護 <code>reset-pwd</code>；改掉範例 MySQL storage 密碼與 keystore 口令。</li>
+<li>生產後設資料改 <strong>MySQL</strong>；按需評估 <code>cluster.enabled</code> 並做故障切換演練。</li>
+<li>升級路徑評估：Boot / Kafka client / JDBC 驅動；補依賴 CVE 掃描與 CI。</li>
+<li>明確 Kafka acks/冪等與 Doris 模型；全量切增量與失敗重試做對帳。</li>
+<li>ClickHouse 若作<strong>源</strong>，不要按真正 CDC 預期排期。</li>
+<li><strong>優先跟蹤官方 <a href="https://github.com/86dbs/dbsyncer">86dbs/dbsyncer</a></strong>，勿預設採用第三方重新命名倉（見下）。</li>
+</ol>
+<h3 id="衍生倉警示zhh9126dbsync214-重新命名">衍生倉警示：Zhh9126/DBSYNC（2.1.4 重新命名）</h3>
+<p>同日只讀分析 <a href="https://github.com/Zhh9126/DBSYNC">Zhh9126/DBSYNC</a>（26★，Apache-2.0，創建於 2026-10-19）：GitHub <code>fork=false</code>，但唯一提交自述「原 dbsyncer 重新命名升級」，包名 <code>dbsyncer</code>→<code>dbdatasync</code>，版本停在 <strong>2.1.4</strong>，並多出 <code>dbdatasync-engine</code> 模組；<strong>缺少</strong>上游已有的 <code>gaussdb</code> 等連接器。關鍵問題：</p>
+<ul>
+<li><code>dbdatasync-connector/pom.xml</code> 模組寫成 <code>DBDataSync-connector-*</code>，磁碟目錄為 <code>dbdatasync-connector-*</code> → <strong>Linux 下 Maven 直接失敗</strong>（與其 issue #1 一致）；本環境復現。</li>
+<li><strong>無</strong> <code>.github</code> CI、<strong>無</strong> Release；貢獻者僅上傳者 1 人。</li>
+<li>同樣預設 <strong>admin/admin</strong>，keystore 密碼改為 <code>DBDataSync</code>，範例 <code>mysql.password=123</code>。</li>
+<li>無 NOTICE；署名弱於對上游 AE86/86dbs 的常見歸因實踐。</li>
+</ul>
+<p><strong>結論</strong>：若看中 DBSyncer 能力，請用 <strong>86dbs/dbsyncer @ v2.1.6+</strong>；DBSYNC 僅適合對照原始碼，<strong>不建議生產</strong>。</p>
+<h2 id="五場景選型建議">五、場景選型建議</h2>
+<ol>
+<li>
+<p><strong>要用一條鏈路串起 MySQL+SQL Server → Kafka/Doris/ClickHouse，且希望少疊平臺</strong><br>
+→ 優先 <strong>SeaTunnel + SeaTunnel Web</strong>；上線前做 Web↔引擎版本相容矩陣與一次全量切增量演練。</p>
+</li>
+<li>
+<p><strong>已有 Flink 平臺，要強流處理/複雜 SQL</strong><br>
+→ <strong>Flink CDC 3.7+</strong>，Web 用 <strong>Dinky</strong>（開發友好）或 <strong>StreamPark</strong>（作業治理）；若目標含 ClickHouse，立項時單獨立項驗證 sink。</p>
+</li>
+<li>
+<p><strong>要「資料接入平臺」而不只是同步作業</strong>（多租戶、審計、MQ 緩衝）<br>
+→ <strong>Apache InLong</strong>；評估是否上完整元件還是輕量 Sort 模式。</p>
+</li>
+<li>
+<p><strong>強依賴中文零程式碼 Web、批次+即時同一控制台</strong><br>
+→ <strong>TIS</strong>；把 Flink 叢集與外掛版本納入變更管理。</p>
+</li>
+<li>
+<p><strong>跨地域（如新加坡作業 ↔ 墨西哥 Doris）</strong><br>
+→ 同步作業與 Stream Load <strong>靠近 Doris 區域</strong>；或先入<strong>同區域 Kafka</strong>再非同步消費。跨洋直寫會把延遲與超時放大到 checkpoint / 交易語義上。</p>
+</li>
+<li>
+<p><strong>僅 MySQL、要極簡</strong><br>
+→ Canal / Bifrost 等仍可用，但<strong>不符合本文 SQL Server 門檻</strong>，勿混用結論。</p>
+</li>
+<li>
+<p><strong>要極簡 Web 單機、功能鏈完整，可接受 star &lt; 1k 與自行加固</strong><br>
+→ <strong>DBSyncer 2.1.6（86dbs/dbsyncer）</strong>；詳見「特別分析」。<strong>不要</strong>用 Zhh9126/DBSYNC 替代上游。</p>
+</li>
+</ol>
+<h2 id="六上線前檢查清單">六、上線前檢查清單</h2>
+<ul>
+<li><input disabled="" type="checkbox"> 源庫：MySQL <code>binlog_format=ROW</code>、<code>binlog_row_image=FULL</code>；SQL Server 已啟用 CDC 且清理作業正常</li>
+<li><input disabled="" type="checkbox"> 帳號權限：SELECT + 複製/CDC 相關權限（按各連接器文件，勿只開業務 CRUD）</li>
+<li><input disabled="" type="checkbox"> 全量視窗：大表 snapshot 對源庫 IO 的影響；是否可從從庫讀</li>
+<li><input disabled="" type="checkbox"> 增量斷點：checkpoint / offset 持久化介質與恢復演練</li>
+<li><input disabled="" type="checkbox"> 目標：Doris 模型（Unique/Duplicate）與部分列更新；ClickHouse 去重/ReplacingMergeTree 策略；Kafka 分區鍵與冪等</li>
+<li><input disabled="" type="checkbox"> DDL：增刪改列是否自動同步；不支援時的告警與人工流程</li>
+<li><input disabled="" type="checkbox"> 許可證：二次分發/SaaS 是否觸碰 ELv2 等限制（Airbyte）</li>
+<li><input disabled="" type="checkbox"> 可觀測：延遲、髒資料、對帳（行數/取樣 checksum）</li>
+<li><input disabled="" type="checkbox"> 跨區域：RTT、頻寬、是否同城/同區落地 sink</li>
+</ul>
+<h2 id="七未能核實--閱讀邊界">七、未能核實 / 閱讀邊界</h2>
+<ul>
+<li>CloudCanal <strong>商業控制台內部</strong>功能細節未登入產品試用，僅依據其 GitHub issue 倉說明「非開源」剔除。</li>
+<li>Airbyte 各 destination 的當前維護狀態（含 Doris）變化快，本文以 ELv2 + 歷史 ARCHIVED 線索作風險提示，<strong>未逐一跑通連接器 e2e</strong>。</li>
+<li>SeaTunnel / Flink CDC 對 <strong>每一種 DDL 子型別</strong>（改主鍵、改分區等）的支援矩陣未逐條迴歸，只引用文件中已寫明的選項。</li>
+<li>StreamPark / Dinky 與 Flink CDC 3.7 的<strong>組合相容性</strong>未在本機拉起叢集驗證，選型需按各自 release note 鎖版本。</li>
+<li>未評測各方案在「新加坡→墨西哥」鏈路上的實測延遲，跨地域僅為架構建議。</li>
+<li>DBSyncer：<strong>多節點叢集</strong>（<code>cluster.enabled=true</code> + MySQL storage）與 <strong>DDL→Doris/Kafka/CH</strong> 端到端未在本環境拉起驗證；Kafka <code>acks</code>/冪等以業務配置為準，倉庫測試樣例可見 <code>acks=1</code>、<code>enable.idempotence=false</code>。</li>
+<li>DBSyncer <code>master</code> 相對 <code>v2.1.6</code> 的後續提交未逐條迴歸。</li>
+</ul>
+<h2 id="參考資料">參考資料</h2>
+<ol>
+<li>GitHub API 快照（2026-11-05）：<code>gh api repos/apache/seatunnel</code> 等，本文表格 star/license/pushed_at 來源。</li>
+<li><a href="https://seatunnel.apache.org/docs/2.3.11/connector-v2/source/MySQL-CDC/">SeaTunnel MySQL-CDC</a> · <a href="https://seatunnel.apache.org/docs/2.3.11/connector-v2/source/SqlServer-CDC/">SqlServer-CDC</a> · <a href="https://seatunnel.apache.org/docs/2.3.11/connector-v2/sink/Kafka/">Kafka/Doris/Clickhouse sink</a></li>
+<li><a href="https://github.com/apache/seatunnel-web/blob/main/README.md">SeaTunnel Web README</a></li>
+<li><a href="https://inlong.apache.org/docs/introduction/">Apache InLong Introduction / Supported Data Nodes</a></li>
+<li><a href="https://nightlies.apache.org/flink/flink-cdc-docs-stable/docs/connectors/pipeline-connectors/overview/">Flink CDC Pipeline Connectors Overview</a></li>
+<li><a href="https://tis.pub/docs/">TIS 文件與端型別表</a> · <a href="https://github.com/datavane/tis">datavane/tis</a></li>
+<li><a href="https://github.com/DataLinkDC/dinky">Dinky</a> · <a href="https://github.com/apache/streampark">StreamPark</a></li>
+<li><a href="https://github.com/airbytehq/airbyte/blob/master/LICENSE">Airbyte LICENSE (ELv2)</a> · <a href="https://github.com/ClouGence/cloudcanal-issue">ClouGence/cloudcanal-issue</a></li>
+<li>繁中 CDC 概念：<a href="https://ithelp.ithome.com.tw/articles/10362458">iT邦幫忙 - 變更資料擷取</a></li>
+<li><a href="https://github.com/86dbs/dbsyncer">86dbs/dbsyncer</a> · tag <a href="https://github.com/86dbs/dbsyncer/releases/tag/v2.1.6">v2.1.6</a> · <a href="https://dbsyncer.cn">dbsyncer.cn</a> · <a href="https://github.com/86dbs/dbsyncer/blob/master/LICENSE">LICENSE (Apache-2.0)</a></li>
+<li>衍生倉對照（不推薦生產）：<a href="https://github.com/Zhh9126/DBSYNC">Zhh9126/DBSYNC</a> · <a href="https://github.com/Zhh9126/DBSYNC/issues/1">issue #1 Linux 編譯大小寫</a></li>
+</ol>
+<hr>
+<p><em>發布說明：配圖均來自 Apache 專案官方資源（Apache-2.0），壓縮後 &lt;300KB，託管於本站靜態目錄。初版核實 2026-11-05；同日增補 DBSyncer 2.1.6 原始碼特別分析（Asia/Singapore）。</em></p>
+]]></content:encoded></item></channel></rss>

@@ -1,0 +1,279 @@
+---
+title: "技術人的底層修養：從左耳朵耗子的文章裡讀出的工程哲學"
+url: https://d94807974-commits.github.io/posts/engineering-philosophy-from-coolshell/
+markdown_url: https://d94807974-commits.github.io/posts/engineering-philosophy-from-coolshell/index.md
+date: 2026-11-04T14:20:00+08:00
+lastmod: 2026-11-05T13:25:00+08:00
+author: "Donald"
+language: zh-TW
+summary: "重讀陳皓（左耳朵耗子）在 CoolShell 與《左耳聽風》裡留下的文字，把散落的觀點串成一套框架：學習觀、程式設計觀、架構觀與職業觀。核心只有一句話——把精力花在本質上，把控制交給系統。"
+tags: ["左耳朵耗子","工程哲學","架構","程式設計師成長","CoolShell"]
+---
+
+# 技術人的底層修養：從左耳朵耗子的文章裡讀出的工程哲學
+
+
+> [!VIEWPOINT] 核心觀點
+> 陳皓在 CoolShell 留下的學習觀、程式設計觀、架構觀與職業觀，可以收成一句話：把精力花在本質上，把控制交給系統。
+
+> 芝蘭生於空谷，不以無人而不芳。
+> —— 陳皓的 GitHub 個人簡介
+
+
+<figure>
+<img src="https://d94807974-commits.github.io/images/engineering-philosophy-from-coolshell/bookcase.jpg" alt="公共書櫃" loading="lazy" width="700">
+<figcaption>圖片：Sir James / <a href="https://commons.wikimedia.org/wiki/File:Public_bookcase_germany_bonn_poppelsdorf_2008_08_10a.jpg">Wikimedia Commons</a>，<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>。技術文章像開放書櫃：精華在於被反覆取用的那幾本。</figcaption>
+</figure>
+
+## 引子：為什麼今天還要讀 CoolShell
+
+2023 年 5 月，陳皓（網名「左耳朵耗子」，很多人叫他「耗子叔」）因突發心肌梗塞離世，年僅 47 歲。他留下的 CoolShell（酷殼）部落格，從 C++ 虛擬函式表一直寫到 Kubernetes 網路排障、Go 程式設計模式、系統架構原則，二十年裡影響了一代中國程式設計師。
+
+三年後的今天，技術圈的熱詞換了一輪又一輪，AI 寫程式碼已是日常。重讀他的文章，我發現真正「不過時」的不是某個具體技術，而是他反覆講的一套**底層修養**：怎麼學、怎麼寫、怎麼設計、怎麼對待自己的職業。這些觀點散落在幾百篇文章裡，單獨看像是經驗之談，放在一起看，背後其實是同一個思路：
+
+**分清什麼是本質、什麼是控制；把人的精力花在本質上，把控制交給系統和工具。**
+
+下面我試著用這條線，把他的學習觀、程式設計觀、架構觀和職業觀串起來，並在每部分寫下我自己的理解和打算。
+
+## 一、學習觀：從「認知」到「技能」，中間沒有捷徑
+
+### 1. 三級轉換：認知 → 知識 → 技能
+
+在《如何超過大多數人》裡，耗子叔把一個人的能力拆成三層：先有零碎的**認知**，再通過系統學習變成**知識**，最後通過訓練和實踐變成**技能**。每一層都要花時間，大多數人就倒在半路上。
+
+針對每一層，他都給了具體的方法：
+
+- **認知層看資訊源**：資訊渠道（能否拿到一手資訊）、資訊品質（garbage in, garbage out）、資訊密度（好的資訊會逼著你去查資料、思考、動手驗證）。
+- **知識層看結構**：要建**知識樹**，而不是背零散的知識點；要追問**知識的緣由**，弄清它的來龍去脈；最重要的是學到**方法套路**。他說：「學習不是為了找到答案，而是找到方法。」
+- **技能層看訓練方式**：精益求精（每次重複都要找更好的做法，否則只是「搬磚」）、允許自己犯錯、找高手切磋。
+
+這和 2011 年那篇著名的《程式設計師技術練級攻略》一脈相承。那篇文章開頭就提醒：不要亂買書，不要亂追新技術新名詞，基礎的東西會在未來至少 10 年裡通用；要回顧技術的發展歷史；例子再簡單也要親手敲一遍；要多想「為什麼是這樣而不是那樣」。
+
+### 2. 一手資料與英文
+
+他多次強調英文能力和一手資料的重要性。在《如何超過大多數人》裡，他提醒只能拿到二手、三手資訊的人，得到的是被別人解讀過的東西，三傳兩遞之後必然失真，甚至會被傳遞資訊的「中間人」篡改；在《別讓自己「牆」了自己》裡，他又把英文能力看作能否融入世界的決定性因素。他推薦的學習材料幾乎都是英文原著、論文和官方文件，比如在講 Pipeline 時直接引用 Rob Pike 的部落格，講呼叫鏈追蹤時直接讓人去讀 Google Dapper 論文。
+
+### 3. 建一個自己的「實驗室」
+
+在介紹《程式設計師練級攻略（2018）》怎麼用時，他給的第一條建議是：**建一個自己的實驗室**。徒手把環境搭起來，寫實驗性的小程式去驗證一個技術點，出了問題自己除錯。他甚至說，不要在他的專欄裡學習，要把專欄當嚮導和跳板，真正的學習要線上下系統地做。
+
+### 我的反思
+
+AI 時代，「拿到答案」的成本幾乎降到了零。這讓耗子叔那句「學習不是為了找到答案，而是找到方法」更加刺耳。如果我只會讓 AI 給出答案，我得到的只是**認知**，連**知識**都算不上，更不用說**技能**。我的做法是：遇到 AI 給的方案，至少追問一層「為什麼」，然後在本地實驗室裡把關鍵結論驗證一遍。
+
+## 二、程式設計觀：程式 = 邏輯 + 控制
+
+### 1. 程式設計的本質
+
+《左耳聽風》裡的「程式設計範式遊記」系列，從 C 的泛型講到函式式、物件導向、Go 的委託，最後落到一篇《程式設計的本質》。他把 Niklaus Wirth 的「程式 = 演算法 + 資料結構」和 Robert Kowalski 1979 年論文裡的「演算法 = 邏輯 + 控制」合在一起：
+
+```
+Program = Logic + Control + Data Structure
+```
+
+**Logic** 是業務要解決的問題，**Control** 是解決問題的策略：遍歷還是遞迴、序列還是並行、同步還是非同步、怎麼重試、怎麼排程。他的判斷很直接：絕大多數程式混亂不堪，根本原因就是業務邏輯和控制邏輯糾纏在一起。他在文中把這句話連寫了三遍：
+
+> 有效地分離 Logic、Control 和 Data 是寫出好程式的關鍵所在！
+
+各種程式設計範式，本質上都是在做這種分離。Map/Reduce/Filter 是控制，傳進去的 lambda 才是邏輯；介面抽象了邏輯，多型和依賴注入負責控制；用 DSL 描述表單校驗規則（Logic），再寫一個通用的 `check_form`（Control），程式碼立刻乾淨了。
+
+### 2. 從 Guard Clauses 到 Functional Options
+
+這條線貫穿了他很多講程式碼的文章。
+
+**《如何重構「箭頭型」程式碼》**裡，層層巢狀的 `if-else` 之所以難讀，是因為錯誤檢查（控制）把正常流程（邏輯）擠到了最深處。他的解法是 Guard Clauses：**讓出錯的程式碼先返回**，剩下的就是正常流程；再把語句塊抽成函式。他還特意反駁了「程式碼不共享就不要抽函式」的說法：函式的作用是遮蔽細節，不只是複用。
+
+**《Go 程式設計模式：Functional Options》**則是同一思想在 API 設計上的體現。一個 `Server` 有必填參數和一堆可選參數：寫一組 `NewXXXServer` 很囉嗦，用 `Config` 結構體又得糾結傳 `nil` 還是 `Config{}`，用 Builder 還要多一個包裝型別。函式式選項把「怎麼配置」變成了可組合的函式：
+
+```go
+type Option func(*Server)
+
+func Timeout(d time.Duration) Option {
+    return func(s *Server) { s.Timeout = d }
+}
+
+func NewServer(addr string, port int, opts ...Option) (*Server, error) {
+    srv := Server{Addr: addr, Port: port, Protocol: "tcp", Timeout: 30 * time.Second}
+    for _, opt := range opts {
+        opt(&srv)
+    }
+    return &srv, nil
+}
+
+s, _ := NewServer("0.0.0.0", 8080, Timeout(300*time.Second))
+```
+
+**《Go 程式設計模式：Pipeline》**更進一步：用 channel 把 `echo → odd → sq → sum` 串起來，就像 Unix 管道 `echo $nums | sq | sum`；HTTP 中介軟體則用一個 `Handler(h, decors...)` 把鑑權、日誌等橫切關注點拼裝起來。每個小函式只做一件事，組合方式就是控制。
+
+### 3. 把兩個模式合起來：重試就是「控制」
+
+我自己做了個小練習，把耗子叔的兩個觀點合在一起：**重試是典型的控制邏輯**，它不應該散落在每個業務函數裡，而應該是一個可配置、可複用的「控制器」，配置方式正好用 Functional Options。
+
+```go
+type retryPolicy struct {
+    maxAttempts         int
+    baseDelay, maxDelay time.Duration
+    retryable           func(error) bool
+}
+
+type RetryOption func(*retryPolicy)
+
+func MaxAttempts(n int) RetryOption { return func(p *retryPolicy) { p.maxAttempts = n } }
+func Backoff(base, max time.Duration) RetryOption {
+    return func(p *retryPolicy) { p.baseDelay, p.maxDelay = base, max }
+}
+func RetryIf(f func(error) bool) RetryOption { return func(p *retryPolicy) { p.retryable = f } }
+
+// Retry 只关心“怎么重试”（Control），fn 只关心“做什么”（Logic）。
+func Retry(ctx context.Context, fn func(context.Context) error, opts ...RetryOption) error {
+    p := retryPolicy{maxAttempts: 3, baseDelay: 100 * time.Millisecond,
+        maxDelay: 2 * time.Second, retryable: func(error) bool { return true }}
+    for _, o := range opts {
+        o(&p)
+    }
+    var err error
+    for i := 0; i < p.maxAttempts; i++ {
+        if err = fn(ctx); err == nil || !p.retryable(err) {
+            return err
+        }
+        d := p.baseDelay << i // 指数退避
+        if d > p.maxDelay {
+            d = p.maxDelay
+        }
+        d = d/2 + time.Duration(rand.Int63n(int64(d/2)+1)) // 抖动，避免重试风暴
+        select {
+        case <-time.After(d):
+        case <-ctx.Done():
+            return ctx.Err()
+        }
+    }
+    return err
+}
+```
+
+業務程式碼只需要寫 `Retry(ctx, callPayment, MaxAttempts(5), RetryIf(isTimeout))`。以後想加熔斷、加監控埋點，改的都是控制層，業務函式一行不動。
+
+## 三、架構觀：為失敗而設計，把控制收口
+
+### 1. 彈力設計：故障是常態
+
+《左耳聽風》的分散式系統系列裡，「彈力設計」是我讀得最多的一組。他的出發點很樸素：在分散式系統裡，故障不可避免，所以設計的目標不是「不出故障」，而是**出了故障能自我保護、快速恢復**。這正是 AWS 說的 Design for Failure。
+
+在總結篇裡，他把彈力設計歸成三大塊：
+
+1. **冗餘服務**：消除單點，靠負載均衡、服務發現、動態路由和健康檢查。
+2. **服務解耦**：橫向做隔離（Bulkheads，按業務分片、按使用者做多租戶），縱向用非同步通訊；一致性問題靠補償交易做「反向交易」。
+3. **服務容錯**：重試、冪等、熔斷、限流、降級。
+
+這幾個模式之間是有依賴的，這是我覺得最有價值的地方：
+
+- **重試必須配合冪等**。呼叫超時的時候，你不知道對方到底成功沒有，安全的重試前提是「同一個請求執行多少次，結果都一樣」。通常的做法是給每次呼叫一個全域唯一 ID，服務端據此判斷請求是否已處理過：
+
+```go
+// 用 requestID 做幂等：重复请求直接返回第一次的结果，不会重复扣款
+func Pay(ctx context.Context, s Store, requestID string, doPay func() (string, error)) (string, error) {
+    if r, loaded, err := s.PutIfAbsent(ctx, requestID, "PROCESSING"); err != nil {
+        return "", err
+    } else if loaded {
+        return r, nil
+    }
+    return doPay() // 完成后把最终结果回写到 requestID 对应的记录
+}
+```
+
+- **熔斷是對重試的保護**：下游已經掛了還在拼命重試，只會把它壓得更死。熔斷器在 Closed、Open、Half-Open 三種狀態間切換，給下游喘息的時間。
+- **限流和降級是對自己的保護**。他講降級時舉過一個例子：倫敦諾丁山狂歡節和阿森納球賽散場時，公交地鐵全部免費，犧牲一點收入，換來人群最快疏散。系統也一樣，資源不夠時要主動犧牲一些東西：一致性（強一致退為最終一致）、次要功能、返回資料的完整度。他特別提醒，降級必須事先梳理清楚哪些功能必須保住、哪些可以犧牲，並把預案寫成可以自動或半自動執行的程式碼。
+
+### 2. 架構原則：控制邏輯要「收口」
+
+2021 年的《我做系統架構的一些原則》是他架構思想的集大成之作，共十一條。其中**原則七「對控制邏輯進行全面收口」**，和前面「程式 = 邏輯 + 控制」完全呼應，只是放大到了系統層面：服務發現、重試、熔斷、限流、監控、排程、灰度釋出，這些都是控制邏輯，應該統一收到閘道、SDK、Service Mesh、Kubernetes 這類基礎設施裡，而不是讓每個業務團隊各寫一遍。
+
+他創辦的 MegaEase 做的開源流量排程系統 Easegress（現在是 CNCF 專案），某種意義上就是這個理念的產品化：把流量控制從業務程式碼裡剝離出來。
+
+其餘幾條，我認為對日常工作最有指導意義的是：
+
+- **關注真正的收益，而不是技術本身**：能否讓團隊並行開發、讓系統更穩定、通過簡化和自動化降低成本。三者都不沾的架構沒有意義。
+- **完備性比效能更重要**：先用支援 ACID 的關係型資料庫，NoSQL 作補充，也就是「先緊後松」。他的經驗是，效能問題總是有解，而丟掉的完備性很難找回來。
+- **不要依賴自己的經驗，要依賴資料和學習**：他說，如果有一天你開始憑以往經驗做技術決定，你就已經不可能再成長了。
+- **小心 X-Y 問題，追問原始需求**：很多人來問「大數據流式處理怎麼做」，追問下去發現只需要做一下效能調優。
+- **不要遷就技術債務**：與其花大力氣遷就，不如直接還；還不了就建一個「新城區」，用防腐層隔開。
+
+### 3. 效能：先定義，再測量，最後才最佳化
+
+在《效能調優攻略》裡，他先定義效能：效能就是**吞吐量（Throughput）**和**延遲（Latency）**兩個指標，缺一不可。能扛一百萬併發但延遲兩分鐘，毫無意義。然後是方法論：系統出問題時，先別急著看程式碼，先看作業系統報告：CPU、記憶體、磁碟 IO、網路 IO；再用 Profiler 找熱點；常用的最佳化策略無非是空間換時間、時間換空間、簡化程式碼、並行處理。
+
+這一點和他「依賴資料而不是經驗」的原則是同一件事。
+
+### 我的反思
+
+我以前做架構評審，最常犯的錯是一上來就討論「用什麼」：上不上 MQ、用不用 Redis。耗子叔的原則逼著我先回答三個問題：**收益是什麼？失敗了怎麼辦？控制邏輯放在哪？**這三個問題答清楚了，選型往往自然就定了。
+
+## 四、職業觀：效率、投資與「別牆了自己」
+
+### 1. 效率不是幹得多，而是價值大
+
+2013 年的《加班與效率》裡，他對「靠加班超越對手」的說法批評得非常尖銳：這說明管理者已經想不出自己公司的核心價值了。他給效率下的定義是：
+
+> 效率不是比誰幹的活多，而是比誰幹得活有更大的價值。
+
+他用「有用功 / 總功」來拆解效率：增加有用功（多問需求方為什麼要做、能不能簡化，「有用功的來源不是拼命做需求，而是砍需求」），降低總功（減少支援性和重複性的工作），形成合力（整個團隊對整個產品負責）。他還介紹了 Amazon 的 T-Shirt Size 估算：業務影響力和投入成本各估一個尺碼，影響小、成本大的需求直接砍掉。
+
+在《什麼是工程師文化？》裡，他把工程師文化概括為**自由 + 效率**，並認為在自由的環境下痴迷於提升效率，創新就會自然發生。效率的具體做法包括：簡化（「簡化不是簡陋」）、無情地推行自動化、正確的抽象、高品質的產品、持續改進。
+
+### 2. 20 到 30 歲，練學習能力和解決問題的能力
+
+《技術人員的發展之路》寫於他 40 歲那年。他認為 20 到 30 歲是最關鍵的十年，首要任務是練就**高效的學習能力**和**解決難題的能力**，標誌是在團隊裡顯現出 Leadership。他特別強調，Leadership 不是當領導和經理，而是一種特徵：大家遇到問題時，總是你能站出來說該怎麼辦（幫人解問題）；大家做關鍵決定時，會來徵求你的意見（被人所依賴）。一旦進入「能力強 → 解決更難的問題 → 學到更多」的正迴圈，人生的可能性就會大大增加。
+
+《程式設計師如何把控自己的職業》延續了這個思路：看清趨勢（他認為技術演進的規律就是自動化加規模化），打牢基礎以不變應萬變，提升成長的效率。他把技術人分成技工、特種工、工程師、設計師/架構師、經理幾類，懂原理的「特種工」不容易隨著某項技術一起被淘汰。
+
+### 3. 投資而不是投機
+
+《別讓自己「牆」了自己》裡有一段我很認同：大多數人只會算自己短期會失去什麼，優秀的人算的是投入以後未來能得到什麼，前者是投機，後者是投資。他勸人做有價值的事，開啟眼界，站在更高的維度思考：與其焦慮薪水、地點、戶口這些低維度的東西，不如關心自己的可能性是否更多、能否解決更大更難的問題。
+
+### 不是聖經，是一種思考方式
+
+公平地說，耗子叔的很多觀點相當犀利，有些也很有爭議，比如「企業級架構選 Java 基本不會錯」，比如對國內一些網際網路產品的批評。他自己也在文章裡說明，這些架構原則適用於比較複雜的業務，簡單應用可能會得出相反的結論。讀他的文章，我覺得最好的方式不是全盤照搬結論，而是學他得出結論的方法：追問本質、看資料、看歷史、看一手資料，然後自己判斷。這本身也是他一直倡導的獨立思考。
+
+## 五、我的行動清單
+
+把上面這些落到自己身上，我給自己定了幾條可以檢查的規矩：
+
+1. **每學一個新技術，畫出知識樹，並追溯它要解決的原始問題**。說不清「它為什麼出現」，就不算學會。
+2. **一手資料優先**：官方文件、RFC、論文、原作者部落格，二手解讀只作索引。
+3. **維護一個個人實驗室倉庫**，每個重要結論配一個能跑的最小實驗。
+4. **寫程式碼時先問：這行是 Logic 還是 Control？**能抽出去的控制邏輯（重試、超時、校驗、日誌）儘量抽成可複用的元件。
+5. **設計評審必答三問**：收益是什麼？失敗時如何降級？控制邏輯收口在哪？
+6. **做決策前先拿資料**：壓測、Profiler、監控，而不是憑感覺或憑經驗。
+7. **用「有用功 / 總功」審視自己的一週**：哪些需求該砍，哪些重複勞動該自動化。
+8. **每年做一次「投資復盤」**：今年的時間投在了哪裡，有沒有讓自己的可能性變多。
+
+## 結語：燈熄了，光還在
+
+耗子叔離開之後，很多人自發寫文章悼念他。我和他素未謀面，只是一個讀著 CoolShell 成長起來的普通程式設計師。他的文字裡沒有「速成」。在 2018 版練級攻略裡，他坦言是故意把內容寫得讓人望而生畏，因為本來就沒有捷徑，很多知識是硬骨頭，只能一口一口地啃。他相信基礎、相信動手、相信效率、相信開放，也身體力行地把自己的技術寫出來、開源出來，分享給所有人。
+
+他在 GitHub 的個人簡介寫著：「芝蘭生於空谷，不以無人而不芳。」我想，對一個技術人最好的紀念，大概就是把他講過的那些樸素道理，認真地用在自己每天寫的程式碼和做的設計裡。
+
+謹以此文，紀念陳皓（1976—2023）。
+
+## 參考資料
+
+- 陳皓，[《程式設計師技術練級攻略》](https://coolshell.cn/articles/4990.html)，CoolShell，2011
+- 陳皓，[《程式設計師練級攻略（2018) 與我的專欄》](https://coolshell.cn/articles/18360.html)，CoolShell，2018
+- 陳皓，[《如何超過大多數人》](https://coolshell.cn/articles/19464.html)，CoolShell，2019
+- 陳皓，[《別讓自己「牆」了自己》](https://coolshell.cn/articles/20276.html)，CoolShell，2019
+- 陳皓，[《Go 程式設計模式：Functional Options》](https://coolshell.cn/articles/21146.html)，CoolShell，2020
+- 陳皓，《Go 程式設計模式：Pipeline》，CoolShell，2020（[極客時間版](https://time.geekbang.org/column/article/332610)）
+- 陳皓，[《如何重構「箭頭型」程式碼》](https://coolshell.cn/articles/17757.html)，CoolShell，2017
+- 陳皓，[《我做系統架構的一些原則》](https://coolshell.cn/articles/21672.html)，CoolShell，2021
+- 陳皓，[《效能調優攻略》](https://coolshell.cn/articles/7490.html)，CoolShell，2012
+- 陳皓，[《加班與效率》](https://coolshell.cn/articles/10217.html)，CoolShell，2013
+- 陳皓，[《什麼是工程師文化？》](https://coolshell.cn/articles/17497.html)，CoolShell，2016
+- 陳皓，[《技術人員的發展之路》](https://coolshell.cn/articles/17583.html)，CoolShell，2016
+- 陳皓，[《程式設計師如何把控自己的職業》](https://coolshell.cn/articles/20977.html)，CoolShell，2020
+- 陳皓，[《左耳聽風》專欄](https://time.geekbang.org/column/48)，極客時間：[《彈力設計：認識故障和彈力設計》](https://time.geekbang.org/column/article/3912)、[《彈力設計：隔離設計》](https://time.geekbang.org/column/article/3917)、[《程式設計範式遊記（9）：程式設計的本質》](https://learn.lianglianglee.com/%e4%b8%93%e6%a0%8f/%e5%b7%a6%e8%80%b3%e5%90%ac%e9%a3%8e/038%20%20%e7%bc%96%e7%a8%8b%e8%8c%83%e5%bc%8f%e6%b8%b8%e8%ae%b0%ef%bc%889%ef%bc%89-%20%e7%bc%96%e7%a8%8b%e7%9a%84%e6%9c%ac%e8%b4%a8.md)、[《彈力設計總結》](https://www.lianglianglee.com/%E4%B8%93%E6%A0%8F/%E5%B7%A6%E8%80%B3%E5%90%AC%E9%A3%8E/051%20%20%E5%BC%B9%E5%8A%9B%E8%AE%BE%E8%AE%A1%E7%AF%87%E4%B9%8B%E2%80%9C%E5%BC%B9%E5%8A%9B%E8%AE%BE%E8%AE%A1%E6%80%BB%E7%BB%93%E2%80%9D.md)、[《降級設計》](https://learn.lianglianglee.com/%E4%B8%93%E6%A0%8F/%E5%B7%A6%E8%80%B3%E5%90%AC%E9%A3%8E/050%20%20%E5%BC%B9%E5%8A%9B%E8%AE%BE%E8%AE%A1%E7%AF%87%E4%B9%8B%E2%80%9C%E9%99%8D%E7%BA%A7%E8%AE%BE%E8%AE%A1%E2%80%9D.md)（後三篇為第三方存檔）
+- Robert Kowalski, *Algorithm = Logic + Control*, Communications of the ACM, 1979
+- Rob Pike, [Go Concurrency Patterns: Pipelines and cancellation](https://go.dev/blog/pipelines)
+- [haoel 的 GitHub 主頁](https://github.com/haoel)、[haoel/leetcode](https://github.com/haoel/leetcode)、[Easegress](https://github.com/easegress-io/easegress)
+- [CoolShell 全站 Markdown 備份（slan-ning/coolshell-markdown）](https://github.com/slan-ning/coolshell-markdown)
+- 陳皓離世相關報道：[澎湃新聞](https://www.thepaper.cn/newsDetail_forward_23100097)、[央廣網](https://news.cnr.cn/native/gd/20230516/t20230516_526252880.shtml)（2023-05）；[維基百科：左耳朵耗子](https://zh.wikipedia.org/zh-cn/%E5%B7%A6%E8%80%B3%E6%9C%B5%E8%80%97%E5%AD%90)
+

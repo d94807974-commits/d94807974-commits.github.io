@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>Java on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/java/</link><description>Recent content in Java on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Thu, 05 Nov 2026 23:45:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/java/index.xml" rel="self" type="application/rss+xml"/><item><title>用 AI 給私有化 Doris 打補丁：重新編譯 FE 讓審計日誌去中文（2.1.6 / 2.1.2 實戰）</title><link>https://d94807974-commits.github.io/posts/doris-audit-log-strip-chinese-with-ai/</link><pubDate>Thu, 05 Nov 2026 23:45:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/doris-audit-log-strip-chinese-with-ai/</guid><description>私有化 Apache Doris 的 fe.audit.log 需要去掉中文，但 conf/log4j2-spring.xml 是 FE 啟動時程式碼生成的，手改會被覆蓋。本文記錄和 AI 協作的完整過程：定位 Log4jConfig、只改一個類、用官方二進位制包做 classpath 單類編譯、逐位元組自證一致、jar uf 替換，並給出 2.1.6-rc04 與 2.1.2-rc04 兩個版本的測試結果、免換 jar 方案及其侷限。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/doris-audit-log-strip-chinese-with-ai.html">設定生成流程、補丁驗證順序與三種模式</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>Doris 審計日誌的 log4j2 設定是 FE 啟動時由 <code>Log4jConfig</code> 產生的，要抗重啟就得改這個產生器本身。整個補丁只替換 <code>doris-fe.jar</code> 裡的一個 class，用官方二進位包做 classpath 單獨編譯，不必全量編譯 Doris。</p>
+</div><blockquote>
+  <p>本文所有數字都來自這次的真實操作記錄。伺服器地址、主機名、叢集 ID、真實安裝路徑都已脫敏，命令裡統一用 <code>${DORIS_HOME}</code>、<code>./work</code>、<code>./src</code>、<code>$JAVA_HOME</code> 這類佔位符。</p>
+
+</blockquote><h2 id="一背景與需求">一、背景與需求</h2>
+<p>手上有兩套私有化部署的 Apache Doris，都是單 FE（Master）：</p>
+<table>
+	<thead>
+			<tr>
+					<th>叢集</th>
+					<th>FE 版本（<code>SHOW FRONTENDS</code> 的 Version）</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>A</td>
+					<td><code>doris-2.1.6-rc04-653e315ba5</code></td>
+			</tr>
+			<tr>
+					<td>B</td>
+					<td><code>doris-2.1.2-rc04-b130df2488</code></td>
+			</tr>
+	</tbody>
+</table>
+<p>需求很簡單：<strong>FE 的審計日誌 <code>fe.audit.log</code> 裡不要出現中文</strong>。SQL 裡的中文字串常量、中文別名、中文註釋都算。</p>
+<p>麻煩在於，<code>${DORIS_HOME}/fe/conf/</code> 裡那個 <code>log4j2-spring.xml</code> 頭部寫著：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- Auto Generated. DO NOT MODIFY IT! --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;Configuration</span> <span style="color:#a6e22e">status=</span><span style="color:#e6db74">&#34;info&#34;</span> <span style="color:#a6e22e">packages=</span><span style="color:#e6db74">&#34;org.apache.doris.common&#34;</span><span style="color:#f92672">&gt;</span>
+</span></span></code></pre></div><p>FE <strong>每次啟動都會重新生成並覆蓋它</strong>，手改審計 appender 的 pattern 撐不過一次重啟。把檔案設成只讀也不行：FE 寫不進去，直接啟動失敗。</p>
+<h2 id="二和-ai-協作的過程">二、和 AI 協作的過程</h2>
+<p>這次的分工大致是這樣的：</p>
+<table>
+	<thead>
+			<tr>
+					<th>人提供</th>
+					<th>AI 負責</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>準確版本號（<code>SHOW FRONTENDS\G</code> 的 <code>Version</code> 欄位）</td>
+					<td>按 tag 拉對應原始碼，定位生成 XML 的程式碼（<code>Log4jConfig</code>）</td>
+			</tr>
+			<tr>
+					<td>線上自動生成的 <code>log4j2-spring.xml</code> 內容（appender 名、pattern）</td>
+					<td>先判斷有沒有<strong>不換 jar</strong> 就能做到的辦法（配置項、自訂模板）</td>
+			</tr>
+			<tr>
+					<td>線上 <code>doris-fe.jar</code> 的 sha256</td>
+					<td>改程式碼、單類編譯、證明「未改動原始碼編譯結果 = 官方 class」</td>
+			</tr>
+			<tr>
+					<td>最終決定和上線操作</td>
+					<td>起測試 FE，跑四種模式 + 重啟 + 執行時改日誌級別，生成 README / diff / 校驗和</td>
+			</tr>
+	</tbody>
+</table>
+<p>**一個真實的教訓：版本號拿錯過。**一開始對話裡給的版本是 2.1.2，AI 就照著 2.1.2 改了。後來使用者貼出線上生成的 XML，裡面有 <code>AuditFile</code>、<code>AuditConsole</code> 和 <code>&lt;!--REPLACED BY AUDIT LOG MARKER--&gt;</code>。AI 一核對原始碼發現：<strong>2.1.2 根本沒有這些結構</strong>（它只有一個叫 <code>Auditfile</code> 的審計 appender，小寫 f），這個 marker 要到 2.1.4 之後才出現。再跑一次 <code>SHOW FRONTENDS</code>，確認線上其實是 2.1.6-rc04，於是 2.1.2 的產物全部作廢重做。</p>
+<p>所以第一步永遠是：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">SHOW</span> FRONTENDS<span style="color:#960050;background-color:#1e0010">\</span><span style="color:#66d9ef">G</span>   <span style="color:#75715e">-- 只看 Version 字段，例如 doris-2.1.6-rc04-653e315ba5
+</span></span></span></code></pre></div><p>版本號最後那段是 commit 短 hash。拿它和官方二進位制包裡 <code>Version</code> 類記錄的 <code>doris_build_short_hash</code> 對一下，就能確認原始碼 tag 選對了。</p>
+<p>後來 B 叢集（真的是 2.1.2-rc04）也要同樣的補丁。這次 AI 沒有直接套用 2.1.6 的檔案，而是按 2.1.2 的原始碼結構重新移植了一遍（差異見第四節末尾）。</p>
+<h2 id="三原理為什麼改生成程式碼就能抗重啟">三、原理：為什麼改生成程式碼就能抗重啟</h2>
+<p><img alt="FE 啟動時審計日誌配置的生成與載入流程（橙色為補丁新增步驟）" loading="lazy" src="/images/doris-audit-log-strip-chinese-with-ai/flow.svg"></p>
+<p>讀 <a href="https://github.com/apache/doris/blob/2.1.6-rc04/fe/fe-core/src/main/java/org/apache/doris/common/Log4jConfig.java">2.1.6-rc04 的 Log4jConfig.java</a> 可以看到，FE 啟動時 <code>initLogging()</code> → <code>reconfig()</code> 會做這幾件事：</p>
+<ol>
+<li>用程式碼拼出一個 XML 模板，裡面帶各種 <code>&lt;!--REPLACED BY ...--&gt;</code> 佔位符；</li>
+<li>替換佔位符，再用 <code>StrSubstitutor</code> 把 <code>${sys_log_dir}</code> 這類變數填進去；</li>
+<li><code>SpringLog4j2Config.writeSpringLogConf()</code> 把結果寫到 <code>conf/log4j2-spring.xml</code>；</li>
+<li>直接在記憶體裡 <code>context.start(config)</code> 載入這份配置；</li>
+<li>之後 <a href="https://github.com/apache/doris/blob/2.1.6-rc04/fe/fe-core/src/main/java/org/apache/doris/httpv2/HttpServer.java">HttpServer</a> 啟動 Spring Boot 時，通過 <code>logging.config</code> 指向這份檔案，再載入一次。</li>
+</ol>
+<p>另外，通過 HTTP <code>POST /rest/v1/log</code> 在執行時改日誌級別，會呼叫 <code>Log4jConfig.updateLogging()</code> → <code>reconfig()</code>，把整套流程再走一遍。</p>
+<p>結論很直接：<strong>過濾規則只要寫進這個生成器，無論是重啟、Spring 重新載入，還是執行時 reconfig，生成出來的配置都會帶上它。</strong></p>
+<p>Log4j2 有兩種現成手段可以用：</p>
+<ul>
+<li><strong>strip（刪除中文）</strong>：用 PatternLayout 的 <a href="https://logging.apache.org/log4j/2.x/manual/pattern-layout.html"><code>%replace{pattern}{regex}{substitution}</code></a> 對 <code>%m</code> 做正則替換；</li>
+<li><strong>drop（整行丟棄）</strong>：用 <a href="https://logging.apache.org/log4j/2.x/manual/filters.html"><code>RegexFilter</code></a>，訊息匹配就 <code>DENY</code>。</li>
+</ul>
+<h3 id="關鍵-diff216-rc04精簡">關鍵 diff（2.1.6-rc04，精簡）</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-diff" data-lang="diff"><span style="display:flex;"><span>     private static final String AUDIT_LOG_PATTERN
+</span></span><span style="display:flex;"><span><span style="color:#f92672">-            = AUDIT_LOG_MARKER_PLACEHOLDER + &#34;%d{yyyy-MM-dd HH:mm:ss,SSS} [%c{1}] %m%n&#34;;
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+            = AUDIT_LOG_MARKER_PLACEHOLDER + &#34;%d{yyyy-MM-dd HH:mm:ss,SSS} [%c{1}] &#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+            + AUDIT_LOG_MESSAGE_PLACEHOLDER + &#34;%n&#34;;
+</span></span></span><span style="display:flex;"><span> ...
+</span></span><span style="display:flex;"><span>             .append(&#34;    &lt;Console name=\&#34;&#34; + AUDIT_LOG_CONSOLE_APPENDER + &#34;\&#34; target=\&#34;SYSTEM_OUT\&#34;&gt;\n&#34;)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">+            .append(&#34;      &#34; + AUDIT_LOG_FILTER_PLACEHOLDER + &#34;\n&#34;)
+</span></span></span><span style="display:flex;"><span> ...
+</span></span><span style="display:flex;"><span>             .append(&#34;    &lt;RollingFile name=\&#34;&#34; + AUDIT_LOG_FILE_APPENDER + &#34;\&#34; fileName=\&#34;${audit_log_dir}/fe.audit.log\&#34; ...&gt;\n&#34;)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">+            .append(&#34;      &#34; + AUDIT_LOG_FILTER_PLACEHOLDER + &#34;\n&#34;)
+</span></span></span><span style="display:flex;"><span> ...
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    static String auditMessagePattern() {
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        if (auditFilterMode.equals(&#34;strip&#34;)) {
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+            return xmlEscape(&#34;%replace{%m}{&#34; + auditChineseRegex + &#34;}{&#34; + auditChineseReplacement + &#34;}&#34;);
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        }
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        return &#34;%m&#34;;
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    }
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    static String auditFilterElement() {
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        if (auditFilterMode.equals(&#34;drop&#34;)) {
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+            return &#34;&lt;RegexFilter regex=\&#34;&#34; + xmlEscape(&#34;(?s).*(?:&#34; + auditChineseRegex + &#34;).*&#34;)
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+                    + &#34;\&#34; useRawMsg=\&#34;false\&#34; onMatch=\&#34;DENY\&#34; onMismatch=\&#34;NEUTRAL\&#34;/&gt;&#34;;
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        }
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        return &#34;&#34;;
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    }
+</span></span></span><span style="display:flex;"><span> ...
+</span></span><span style="display:flex;"><span>         newXmlConfTemplate = strSub.replace(newXmlConfTemplate);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        // 在 ${} 替换之后、用 String.replace（不是 replaceAll）注入，正则里的反斜杠原样保留
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        newXmlConfTemplate = newXmlConfTemplate.replace(AUDIT_LOG_MESSAGE_PLACEHOLDER, auditMessagePattern());
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        newXmlConfTemplate = newXmlConfTemplate.replace(AUDIT_LOG_FILTER_PLACEHOLDER, auditFilterElement());
+</span></span></span><span style="display:flex;"><span> ...
+</span></span><span style="display:flex;"><span>         customConfDir = Config.custom_config_dir;
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        loadAuditFilterConf(confDir, customConfDir);
+</span></span></span><span style="display:flex;"><span>         reconfig();
+</span></span></code></pre></div><p>有幾個細節：</p>
+<ul>
+<li><strong>配置項由補丁自己從 <code>fe.conf</code> / <code>fe_custom.conf</code> 讀取</strong>，不用改 <code>Config.java</code>，所以只需要替換一個 class。Doris 的 <code>ConfigBase</code> 會忽略不認識的配置項，回滾到原版 jar 時這些配置項留在 fe.conf 裡也沒影響。</li>
+<li><strong>注入時機放在 <code>${}</code> 替換之後</strong>，並且用 <code>String.replace</code> 而不是 <code>replaceAll</code>。否則 <code>\p{IsHan}</code> 裡的反斜槓會被當成替換串的轉義符吃掉。</li>
+<li><strong>注入的內容會先做 XML 轉義</strong>（<code>&amp; &lt; &gt; &quot;</code>），不會因為正則裡的特殊字元把 XML 寫壞。</li>
+<li><strong>配置值非法時 FE 直接拒絕啟動</strong>，例如 <code>audit_log_filter_chinese = foo</code> 會在 fe.out 裡報 <code>audit_log_filter_chinese config error: foo, must be none/strip/drop</code>。審計配置錯了就該儘早暴露，而不是悄悄失效。</li>
+</ul>
+<h3 id="生成後的-pattern-對比auditfile">生成後的 pattern 對比（AuditFile）</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- 原版 / none --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;Pattern&gt;</span><span style="color:#75715e">&lt;!--REPLACED BY AUDIT LOG MARKER--&gt;</span>%d{yyyy-MM-dd HH:mm:ss,SSS} [%c{1}] %m%n<span style="color:#f92672">&lt;/Pattern&gt;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- strip（默认） --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;Pattern&gt;</span><span style="color:#75715e">&lt;!--REPLACED BY AUDIT LOG MARKER--&gt;</span>%d{yyyy-MM-dd HH:mm:ss,SSS} [%c{1}] %replace{%m}{[\p{IsHan}\p{InCJKSymbolsAndPunctuation}\p{InHalfwidthAndFullwidthForms}\p{InCJKCompatibilityForms}\p{InBopomofo}]+}{}%n<span style="color:#f92672">&lt;/Pattern&gt;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- drop：appender 内多一行 --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;RegexFilter</span> <span style="color:#a6e22e">regex=</span><span style="color:#e6db74">&#34;(?s).*(?:[\p{IsHan}\p{InCJKSymbolsAndPunctuation}\p{InHalfwidthAndFullwidthForms}\p{InCJKCompatibilityForms}\p{InBopomofo}]+).*&#34;</span> <span style="color:#a6e22e">useRawMsg=</span><span style="color:#e6db74">&#34;false&#34;</span> <span style="color:#a6e22e">onMatch=</span><span style="color:#e6db74">&#34;DENY&#34;</span> <span style="color:#a6e22e">onMismatch=</span><span style="color:#e6db74">&#34;NEUTRAL&#34;</span><span style="color:#f92672">/&gt;</span>
+</span></span></code></pre></div><p>除此之外，生成檔案的結構完全不變：logger、路徑、滾動策略、marker 都一樣。在 none / strip 模式下，原來放 filter 的位置會多出一行空白。</p>
+<h3 id="212-rc04-的差異">2.1.2-rc04 的差異</h3>
+<p><a href="https://github.com/apache/doris/blob/2.1.2-rc04/fe/fe-core/src/main/java/org/apache/doris/common/Log4jConfig.java">2.1.2-rc04 的 Log4jConfig.java</a> 結構更老，移植時做了這些調整：</p>
+<ul>
+<li>模板是一整段字串常量 <code>xmlConfTemplate</code>，不是 <code>StringBuilder</code>，所以直接在模板裡加佔位符；</li>
+<li>只有一個審計 appender <code>Auditfile</code>，沒有 <code>AuditConsole</code>，也沒有 AUDIT LOG MARKER；</li>
+<li>沒有 <code>LogUtils</code>，啟動資訊改用 <code>System.out.println</code> 列印（fe.out 裡沒有 <code>StdoutLogger</code> 字首）；</li>
+<li>三個配置項、預設值、校驗規則、注入方式和 2.1.6 版完全一致。</li>
+</ul>
+<h2 id="四不全量編譯只編譯一個類">四、不全量編譯：只編譯一個類</h2>
+<p>全量編譯 Doris FE 要拉一大堆依賴，耗時長，還可能因為構建環境不同，編出和官方不一樣的位元組碼。這裡只改了一個類，所以完全可以：</p>
+<ol>
+<li>拿<strong>同版本官方二進位制包</strong>裡的 <code>fe/lib/*</code> 做 classpath；</li>
+<li>用 JDK 8 只編譯 <code>Log4jConfig.java</code>；</li>
+<li><strong>先編譯未改動的原始碼，證明結果和官方 jar 裡的 class 逐位元組一致</strong>，再編譯改過的版本；</li>
+<li>用 <code>jar uf</code> 只替換這一個條目。</li>
+</ol>
+<p>官方 jar 是 JDK 8 編譯的：<code>Version</code> 類裡記錄的編譯器分別是 1.8.0_352（2.1.6）和 1.8.0_312（2.1.2）；class 檔案 major version 為 52（Java 8，見 <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">JVM 規範第 4 章</a>）。補丁 class 也必須是 52，這樣在 JDK 8/11/17 上都能載入。</p>
+<p>可複用的命令（以 2.1.6-rc04 為例）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 0) 源码：只需要这一个文件</span>
+</span></span><span style="display:flex;"><span>git clone --filter<span style="color:#f92672">=</span>blob:none --no-checkout https://github.com/apache/doris.git ./src
+</span></span><span style="display:flex;"><span>cd ./src <span style="color:#f92672">&amp;&amp;</span> git fetch --depth <span style="color:#ae81ff">1</span> origin tag 2.1.6-rc04
+</span></span><span style="display:flex;"><span>mkdir -p ../work/orig/org/apache/doris/common
+</span></span><span style="display:flex;"><span>git show 2.1.6-rc04:fe/fe-core/src/main/java/org/apache/doris/common/Log4jConfig.java <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  &gt; ../work/orig/org/apache/doris/common/Log4jConfig.java
+</span></span><span style="display:flex;"><span>cd ..
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 1) 官方二进制包解压后的 fe/lib 作为 classpath（这里记为 ./work/apache-doris-2.1.6-bin-x64）</span>
+</span></span><span style="display:flex;"><span>LIB<span style="color:#f92672">=</span>./work/apache-doris-2.1.6-bin-x64/fe/lib
+</span></span><span style="display:flex;"><span>export PATH<span style="color:#f92672">=</span>$JAVA_HOME/bin:$PATH     <span style="color:#75715e"># JDK 8</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 2) 自证：未改动源码 → 与官方 class 逐字节一致（注意 -g，否则调试信息不同）</span>
+</span></span><span style="display:flex;"><span>javac -g -source <span style="color:#ae81ff">8</span> -target <span style="color:#ae81ff">8</span> -nowarn -cp <span style="color:#e6db74">&#34;</span>$LIB<span style="color:#e6db74">/*&#34;</span> -d ./work/cls/orig <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  ./work/orig/org/apache/doris/common/Log4jConfig.java
+</span></span><span style="display:flex;"><span>mkdir -p ./work/official <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">(</span>cd ./work/official <span style="color:#f92672">&amp;&amp;</span> unzip -qo <span style="color:#e6db74">&#34;../../</span>$LIB<span style="color:#e6db74">/doris-fe.jar&#34;</span> <span style="color:#e6db74">&#39;org/apache/doris/common/Log4jConfig*&#39;</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> f in ./work/official/org/apache/doris/common/Log4jConfig*.class; <span style="color:#66d9ef">do</span>
+</span></span><span style="display:flex;"><span>  cmp <span style="color:#e6db74">&#34;</span>$f<span style="color:#e6db74">&#34;</span> <span style="color:#e6db74">&#34;./work/cls/orig/org/apache/doris/common/</span><span style="color:#66d9ef">$(</span>basename <span style="color:#e6db74">&#34;</span>$f<span style="color:#e6db74">&#34;</span><span style="color:#66d9ef">)</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">&amp;&amp;</span> echo <span style="color:#e6db74">&#34;same </span><span style="color:#66d9ef">$(</span>basename <span style="color:#e6db74">&#34;</span>$f<span style="color:#e6db74">&#34;</span><span style="color:#66d9ef">)</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">done</span>
+</span></span><span style="display:flex;"><span>javap -v ./work/cls/orig/org/apache/doris/common/Log4jConfig.class | grep major   <span style="color:#75715e"># major version: 52</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 3) 编译改过的源码（./work/new/... 是打过 patch 的 Log4jConfig.java）</span>
+</span></span><span style="display:flex;"><span>javac -g -source <span style="color:#ae81ff">8</span> -target <span style="color:#ae81ff">8</span> -nowarn -cp <span style="color:#e6db74">&#34;</span>$LIB<span style="color:#e6db74">/*&#34;</span> -d ./work/cls/new <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  ./work/new/org/apache/doris/common/Log4jConfig.java
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 4) 复制一份官方 jar，只更新 Log4jConfig.class</span>
+</span></span><span style="display:flex;"><span>cp <span style="color:#e6db74">&#34;</span>$LIB<span style="color:#e6db74">/doris-fe.jar&#34;</span> ./work/doris-fe.jar
+</span></span><span style="display:flex;"><span><span style="color:#f92672">(</span>cd ./work/cls/new <span style="color:#f92672">&amp;&amp;</span> jar uf ../../doris-fe.jar org/apache/doris/common/Log4jConfig.class<span style="color:#f92672">)</span>
+</span></span></code></pre></div><p>兩個踩過的小坑：</p>
+<ul>
+<li>編譯時<strong>不加 <code>-g</code></strong>，內部類 <code>Log4jConfig$Tuple.class</code> 會和官方不一致；加上 <code>-g</code> 後兩個 class 都逐位元組一致。</li>
+<li>2.1.2 版改動後新增了 import，導致行號變化，重新編譯出來的 <code>Tuple.class</code> 只差行號表。所以 <code>jar uf</code> <strong>只更新 <code>Log4jConfig.class</code></strong>，內部類繼續用官方原檔案。</li>
+</ul>
+<h2 id="五配置項與測試結果">五、配置項與測試結果</h2>
+<table>
+	<thead>
+			<tr>
+					<th>配置項（寫在 <code>${DORIS_HOME}/fe/conf/fe.conf</code>）</th>
+					<th>取值</th>
+					<th>預設</th>
+					<th>說明</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td><code>audit_log_filter_chinese</code></td>
+					<td>none / strip / drop</td>
+					<td><strong>strip</strong></td>
+					<td>none=原樣；strip=刪除中文；drop=含中文的審計記錄整行不寫</td>
+			</tr>
+			<tr>
+					<td><code>audit_log_chinese_replacement</code></td>
+					<td>字串</td>
+					<td>空</td>
+					<td>strip 時用來替換中文的串，例如 <code>?</code>；不能包含 <code>{ } % $ \</code></td>
+			</tr>
+			<tr>
+					<td><code>audit_log_chinese_regex</code></td>
+					<td>Java 正則</td>
+					<td><code>[\p{IsHan}\p{InCJKSymbolsAndPunctuation}\p{InHalfwidthAndFullwidthForms}\p{InCJKCompatibilityForms}\p{InBopomofo}]+</code></td>
+					<td>預設覆蓋漢字、中文標點、全形字元和注音；不能包含 <code>$</code>、<code>%</code>，花括號必須成對</td>
+			</tr>
+	</tbody>
+</table>
+<p>讀取順序是 fe.conf → fe_custom.conf（後者覆蓋前者），也可以用 JVM <code>-D</code> 參數覆蓋。<strong>注意：換上補丁 jar 後，即使什麼都不配，預設也是 strip。</strong></p>
+<p>測試 SQL：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">select</span> <span style="color:#e6db74">&#39;你好，世界！abc&#39;</span> <span style="color:#66d9ef">as</span> <span style="color:#f92672">`</span><span style="color:#960050;background-color:#1e0010">中文别名</span><span style="color:#f92672">`</span> <span style="color:#75715e">/* 注释：测试 */</span>;
+</span></span></code></pre></div><p>兩個版本分別用「官方二進位制包 + 補丁 jar」起單 FE（JDK 1.8.0_504）測試，fe.audit.log 裡 <code>Stmt=</code> 的實測結果一致：</p>
+<table>
+	<thead>
+			<tr>
+					<th>模式</th>
+					<th>fe.audit.log 中的 Stmt</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>none</td>
+					<td><code>select '你好，世界！abc' as `中文別名` /* 註釋：測試 */</code></td>
+			</tr>
+			<tr>
+					<td>strip（預設，不寫任何配置）</td>
+					<td><code>select 'abc' as `` /*  */</code></td>
+			</tr>
+			<tr>
+					<td>strip + replacement=<code>?</code></td>
+					<td><code>select '?abc' as `?` /* ? */</code></td>
+			</tr>
+			<tr>
+					<td>drop</td>
+					<td>這條不寫入；同批的英文 SQL（<code>select 'hello world' as en_only</code>）正常寫入</td>
+			</tr>
+	</tbody>
+</table>
+<p>另外還驗證了這些情況（兩個版本都測過）：</p>
+<ul>
+<li>每次重啟後 <code>conf/log4j2-spring.xml</code> 的 mtime 都會變，內容帶 <code>%replace</code> 或 <code>RegexFilter</code>；</li>
+<li><code>POST /rest/v1/log?add_verbose=org.apache.doris.qe</code> 在執行時觸發 reconfig 後，過濾仍然生效；</li>
+<li>跨兩行的 SQL 也能正確處理（Doris 寫審計日誌前會把換行替換成空格）；</li>
+<li>2.1.2 版在 <code>sys_log_mode = ASYNC</code> 下同樣生效；</li>
+<li>配置非法值時 FE 拒絕啟動。</li>
+</ul>
+<p>上線後的驗證命令：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>grep <span style="color:#e6db74">&#34;audit log chinese filter&#34;</span> <span style="color:#e6db74">${</span>DORIS_HOME<span style="color:#e6db74">}</span>/fe/log/fe.out | tail -1
+</span></span><span style="display:flex;"><span>ls -l <span style="color:#e6db74">${</span>DORIS_HOME<span style="color:#e6db74">}</span>/fe/conf/log4j2-spring.xml          <span style="color:#75715e"># mtime 应该是本次启动时间</span>
+</span></span><span style="display:flex;"><span>grep -n <span style="color:#e6db74">&#39;replace{%m}\|RegexFilter&#39;</span> <span style="color:#e6db74">${</span>DORIS_HOME<span style="color:#e6db74">}</span>/fe/conf/log4j2-spring.xml
+</span></span><span style="display:flex;"><span>tail -n <span style="color:#ae81ff">3</span> <span style="color:#e6db74">${</span>DORIS_HOME<span style="color:#e6db74">}</span>/fe/log/fe.audit.log           <span style="color:#75715e"># 以 fe.conf 里实际的审计日志目录为准</span>
+</span></span></code></pre></div><h2 id="六交付前的防錯">六、交付前的防錯</h2>
+<p>**1）線上 jar 必須是官方原版。**如果線上的 <code>doris-fe.jar</code> 被別人改過，拿官方 jar 打補丁再替換上去，就會把那些改動悄悄抹掉。所以先比對 sha256：</p>
+<table>
+	<thead>
+			<tr>
+					<th>版本</th>
+					<th>官方 <code>fe/lib/doris-fe.jar</code> sha256</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>2.1.6-rc04</td>
+					<td><code>6005bb99e7b13200ff192252d2a07d32a82fd3bf3a23c4cfe1078a33f7e7c937</code></td>
+			</tr>
+			<tr>
+					<td>2.1.2-rc04</td>
+					<td><code>608177785eaab4bc3aea3cf9757341aead84d2c29129531acbbf2e489b3a8337</code></td>
+			</tr>
+	</tbody>
+</table>
+<p>這次 2.1.6 叢集線上 jar 的 sha256 和官方一致。</p>
+<p><strong>2）補丁 jar 要逐個條目比對，確認只差一個 class。</strong><code>jar uf</code> 會重新壓縮，jar 的檔案大小會變，所以不能看大小，要比對每個條目的 CRC：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> zipfile
+</span></span><span style="display:flex;"><span>a <span style="color:#f92672">=</span> zipfile<span style="color:#f92672">.</span>ZipFile(<span style="color:#e6db74">&#39;official/doris-fe.jar&#39;</span>)
+</span></span><span style="display:flex;"><span>b <span style="color:#f92672">=</span> zipfile<span style="color:#f92672">.</span>ZipFile(<span style="color:#e6db74">&#39;patched/doris-fe.jar&#39;</span>)
+</span></span><span style="display:flex;"><span>da <span style="color:#f92672">=</span> {i<span style="color:#f92672">.</span>filename: i<span style="color:#f92672">.</span>CRC <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> a<span style="color:#f92672">.</span>infolist()}
+</span></span><span style="display:flex;"><span>db <span style="color:#f92672">=</span> {i<span style="color:#f92672">.</span>filename: i<span style="color:#f92672">.</span>CRC <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> b<span style="color:#f92672">.</span>infolist()}
+</span></span><span style="display:flex;"><span>print(len(da), len(db), set(da) <span style="color:#f92672">^</span> set(db), [k <span style="color:#66d9ef">for</span> k <span style="color:#f92672">in</span> da <span style="color:#66d9ef">if</span> k <span style="color:#f92672">in</span> db <span style="color:#f92672">and</span> da[k] <span style="color:#f92672">!=</span> db[k]])
+</span></span></code></pre></div><p>實測結果：</p>
+<ul>
+<li>2.1.6：<code>7354 7354 set() ['org/apache/doris/common/Log4jConfig.class']</code></li>
+<li>2.1.2：<code>6955 6955 set() ['org/apache/doris/common/Log4jConfig.class']</code></li>
+</ul>
+<p><strong>3）替換和回滾（由人來操作，每個 FE 都要做）：</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>cd <span style="color:#e6db74">${</span>DORIS_HOME<span style="color:#e6db74">}</span>/fe
+</span></span><span style="display:flex;"><span>sha256sum lib/doris-fe.jar                 <span style="color:#75715e"># 必须等于上表中对应版本的官方值</span>
+</span></span><span style="display:flex;"><span>./bin/stop_fe.sh
+</span></span><span style="display:flex;"><span>cp -p lib/doris-fe.jar ./backup/doris-fe.jar.orig   <span style="color:#75715e"># 备份到 lib 目录以外</span>
+</span></span><span style="display:flex;"><span>cp ./patch/doris-fe.jar lib/doris-fe.jar
+</span></span><span style="display:flex;"><span>echo <span style="color:#e6db74">&#34;audit_log_filter_chinese = strip&#34;</span> &gt;&gt; conf/fe.conf   <span style="color:#75715e"># 可选，默认就是 strip</span>
+</span></span><span style="display:flex;"><span>./bin/start_fe.sh --daemon
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 回滚</span>
+</span></span><span style="display:flex;"><span>./bin/stop_fe.sh <span style="color:#f92672">&amp;&amp;</span> cp -p ./backup/doris-fe.jar.orig lib/doris-fe.jar <span style="color:#f92672">&amp;&amp;</span> ./bin/start_fe.sh --daemon
+</span></span></code></pre></div><h2 id="七免換-jar-的方案-dloggingconfig-及其侷限">七、免換 jar 的方案：<code>-Dlogging.config</code> 及其侷限</h2>
+<p>使用者最初問的是：有沒有不換 jar 的辦法？Doris 沒有現成的配置項能控制審計 pattern。不過讀 HttpServer 原始碼可以發現，<code>logging.config</code> 是作為 Spring 的<strong>預設屬性</strong>（優先順序最低）傳進去的。因此可以在 fe.conf 的 <code>JAVA_OPTS</code>（JDK 17 對應 <code>JAVA_OPTS_FOR_JDK_17</code>）最前面加上：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>-Dlogging.config<span style="color:#f92672">=</span><span style="color:#e6db74">${</span>DORIS_HOME<span style="color:#e6db74">}</span>/fe/custom/log4j2-audit-strip.xml
+</span></span></code></pre></div><p>讓 Spring Boot 載入一份放在 conf 目錄之外、不會被覆蓋的靜態 log4j2 配置。在 2.1.6 上用<strong>官方原版 jar</strong> 實測，審計日誌裡的中文確實被刪掉了，但侷限也很明顯：</p>
+<ol>
+<li>**執行時一改日誌級別就失效。**通過 <code>/rest/v1/log</code> 修改日誌級別會觸發 <code>reconfig()</code>，切回程式碼生成的配置，審計日誌馬上又出現中文，直到下次重啟。這一點已實測復現。</li>
+<li>靜態 XML 不再跟隨 fe.conf 裡 <code>sys_log_*</code> / <code>audit_log_*</code> 的變化，需要手工維護。</li>
+<li>從 FE 啟動到 HTTP 服務起來之前，用的仍是原配置。這段時間還沒有查詢，所以基本不影響審計日誌。</li>
+</ol>
+<p>這個方案在 2.1.2 上只讀了原始碼（機制相同），沒有實測。考慮到第 1 條，最終選擇了換 jar。</p>
+<h2 id="八風險與邊界">八、風險與邊界</h2>
+<ul>
+<li>**<code>__internal_schema.audit_log</code> 表不受影響。**內建審計外掛 AuditLoader 寫表走的是另一條路徑，不經過這個 appender，表裡仍是原始 SQL（含中文）（見官方文件 <a href="https://doris.apache.org/zh-CN/docs/3.x/admin-manual/audit-plugin/">審計日誌</a>）。如果表裡也要去中文，需要另外處理。fe.log、fe.warn.log 同樣不受影響（見 <a href="https://doris.apache.org/zh-CN/docs/3.x/admin-manual/log-management/fe-log/">FE 日誌管理</a>）。</li>
+<li><strong>drop 模式有合規風險</strong>：含中文的查詢會從 fe.audit.log 裡完全消失。一般建議用 strip。</li>
+<li><strong>strip 會改變 SQL 文本</strong>：日誌裡的 SQL 可能沒法直接複製執行。SqlHash 仍按原始 SQL 計算。</li>
+<li><strong>jar 和版本強繫結</strong>：2.1.6 和 2.1.2 的 jar 不能混用；升級 Doris 後必須基於新版本原始碼重新打補丁。</li>
+<li>測試只覆蓋了 JDK 8 執行時和單 FE。多 FE 時每個 FE 都要替換。</li>
+</ul>
+<h2 id="九小結用-ai-做私有化補丁的幾條經驗">九、小結：用 AI 做私有化補丁的幾條經驗</h2>
+<ol>
+<li><strong>給足上下文，尤其是準確版本號。</strong><code>SHOW FRONTENDS</code> 的 Version、線上生成的配置檔案、線上 jar 的 sha256，比任何口頭描述都可靠。這次走過的唯一一段彎路，就是版本號拿錯了。</li>
+<li>**讓 AI 自證一致性。**不要只要一個「編譯好的 jar」，而是要它證明：未改動原始碼編譯出的 class 與官方逐位元組一致，補丁 jar 與官方 jar 只差目標 class。這兩條證據成立，替換的風險就很可控。</li>
+<li>**最小改動。**只改生成器一個類；配置項由補丁自己讀取，不碰 <code>Config.java</code>；生成檔案的結構保持不變；配置非法時 FE 拒絕啟動，不讓過濾悄悄失效。</li>
+<li><strong>先找免改程式碼的方案，並把侷限講清楚。</strong><code>-Dlogging.config</code> 能用，但一次執行時 reconfig 就會失效。這類邊界一定要實測，不能只靠推斷。</li>
+<li>**人來做最後一步。**停 FE、備份、替換、回滾這些生產操作，由人按 README 執行；AI 負責準備好材料，並給出可核對的證據。</li>
+</ol>
+<h2 id="參考">參考</h2>
+<ul>
+<li>apache/doris <code>Log4jConfig.java</code>：<a href="https://github.com/apache/doris/blob/2.1.6-rc04/fe/fe-core/src/main/java/org/apache/doris/common/Log4jConfig.java">2.1.6-rc04</a> ｜ <a href="https://github.com/apache/doris/blob/2.1.2-rc04/fe/fe-core/src/main/java/org/apache/doris/common/Log4jConfig.java">2.1.2-rc04</a></li>
+<li>apache/doris <code>HttpServer.java</code>（<code>logging.config</code>）：<a href="https://github.com/apache/doris/blob/2.1.6-rc04/fe/fe-core/src/main/java/org/apache/doris/httpv2/HttpServer.java">2.1.6-rc04</a></li>
+<li>Apache Doris 文件：<a href="https://doris.apache.org/zh-CN/docs/3.x/admin-manual/audit-plugin/">審計日誌</a> ｜ <a href="https://doris.apache.org/zh-CN/docs/3.x/admin-manual/log-management/fe-log/">FE 日誌管理</a>（2.1 文件已歸檔，連結為當前版本）｜ <a href="https://doris.apache.org/download">下載</a></li>
+<li>Log4j2：<a href="https://logging.apache.org/log4j/2.x/manual/pattern-layout.html">Pattern Layout（%replace）</a> ｜ <a href="https://logging.apache.org/log4j/2.x/manual/filters.html">Filters（RegexFilter）</a></li>
+<li><a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">JVM 規範第 4 章：class 檔案格式（major version）</a></li>
+</ul>
+]]></content:encoded></item></channel></rss>

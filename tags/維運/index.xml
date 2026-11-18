@@ -1,0 +1,1002 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>維運 on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/%E7%B6%AD%E9%81%8B/</link><description>Recent content in 維運 on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Mon, 09 Nov 2026 15:00:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/%E7%B6%AD%E9%81%8B/index.xml" rel="self" type="application/rss+xml"/><item><title>用 Debezium 把多個 MySQL 的行級變更同步到 Kafka：場景、部署與工程問題</title><link>https://d94807974-commits.github.io/posts/debezium-mysql-multi-source-kafka/</link><pubDate>Mon, 09 Nov 2026 15:00:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/debezium-mysql-multi-source-kafka/</guid><description>把多個 MySQL 的每一行變更（INSERT/UPDATE/DELETE）即時推到 Kafka：為什麼用 binlog CDC、為什麼選零程式碼的 Debezium、Kafka Connect 分散式部署的完整步驟（MySQL 參數、最小權限、內部 topic、外掛、密碼不落明文、systemd、多源 connector、表到 topic 路由），以及上線後真正會遇到的工程問題：重複與冪等、順序與分區、快照壓力、binlog 過期、新增表、schema history、型別精度與時區、server_id 衝突、主從切換。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/debezium-mysql-multi-source-kafka.html">架構圖、事件流、部署形態對比與工程問題清單</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>把多個 MySQL 的行級變更推到 Kafka，優先選 Kafka Connect（分散式模式）加 Debezium：純設定、按 GTID 記位點、多源統一管理。真正的難點不在部署，而在消費端冪等、保序、快照與 binlog 保留。</p>
+</div><blockquote>
+  <p>文中的主機、密碼、庫表一律是佔位符或通用範例（<code>&lt;mysql1-host&gt;</code>、<code>&lt;kafka&gt;:9092</code>、<code>&lt;內網IP&gt;</code>、<code>&lt;強密碼&gt;</code>、<code>shop.orders</code>），版本號請按實際情況調整。設定項名稱以 Debezium 2.x/3.x 官方文件為準。</p>
+
+</blockquote><h2 id="一場景為什麼需要行級-cdc">一、場景：為什麼需要行級 CDC</h2>
+<h3 id="11-典型用途">1.1 典型用途</h3>
+<p>「把資料庫的每一行變更變成一條訊息」這件事，在很多架構裡都會出現：</p>
+<table>
+	<thead>
+			<tr>
+					<th>場景</th>
+					<th>需要什麼</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>即時資料倉儲 / 湖倉入湖</td>
+					<td>業務庫的增刪改以秒級延遲進入 OLAP（Doris、ClickHouse、Iceberg 等）</td>
+			</tr>
+			<tr>
+					<td>搜尋索引同步</td>
+					<td>商品、訂單變更後，Elasticsearch / OpenSearch 中的文件跟著更新或刪除</td>
+			</tr>
+			<tr>
+					<td>快取失效</td>
+					<td>行變更後精確刪除對應的快取 key，而不是靠 TTL 碰運氣</td>
+			</tr>
+			<tr>
+					<td>多庫匯聚</td>
+					<td>分庫分表、多個業務系統的同類資料匯聚到一個 topic 或一張寬表</td>
+			</tr>
+			<tr>
+					<td>審計與回溯</td>
+					<td>保留「誰在什麼時候把哪一行從什麼改成了什麼」（before / after）</td>
+			</tr>
+			<tr>
+					<td>微服務事件</td>
+					<td>用 outbox 表或業務表變更驅動下游服務，避免雙寫</td>
+			</tr>
+	</tbody>
+</table>
+<h3 id="12-定時拉取的問題">1.2 定時拉取的問題</h3>
+<p>最樸素的做法是定時 <code>SELECT ... WHERE updated_at &gt; ?</code>。它能跑，但有幾個繞不過去的問題：</p>
+<ul>
+<li><strong>延遲和壓力是一對矛盾</strong>：拉得勤，源庫壓力大；拉得慢，延遲高。</li>
+<li><strong>感知不到刪除</strong>：物理刪除的行查不出來，只能改成邏輯刪除，要動業務表結構。</li>
+<li><strong>依賴 <code>updated_at</code> 的紀律</strong>：有人直接改庫、批次 SQL 忘了更新時間戳，資料就漏了。</li>
+<li><strong>丟失中間狀態</strong>：兩次拉取之間一行被改了三次，只能看到最後一次。</li>
+<li><strong>一條 SQL 改 1000 行</strong>，你很難知道到底改了哪 1000 行。</li>
+</ul>
+<h3 id="13-為什麼是-binlog">1.3 為什麼是 binlog</h3>
+<p>MySQL 的 binlog 在 <code>ROW</code> 格式下記錄了每一行的前後映像，而且是<strong>交易提交後</strong>才寫入的。基於 binlog 的 CDC 相當於把自己偽裝成一個從庫：</p>
+<ul>
+<li>每一行變更都有一條記錄，刪除也有；</li>
+<li>回滾的交易不會出現；</li>
+<li>對源庫只是一個複製連線，壓力遠小於頻繁掃表；</li>
+<li>帶有位點（file/pos 或 GTID），可以斷點續傳。</li>
+</ul>
+<p>代價是：需要開啟並保留 binlog、需要複製權限、需要處理表結構變更（DDL）。這些都放到後面的工程問題裡講。</p>
+<h2 id="二選型思路">二、選型思路</h2>
+<p>我在選型時給自己定了幾條硬標準：</p>
+<ol>
+<li><strong>維護活躍</strong>：近一年有持續的釋出和提交，issue 有人回覆。</li>
+<li><strong>零程式碼或接近零程式碼</strong>：同步任務以後要交給別人維護，設定比程式碼好交接。</li>
+<li><strong>支援 GTID</strong>：位點按 GTID 記錄，主從切換後能接著同步。</li>
+<li><strong>多源與表級路由</strong>：同時接多個 MySQL，能指定哪些表、發到哪個 topic。</li>
+<li><strong>密碼不落明文</strong>：設定檔、程序命令列、日誌、管理介面裡都看不到密碼。</li>
+</ol>
+<p>按這幾條比較了三類方案（結論來自一次單機實測加官方文件，數值不代表生產）：</p>
+<table>
+	<thead>
+			<tr>
+					<th>方案</th>
+					<th>需要寫的程式碼</th>
+					<th>GTID</th>
+					<th>評價</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td><strong>Debezium</strong></td>
+					<td>0 行，純設定</td>
+					<td>位點中帶 GTID 集合，主從切換可續傳</td>
+					<td>社群最活躍、文件最全；設定項多，需要懂 JVM 和 Kafka Connect</td>
+			</tr>
+			<tr>
+					<td><strong>Maxwell</strong></td>
+					<td>0 行；自訂 topic 對映需要幾行 JS</td>
+					<td>需手動設定 <code>gtid_mode=true</code>，預設按 file/pos</td>
+					<td>輕量、JSON 簡單；但 <code>ignore_producer_error</code> 預設為 <code>true</code>（Kafka 傳送失敗只記日誌），生產必須改成 <code>false</code>；UPDATE 的 <code>old</code> 只包含被修改的列；位點存在源庫的 <code>maxwell</code> 庫，需要寫權限</td>
+			</tr>
+			<tr>
+					<td><strong>自研</strong>（go-mysql、python-mysql-replication 等庫）</td>
+					<td>數百行起</td>
+					<td>庫支援，需自己實現</td>
+					<td>靈活、吞吐可以很高；但位點一致性、型別對映、DDL、快照、高可用、監控全部要自己長期維護，交接成本最高</td>
+			</tr>
+	</tbody>
+</table>
+<p>實測裡還有幾條對所有方案都成立的結論：</p>
+<ul>
+<li>程序被 <code>kill -9</code> 後重啟，都<strong>不丟資料但會有重複</strong>——這是至少一次（at-least-once）語義的正常表現。</li>
+<li>一條 <code>UPDATE</code> 命中 1000 行，會產生 1000 條訊息；<code>ROLLBACK</code> 的交易不產生訊息。</li>
+<li>「白名單之外的表不產生任何訊息」「指定表到指定 topic」「多源互不串位點」都能用設定實現。</li>
+</ul>
+<p>所以結論是：<strong>生產首選 Debezium</strong>；如果只要最輕量的 JSON、能接受上面幾條需要手動調整的預設值，Maxwell 也可以；自研只在有特殊客製需求時作為起點。</p>
+<h2 id="三兩種部署形態">三、兩種部署形態</h2>
+<p>Debezium 的 MySQL Connector 有兩種常見跑法：</p>
+<table>
+	<thead>
+			<tr>
+					<th></th>
+					<th>Kafka Connect（分散式模式）</th>
+					<th>Debezium Server</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>程序模型</td>
+					<td>一個 Connect 叢集執行多個 connector，每個源一個 connector</td>
+					<td>一個程序只跑一個源</td>
+			</tr>
+			<tr>
+					<td>管理方式</td>
+					<td>REST API 增刪改查、暫停恢復、檢視狀態</td>
+					<td>改 <code>application.properties</code> 後重啟</td>
+			</tr>
+			<tr>
+					<td>位點儲存</td>
+					<td>Kafka 內部 topic（<code>connect-offsets</code>）</td>
+					<td>預設本地檔案（也可設定到 Kafka 等）</td>
+			</tr>
+			<tr>
+					<td>高可用</td>
+					<td>多個 worker 用同一個 <code>group.id</code> 組成叢集，task 自動漂移</td>
+					<td>需要外部程序管理和持久卷</td>
+			</tr>
+			<tr>
+					<td>適合</td>
+					<td>多個源、需要統一維運</td>
+					<td>單源、輕量、或者不想維護 Connect 叢集</td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>多源的場景推薦 Kafka Connect</strong>：源越多，統一的 REST 管理和集中存放的位點就越省心，接手的人也只需要掌握一套操作。下面的部署流程以它為主，Debezium Server 的單源設定放在附錄。</p>
+<p>整體架構（圖形版見<a href="/visual/debezium-mysql-multi-source-kafka.html">圖解版</a>的「整體架構」面板）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>  +-----------+    +-----------+    +-----------+
+</span></span><span style="display:flex;"><span>  |  MySQL 1  |    |  MySQL 2  |    |  MySQL N  |
+</span></span><span style="display:flex;"><span>  | (binlog,  |    | (binlog,  |    | (binlog,  |
+</span></span><span style="display:flex;"><span>  |  GTID on) |    |  GTID on) |    |  GTID on) |
+</span></span><span style="display:flex;"><span>  +-----+-----+    +-----+-----+    +-----+-----+
+</span></span><span style="display:flex;"><span>        |                |                |
+</span></span><span style="display:flex;"><span>        | replication protocol (one connector per source)
+</span></span><span style="display:flex;"><span>        v                v                v
+</span></span><span style="display:flex;"><span>  +---------------------------------------------------+
+</span></span><span style="display:flex;"><span>  |   Kafka Connect cluster (group.id=cdc-connect)    |
+</span></span><span style="display:flex;"><span>  |   worker A  &lt;-- tasks rebalance --&gt;  worker B     |
+</span></span><span style="display:flex;"><span>  |   connectors: mysql-src1 | mysql-src2 | ...       |
+</span></span><span style="display:flex;"><span>  |   SMT: RegexRouter / ExtractNewRecordState        |
+</span></span><span style="display:flex;"><span>  +-------------------------+-------------------------+
+</span></span><span style="display:flex;"><span>                            |
+</span></span><span style="display:flex;"><span>                            v
+</span></span><span style="display:flex;"><span>  +---------------------------------------------------+
+</span></span><span style="display:flex;"><span>  | Kafka                                             |
+</span></span><span style="display:flex;"><span>  |  cdc.shop.orders  cdc.shop.users  cdc.crm.*       |
+</span></span><span style="display:flex;"><span>  |  connect-configs / connect-offsets / -status      |
+</span></span><span style="display:flex;"><span>  |  schemahistory.src1 / schemahistory.src2          |
+</span></span><span style="display:flex;"><span>  +-------------------------+-------------------------+
+</span></span><span style="display:flex;"><span>                            |
+</span></span><span style="display:flex;"><span>          +-----------------+-----------------+
+</span></span><span style="display:flex;"><span>          v                 v                 v
+</span></span><span style="display:flex;"><span>     OLAP / lake      search index      cache invalidation
+</span></span><span style="display:flex;"><span>     (idempotent consumers: primary key + GTID/position)
+</span></span></code></pre></div><h2 id="四部署流程">四、部署流程</h2>
+<p>下面以 Linux 主機 + systemd 部署為例；Kubernetes 上可以用 Strimzi 等 Operator，思路相同。</p>
+<h3 id="41-mysql-側準備每個源都要做">4.1 MySQL 側準備（每個源都要做）</h3>
+<p>先確認 binlog 相關參數（以 MySQL 8.0 為例）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">SHOW</span> VARIABLES <span style="color:#66d9ef">WHERE</span> Variable_name <span style="color:#66d9ef">IN</span>
+</span></span><span style="display:flex;"><span> (<span style="color:#e6db74">&#39;log_bin&#39;</span>, <span style="color:#e6db74">&#39;binlog_format&#39;</span>, <span style="color:#e6db74">&#39;binlog_row_image&#39;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#39;gtid_mode&#39;</span>, <span style="color:#e6db74">&#39;enforce_gtid_consistency&#39;</span>, <span style="color:#e6db74">&#39;binlog_expire_logs_seconds&#39;</span>);
+</span></span><span style="display:flex;"><span><span style="color:#75715e">-- expected: log_bin=ON, binlog_format=ROW, binlog_row_image=FULL,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">--           gtid_mode=ON, enforce_gtid_consistency=ON
+</span></span></span></code></pre></div><p>幾點說明：</p>
+<ul>
+<li><code>binlog_format=ROW</code> 和 <code>binlog_row_image=FULL</code> 是行級 CDC 的前提，否則拿不到完整的前後映像。</li>
+<li>開啟 GTID 不是必須的，但強烈建議：位點會帶上 GTID 集合，主從切換後可以續傳。</li>
+<li><code>binlog_expire_logs_seconds</code> 至少保留 <strong>3～7 天</strong>，要大於「同步鏈路最長可能停機時間 + 追平時間」。保留太短，停機一個長假回來位點已經被清理，就只能重新快照。</li>
+<li>如果從<strong>只讀副本</strong>採集（推薦，避開主庫壓力），副本必須開啟 <code>log_replica_updates=ON</code>（8.0.26 之前叫 <code>log_slave_updates</code>），否則副本自己的 binlog 裡沒有複製過來的變更。</li>
+</ul>
+<p>建立專用帳號：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">CREATE</span> <span style="color:#66d9ef">USER</span> <span style="color:#e6db74">&#39;cdc_min&#39;</span><span style="color:#f92672">@</span><span style="color:#e6db74">&#39;&lt;connect-ip&gt;&#39;</span> IDENTIFIED <span style="color:#66d9ef">BY</span> <span style="color:#e6db74">&#39;&lt;強密碼&gt;&#39;</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">GRANT</span> <span style="color:#66d9ef">SELECT</span>, RELOAD, <span style="color:#66d9ef">SHOW</span> DATABASES, REPLICATION SLAVE, REPLICATION CLIENT
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">ON</span> <span style="color:#f92672">*</span>.<span style="color:#f92672">*</span> <span style="color:#66d9ef">TO</span> <span style="color:#e6db74">&#39;cdc_min&#39;</span><span style="color:#f92672">@</span><span style="color:#e6db74">&#39;&lt;connect-ip&gt;&#39;</span>;
+</span></span></code></pre></div><p>各權限的用途：</p>
+<table>
+	<thead>
+			<tr>
+					<th>權限</th>
+					<th>用途</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td><code>REPLICATION SLAVE</code></td>
+					<td>以複製協議讀取 binlog</td>
+			</tr>
+			<tr>
+					<td><code>REPLICATION CLIENT</code></td>
+					<td>執行 <code>SHOW MASTER STATUS</code> / <code>SHOW BINARY LOGS</code> 等查詢位點</td>
+			</tr>
+			<tr>
+					<td><code>SELECT</code></td>
+					<td>快照時讀取表資料</td>
+			</tr>
+			<tr>
+					<td><code>RELOAD</code></td>
+					<td>快照時執行 <code>FLUSH TABLES ... WITH READ LOCK</code> 等全域鎖操作</td>
+			</tr>
+			<tr>
+					<td><code>SHOW DATABASES</code></td>
+					<td>發現庫表</td>
+			</tr>
+	</tbody>
+</table>
+<p>如果不需要全量快照（例如 <code>snapshot.mode=no_data</code> 且 <code>snapshot.locking.mode=none</code>），可以按官方文件進一步收斂：去掉 <code>RELOAD</code>，把 <code>SELECT</code> 收窄到需要的庫。是否需要 <code>LOCK TABLES</code> 等權限，以所用快照模式的文件為準。</p>
+<h3 id="42-kafka-側準備">4.2 Kafka 側準備</h3>
+<p>Kafka Connect 分散式模式依賴三個內部 topic，生產上建議<strong>預先建立</strong>，而不是交給自動建立：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>kafka-topics.sh --bootstrap-server &lt;kafka&gt;:9092 --create --topic connect-configs <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  --partitions <span style="color:#ae81ff">1</span>  --replication-factor <span style="color:#ae81ff">3</span> --config cleanup.policy<span style="color:#f92672">=</span>compact
+</span></span><span style="display:flex;"><span>kafka-topics.sh --bootstrap-server &lt;kafka&gt;:9092 --create --topic connect-offsets <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  --partitions <span style="color:#ae81ff">25</span> --replication-factor <span style="color:#ae81ff">3</span> --config cleanup.policy<span style="color:#f92672">=</span>compact
+</span></span><span style="display:flex;"><span>kafka-topics.sh --bootstrap-server &lt;kafka&gt;:9092 --create --topic connect-status <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  --partitions <span style="color:#ae81ff">5</span>  --replication-factor <span style="color:#ae81ff">3</span> --config cleanup.policy<span style="color:#f92672">=</span>compact
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># schema history topic: one per source, single partition, never expire</span>
+</span></span><span style="display:flex;"><span>kafka-topics.sh --bootstrap-server &lt;kafka&gt;:9092 --create --topic schemahistory.src1 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  --partitions <span style="color:#ae81ff">1</span> --replication-factor <span style="color:#ae81ff">3</span> --config retention.ms<span style="color:#f92672">=</span>-1
+</span></span></code></pre></div><ul>
+<li><code>connect-configs</code> 必須單分區；三個 topic 都必須是 <code>compact</code>。</li>
+<li><strong>schema history topic 必須單分區、永不過期</strong>，原因見第五節。</li>
+<li>業務 topic（如 <code>cdc.shop.orders</code>）也建議預建，自己決定分區數、副本數和保留期。分區數一旦定下，就不要隨意增加（見第五節「順序」）。</li>
+</ul>
+<h3 id="43-安裝-debezium-外掛">4.3 安裝 Debezium 外掛</h3>
+<p>用 Kafka 自帶的 <code>connect-distributed.sh</code> 即可，把 Debezium 外掛解壓到 <code>plugin.path</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>mkdir -p /opt/connect-plugins <span style="color:#f92672">&amp;&amp;</span> cd /opt/connect-plugins
+</span></span><span style="display:flex;"><span>curl -LO https://repo1.maven.org/maven2/io/debezium/debezium-connector-mysql/&lt;version&gt;/debezium-connector-mysql-&lt;version&gt;-plugin.tar.gz
+</span></span><span style="display:flex;"><span>tar xzf debezium-connector-mysql-&lt;version&gt;-plugin.tar.gz
+</span></span></code></pre></div><p>注意 Debezium 版本與 Kafka / Java 版本的相容關係，以釋出說明為準。</p>
+<h3 id="44-worker-設定">4.4 Worker 設定</h3>
+<p><code>/opt/kafka/config/connect-distributed.properties</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-properties" data-lang="properties"><span style="display:flex;"><span><span style="color:#a6e22e">bootstrap.servers</span><span style="color:#f92672">=</span><span style="color:#e6db74">&lt;kafka1&gt;:9092,&lt;kafka2&gt;:9092</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">group.id</span><span style="color:#f92672">=</span><span style="color:#e6db74">cdc-connect</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">plugin.path</span><span style="color:#f92672">=</span><span style="color:#e6db74">/opt/connect-plugins</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">config.storage.topic</span><span style="color:#f92672">=</span><span style="color:#e6db74">connect-configs</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">offset.storage.topic</span><span style="color:#f92672">=</span><span style="color:#e6db74">connect-offsets</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">status.storage.topic</span><span style="color:#f92672">=</span><span style="color:#e6db74">connect-status</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">config.storage.replication.factor</span><span style="color:#f92672">=</span><span style="color:#e6db74">3</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">offset.storage.replication.factor</span><span style="color:#f92672">=</span><span style="color:#e6db74">3</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">status.storage.replication.factor</span><span style="color:#f92672">=</span><span style="color:#e6db74">3</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">key.converter</span><span style="color:#f92672">=</span><span style="color:#e6db74">org.apache.kafka.connect.json.JsonConverter</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">value.converter</span><span style="color:#f92672">=</span><span style="color:#e6db74">org.apache.kafka.connect.json.JsonConverter</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">key.converter.schemas.enable</span><span style="color:#f92672">=</span><span style="color:#e6db74">false</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">value.converter.schemas.enable</span><span style="color:#f92672">=</span><span style="color:#e6db74">false</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># read secrets from files instead of plain text in connector configs</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">config.providers</span><span style="color:#f92672">=</span><span style="color:#e6db74">file</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">config.providers.file.class</span><span style="color:#f92672">=</span><span style="color:#e6db74">org.apache.kafka.common.config.provider.FileConfigProvider</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># REST API on the internal network only</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">listeners</span><span style="color:#f92672">=</span><span style="color:#e6db74">http://&lt;內網IP&gt;:8083</span>
+</span></span></code></pre></div><ul>
+<li><code>schemas.enable=false</code> 讓訊息只包含資料本身，體積小、消費端好處理；如果下游需要 schema，建議用 Avro / Protobuf + Schema Registry，而不是 JSON 內嵌 schema。</li>
+<li>REST 介面<strong>沒有預設鑑權</strong>，任何能訪問 8083 的人都能讀寫 connector 設定，所以只監聽內網，並用防火牆限制來源。</li>
+</ul>
+<h3 id="45-密碼不落明文">4.5 密碼不落明文</h3>
+<p>目標是：connector 設定、程序命令列、日誌、REST 返回結果裡都看不到密碼。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>useradd -r -s /sbin/nologin kafkaconnect
+</span></span><span style="display:flex;"><span>install -d -m <span style="color:#ae81ff">0700</span> -o kafkaconnect /opt/secrets
+</span></span><span style="display:flex;"><span>printf <span style="color:#e6db74">&#39;password=%s\n&#39;</span> <span style="color:#e6db74">&#39;&lt;mysql1密碼&gt;&#39;</span> &gt; /opt/secrets/mysql1.properties
+</span></span><span style="display:flex;"><span>chown kafkaconnect /opt/secrets/*.properties <span style="color:#f92672">&amp;&amp;</span> chmod <span style="color:#ae81ff">0400</span> /opt/secrets/*.properties
+</span></span></code></pre></div><p>connector 設定裡只寫引用：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;database.password&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;${file:/opt/secrets/mysql1.properties:password}&#34;</span>
+</span></span></code></pre></div><ul>
+<li><code>FileConfigProvider</code> 在執行時解析這個佔位符；透過 REST <code>GET /connectors/&lt;name&gt;/config</code> 看到的仍然是佔位符本身，而不是密碼。</li>
+<li>Kubernetes 上，把 Secret 以 volume 方式掛到同一路徑（<code>defaultMode: 0400</code>）即可；也可以換成 Vault 等外部金鑰系統的 config provider。</li>
+<li><strong>為什麼不直接用環境變數</strong>：環境變數對同一使用者和 root 可以透過 <code>/proc/&lt;pid&gt;/environ</code> 讀到，<code>docker inspect</code>、<code>kubectl describe</code> 也可能把它顯示出來。檔案掛載 + 專用帳號 + 最小檔案權限更可控。</li>
+<li>Kafka 側如果開了 SASL，producer / consumer 的 JAAS 密碼同樣用 <code>${file:...}</code> 引用，不要寫進設定。</li>
+</ul>
+<h3 id="46-用-systemd-託管-connect">4.6 用 systemd 託管 Connect</h3>
+<p><code>/etc/systemd/system/kafka-connect.service</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-ini" data-lang="ini"><span style="display:flex;"><span><span style="color:#66d9ef">[Unit]</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Description</span><span style="color:#f92672">=</span><span style="color:#e6db74">Kafka Connect (Debezium)</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">After</span><span style="color:#f92672">=</span><span style="color:#e6db74">network.target</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">[Service]</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">User</span><span style="color:#f92672">=</span><span style="color:#e6db74">kafkaconnect</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Environment</span><span style="color:#f92672">=</span><span style="color:#e6db74">KAFKA_HEAP_OPTS=-Xms2g -Xmx2g</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">ExecStart</span><span style="color:#f92672">=</span><span style="color:#e6db74">/opt/kafka/bin/connect-distributed.sh /opt/kafka/config/connect-distributed.properties</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">Restart</span><span style="color:#f92672">=</span><span style="color:#e6db74">always</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">RestartSec</span><span style="color:#f92672">=</span><span style="color:#e6db74">10</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">LimitNOFILE</span><span style="color:#f92672">=</span><span style="color:#e6db74">100000</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">[Install]</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">WantedBy</span><span style="color:#f92672">=</span><span style="color:#e6db74">multi-user.target</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>systemctl daemon-reload <span style="color:#f92672">&amp;&amp;</span> systemctl enable --now kafka-connect
+</span></span><span style="display:flex;"><span>curl -s http://&lt;內網IP&gt;:8083/connector-plugins | grep -i mysql
+</span></span></code></pre></div><p>要高可用，就在兩臺以上的機器上用<strong>同一個 <code>group.id</code></strong> 各起一個 worker，它們會自動組成叢集；某臺機器掛掉時，它上面的 task 會被重新分配到其它 worker。MySQL connector 每個只有一個 task（binlog 是單流），所以「高可用」指的是故障轉移，而不是並行加速。</p>
+<h3 id="47-多個源每個源一個-connector">4.7 多個源：每個源一個 connector</h3>
+<p><code>mysql-src1.json</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;name&#34;</span>: <span style="color:#e6db74">&#34;mysql-src1&#34;</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">&#34;config&#34;</span>: {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;connector.class&#34;</span>: <span style="color:#e6db74">&#34;io.debezium.connector.mysql.MySqlConnector&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;tasks.max&#34;</span>: <span style="color:#e6db74">&#34;1&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;database.hostname&#34;</span>: <span style="color:#e6db74">&#34;&lt;mysql1-host&gt;&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;database.port&#34;</span>: <span style="color:#e6db74">&#34;3306&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;database.user&#34;</span>: <span style="color:#e6db74">&#34;cdc_min&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;database.password&#34;</span>: <span style="color:#e6db74">&#34;${file:/opt/secrets/mysql1.properties:password}&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;database.server.id&#34;</span>: <span style="color:#e6db74">&#34;9301&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;topic.prefix&#34;</span>: <span style="color:#e6db74">&#34;src1&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;database.include.list&#34;</span>: <span style="color:#e6db74">&#34;shop,crm&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;table.include.list&#34;</span>: <span style="color:#e6db74">&#34;shop\\.orders,shop\\.users,crm\\.customer_.*&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;schema.history.internal.kafka.bootstrap.servers&#34;</span>: <span style="color:#e6db74">&#34;&lt;kafka&gt;:9092&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;schema.history.internal.kafka.topic&#34;</span>: <span style="color:#e6db74">&#34;schemahistory.src1&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;include.schema.changes&#34;</span>: <span style="color:#e6db74">&#34;false&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;decimal.handling.mode&#34;</span>: <span style="color:#e6db74">&#34;string&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;transforms&#34;</span>: <span style="color:#e6db74">&#34;route&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;transforms.route.type&#34;</span>: <span style="color:#e6db74">&#34;org.apache.kafka.connect.transforms.RegexRouter&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;transforms.route.regex&#34;</span>: <span style="color:#e6db74">&#34;src1\\.([^.]+)\\.([^.]+)&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">&#34;transforms.route.replacement&#34;</span>: <span style="color:#e6db74">&#34;cdc.$1.$2&#34;</span>
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>關鍵項：</p>
+<ul>
+<li><code>database.server.id</code>：這個 connector 偽裝成從庫時使用的 server id，<strong>在整個 MySQL 複製拓撲裡必須全域唯一</strong>，不能和任何真實從庫或其它 CDC 實例重複。</li>
+<li><code>topic.prefix</code>：邏輯名稱，會出現在預設 topic 名（<code>&lt;prefix&gt;.&lt;db&gt;.&lt;table&gt;</code>）、訊息的 <code>source.name</code> 和指標裡。<strong>上線後不要改</strong>，改了會被視為一個新的源。</li>
+<li><code>database.include.list</code> / <code>table.include.list</code>：都是<strong>正規表示式</strong>，按「庫名\.表名」匹配。JSON 裡反斜槓本身要轉義，所以寫成 <code>shop\\.orders</code>，實際生效的正則是 <code>shop\.orders</code>。</li>
+<li>預設 topic 名是 <code>src1.shop.orders</code>，<code>RegexRouter</code> 把它改成 <code>cdc.shop.orders</code>。這裡 <code>$1</code>、<code>$2</code> 是正則捕獲組，不是設定佔位符。</li>
+<li><code>decimal.handling.mode=string</code>：見第五節「型別精度」。</li>
+</ul>
+<p>第二個源複製一份，至少要改：</p>
+<table>
+	<thead>
+			<tr>
+					<th>項</th>
+					<th>src1</th>
+					<th>src2</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td><code>name</code></td>
+					<td><code>mysql-src1</code></td>
+					<td><code>mysql-src2</code></td>
+			</tr>
+			<tr>
+					<td><code>database.hostname</code></td>
+					<td><code>&lt;mysql1-host&gt;</code></td>
+					<td><code>&lt;mysql2-host&gt;</code></td>
+			</tr>
+			<tr>
+					<td><code>database.password</code></td>
+					<td><code>.../mysql1.properties:password</code></td>
+					<td><code>.../mysql2.properties:password</code></td>
+			</tr>
+			<tr>
+					<td><code>database.server.id</code></td>
+					<td><code>9301</code></td>
+					<td><code>9302</code></td>
+			</tr>
+			<tr>
+					<td><code>topic.prefix</code></td>
+					<td><code>src1</code></td>
+					<td><code>src2</code></td>
+			</tr>
+			<tr>
+					<td><code>schema.history.internal.kafka.topic</code></td>
+					<td><code>schemahistory.src1</code></td>
+					<td><code>schemahistory.src2</code></td>
+			</tr>
+			<tr>
+					<td>庫表列表、<code>transforms.route.regex</code></td>
+					<td>按需</td>
+					<td>按需（字首改成 <code>src2</code>）</td>
+			</tr>
+	</tbody>
+</table>
+<p>註冊：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>curl -X POST -H <span style="color:#e6db74">&#39;Content-Type: application/json&#39;</span> --data @mysql-src1.json http://&lt;內網IP&gt;:8083/connectors
+</span></span><span style="display:flex;"><span>curl -X POST -H <span style="color:#e6db74">&#39;Content-Type: application/json&#39;</span> --data @mysql-src2.json http://&lt;內網IP&gt;:8083/connectors
+</span></span></code></pre></div><p>各源的位點由 Kafka Connect 按 connector 分別儲存在 <code>connect-offsets</code> 裡，互不影響。</p>
+<h3 id="48-指定表到指定-topic">4.8 指定表到指定 topic</h3>
+<p><strong>單表對映</strong>（多個路由按順序串聯）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;orders,users&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.orders.type&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;org.apache.kafka.connect.transforms.RegexRouter&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.orders.regex&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;src1\\.shop\\.orders&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.orders.replacement&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;topic_orders&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.users.type&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;org.apache.kafka.connect.transforms.RegexRouter&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.users.regex&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;src1\\.shop\\.users&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.users.replacement&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;topic_users&#34;</span>
+</span></span></code></pre></div><p><strong>正則合併</strong>：把按年分表的 <code>orders_2024</code>、<code>orders_2025</code>……合併到一個 topic：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;table.include.list&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;shop\\.orders,shop\\.orders_20[0-9]{2}&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;hist&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.hist.type&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;org.apache.kafka.connect.transforms.RegexRouter&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.hist.regex&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;src1\\.shop\\.orders_20[0-9]{2}&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.hist.replacement&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;topic_orders_history&#34;</span>
+</span></span></code></pre></div><p>注意幾點：</p>
+<ul>
+<li><code>RegexRouter</code> 的正則是<strong>整串匹配</strong>，<code>src1\\.shop\\.orders</code> 不會誤傷 <code>orders_2024</code>。</li>
+<li><code>table.include.list</code> 和 <code>table.exclude.list</code> <strong>不能同時使用</strong>，庫級的 include / exclude 同理。</li>
+<li>合併到同一個 topic 的多張表，key 的結構必須一致（主鍵列相同），否則下游按 key 處理會出問題。Debezium 也提供 <code>io.debezium.transforms.ByLogicalTableRouter</code>，可以在 key 裡額外加上來源表，用於分表合併。</li>
+<li>白名單之外的表不會產生訊息，也不會建立 topic。</li>
+</ul>
+<p><strong>只想要「變更後的行」</strong>：預設訊息是包含 <code>before</code>、<code>after</code>、<code>source</code>、<code>op</code> 的信封結構。下游只關心最新狀態時，可以加 <code>ExtractNewRecordState</code> 把它展平：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-json" data-lang="json"><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;unwrap,route&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.unwrap.type&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;io.debezium.transforms.ExtractNewRecordState&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.unwrap.add.fields&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;op,source.ts_ms,source.gtid&#34;</span><span style="color:#960050;background-color:#1e0010">,</span>
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#34;transforms.unwrap.delete.tombstone.handling.mode&#34;</span><span style="color:#960050;background-color:#1e0010">:</span> <span style="color:#e6db74">&#34;rewrite&#34;</span>
+</span></span></code></pre></div><p><code>rewrite</code> 會把刪除事件改寫成帶 <code>__deleted=true</code> 的記錄，下游可以據此刪除；<code>add.fields</code> 把操作型別和 GTID 保留下來，供冪等使用。轉換按 <code>transforms</code> 列出的順序執行。</p>
+<h3 id="49-驗證">4.9 驗證</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># connector and task should both be RUNNING</span>
+</span></span><span style="display:flex;"><span>curl -s http://&lt;內網IP&gt;:8083/connectors/mysql-src1/status
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>kafka-console-consumer.sh --bootstrap-server &lt;kafka&gt;:9092 <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  --topic cdc.shop.orders --from-beginning --property print.key<span style="color:#f92672">=</span>true
+</span></span></code></pre></div><p>建議至少驗證這幾項：</p>
+<ol>
+<li>單行 <code>INSERT</code> / <code>UPDATE</code> / <code>DELETE</code> 分別產生 <code>op=c</code> / <code>op=u</code> / <code>op=d</code> 的訊息，UPDATE 帶完整的 <code>before</code> 和 <code>after</code>。</li>
+<li>一條 <code>UPDATE</code> 命中 1000 行，產生 1000 條訊息，主鍵集合與預期一致。</li>
+<li><code>BEGIN; ...; ROLLBACK;</code> 不產生任何訊息。</li>
+<li>白名單外的表寫入後沒有訊息。</li>
+<li>同一主鍵的多次修改落在同一分區且順序正確。</li>
+<li>強制重啟 Connect 程序後，不丟訊息（允許重複）。</li>
+</ol>
+<p>預設情況下，刪除事件後面還會跟一條 value 為 <code>null</code> 的墓碑（tombstone）訊息，用於 compact topic 的清理。消費端要能正確處理 <code>null</code> value。</p>
+<h3 id="附debezium-server-單源設定">附：Debezium Server 單源設定</h3>
+<p>只有一個源、不想維護 Connect 叢集時，可以用 Debezium Server。<code>conf/application.properties</code>：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-properties" data-lang="properties"><span style="display:flex;"><span><span style="color:#a6e22e">debezium.sink.type</span><span style="color:#f92672">=</span><span style="color:#e6db74">kafka</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.sink.kafka.producer.bootstrap.servers</span><span style="color:#f92672">=</span><span style="color:#e6db74">&lt;kafka&gt;:9092</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.sink.kafka.producer.key.serializer</span><span style="color:#f92672">=</span><span style="color:#e6db74">org.apache.kafka.common.serialization.StringSerializer</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.sink.kafka.producer.value.serializer</span><span style="color:#f92672">=</span><span style="color:#e6db74">org.apache.kafka.common.serialization.StringSerializer</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.connector.class</span><span style="color:#f92672">=</span><span style="color:#e6db74">io.debezium.connector.mysql.MySqlConnector</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.database.hostname</span><span style="color:#f92672">=</span><span style="color:#e6db74">&lt;mysql1-host&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.database.port</span><span style="color:#f92672">=</span><span style="color:#e6db74">3306</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.database.user</span><span style="color:#f92672">=</span><span style="color:#e6db74">cdc_min</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.database.password</span><span style="color:#f92672">=</span><span style="color:#e6db74">${MYSQL1_CDC_PASSWORD}</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.database.server.id</span><span style="color:#f92672">=</span><span style="color:#e6db74">9301</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.topic.prefix</span><span style="color:#f92672">=</span><span style="color:#e6db74">src1</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.database.include.list</span><span style="color:#f92672">=</span><span style="color:#e6db74">shop</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.table.include.list</span><span style="color:#f92672">=</span><span style="color:#e6db74">shop\\.orders,shop\\.users</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.decimal.handling.mode</span><span style="color:#f92672">=</span><span style="color:#e6db74">string</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.offset.storage</span><span style="color:#f92672">=</span><span style="color:#e6db74">org.apache.kafka.connect.storage.FileOffsetBackingStore</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.offset.storage.file.filename</span><span style="color:#f92672">=</span><span style="color:#e6db74">/data/src1/offsets.dat</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.offset.flush.interval.ms</span><span style="color:#f92672">=</span><span style="color:#e6db74">10000</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.schema.history.internal</span><span style="color:#f92672">=</span><span style="color:#e6db74">io.debezium.storage.file.history.FileSchemaHistory</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.source.schema.history.internal.file.filename</span><span style="color:#f92672">=</span><span style="color:#e6db74">/data/src1/schema_history.dat</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.transforms</span><span style="color:#f92672">=</span><span style="color:#e6db74">orders,users</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.transforms.orders.type</span><span style="color:#f92672">=</span><span style="color:#e6db74">org.apache.kafka.connect.transforms.RegexRouter</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.transforms.orders.regex</span><span style="color:#f92672">=</span><span style="color:#e6db74">src1\\.shop\\.orders</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.transforms.orders.replacement</span><span style="color:#f92672">=</span><span style="color:#e6db74">topic_orders</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.transforms.users.type</span><span style="color:#f92672">=</span><span style="color:#e6db74">org.apache.kafka.connect.transforms.RegexRouter</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.transforms.users.regex</span><span style="color:#f92672">=</span><span style="color:#e6db74">src1\\.shop\\.users</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">debezium.transforms.users.replacement</span><span style="color:#f92672">=</span><span style="color:#e6db74">topic_users</span>
+</span></span></code></pre></div><ul>
+<li>一個程序一個源；多個源就多個目錄、多個程序，<code>server.id</code>、<code>topic.prefix</code>、offset 檔案、schema history 檔案全部獨立。</li>
+<li><code>${MYSQL1_CDC_PASSWORD}</code> 由 Quarkus 在啟動時從環境變數展開。上面說過環境變數的風險，更穩妥的做法是由啟動指令碼從 0400 的金鑰檔案讀取後再注入，並用專用帳號執行。</li>
+<li>offset 和 schema history 檔案必須放在持久化儲存上，丟了就等於丟了位點。</li>
+</ul>
+<h2 id="五工程問題重點">五、工程問題（重點）</h2>
+<p>部署只是開始。下面這些問題，基本每條鏈路上線後都會遇到。</p>
+<h3 id="51-重複訊息至少一次投遞">5.1 重複訊息：至少一次投遞</h3>
+<ul>
+<li><strong>現象</strong>：Connect 程序被強殺或 worker 重平衡後，消費端看到一段重複的訊息。</li>
+<li><strong>原因</strong>：Debezium 把訊息發到 Kafka 後，位點是<strong>週期性</strong>提交的（<code>offset.flush.interval.ms</code>，預設 60 秒）。崩潰時最後一次提交之後已經發出的訊息，重啟後會再發一遍。這是設計上的 at-least-once。</li>
+<li><strong>做法</strong>：
+<ul>
+<li>消費端必須冪等。最常見的是<strong>按主鍵 upsert</strong>；需要嚴格去重時，用「主鍵 + GTID（或 binlog file/pos/row）」判斷是否處理過。</li>
+<li>落 OLAP 時使用支援主鍵覆蓋的表模型（如 Doris 的 Unique Key、ClickHouse 的 ReplacingMergeTree），天然吸收重複。</li>
+<li>新版 Kafka Connect 支援 source connector 的 exactly-once（<code>exactly.once.source.support</code>），但需要 Kafka 和 connector 兩邊都滿足條件，不要預設依賴它，消費端冪等仍然是底線。</li>
+</ul>
+</li>
+</ul>
+<h3 id="52-順序與分區">5.2 順序與分區</h3>
+<ul>
+<li><strong>現象</strong>：同一行先 UPDATE 後 DELETE，下游卻先收到 DELETE，最後留下一行「復活」的資料。</li>
+<li><strong>原因</strong>：Kafka 只保證<strong>單個分區內</strong>有序。Debezium 預設用主鍵作為訊息 key，同一主鍵會進同一分區，所以同一行的變更是有序的；但：
+<ul>
+<li>中途<strong>增加 topic 分區數</strong>，key 到分區的對映會變，切換前後的訊息可能被不同消費者並行處理；</li>
+<li>無主鍵的表 key 為空，訊息會被分散到各分區，順序無法保證；</li>
+<li>多個源合併到一個 topic 時，不同源裡主鍵相同的行會被當成同一個 key。</li>
+</ul>
+</li>
+<li><strong>做法</strong>：
+<ul>
+<li>業務 topic 預建時就把分區數定好，之後不要隨意增加；確實要擴，就新建 topic 並做一次切換。</li>
+<li>無主鍵的表，用 <code>message.key.columns</code> 指定業務唯一鍵作為 key，或者在源頭補主鍵。</li>
+<li>多源合併到同一個 topic 時，在 key 裡加上來源（例如用 <code>ByLogicalTableRouter</code> 的 key 增強），或者乾脆每個源一個 topic。</li>
+<li>跨表、跨主鍵的全域順序，Kafka 本身不提供，不要在消費端假設它。</li>
+</ul>
+</li>
+</ul>
+<h3 id="53-首次快照對源庫的壓力">5.3 首次快照對源庫的壓力</h3>
+<ul>
+<li><strong>現象</strong>：新建 connector 後，源庫 CPU、IO 飆升，甚至短暫出現鎖等待。</li>
+<li><strong>原因</strong>：預設 <code>snapshot.mode=initial</code> 會先把白名單內的表全量讀一遍，再從快照時刻的位點開始讀 binlog。大表全表掃描、以及部分模式下的全域讀鎖，都會影響源庫。</li>
+<li><strong>做法</strong>：
+<ul>
+<li>從只讀副本採集。</li>
+<li>選擇合適的快照模式：只要增量時用 <code>no_data</code>（舊版本叫 <code>schema_only</code>）；需要全量時用 <code>initial</code>，並在低峰期進行。</li>
+<li>用 <code>snapshot.locking.mode</code> 控制鎖的行為（如 <code>minimal</code>、<code>none</code>），理解它對一致性的影響後再選。</li>
+<li>用 <code>snapshot.fetch.size</code>、<code>snapshot.max.threads</code> 等參數控制節奏；超大表可以先 <code>no_data</code> 啟動增量，再用增量快照（見 5.5）分批補歷史。</li>
+</ul>
+</li>
+</ul>
+<h3 id="54-binlog-被清理位點失效">5.4 binlog 被清理，位點失效</h3>
+<ul>
+<li><strong>現象</strong>：connector 停了幾天，重啟後報錯，大意是需要的 binlog 已經不在伺服器上。</li>
+<li><strong>原因</strong>：<code>binlog_expire_logs_seconds</code> 到期，或者有人手動 <code>PURGE BINARY LOGS</code>，connector 記錄的位點之後的 binlog 已經沒了。</li>
+<li><strong>做法</strong>：
+<ul>
+<li>保證 binlog 保留時長 &gt; 最長停機時間 + 追平時間，並對「connector 停止時長」設定告警。</li>
+<li>萬一發生，只能重新快照：可以用 <code>snapshot.mode=when_needed</code> 讓 connector 在位點失效時自動重新快照，或者人工刪除位點後重建。重新快照意味著下游會收到一遍全量資料，消費端的冪等此時尤為重要。</li>
+</ul>
+</li>
+</ul>
+<h3 id="55-新增表只有增量沒有歷史">5.5 新增表只有增量，沒有歷史</h3>
+<ul>
+<li><strong>現象</strong>：把新表加進 <code>table.include.list</code> 之後，只收到了之後的變更，歷史資料沒有。</li>
+<li><strong>原因</strong>：快照只在 connector 第一次啟動時執行；之後修改白名單，新表預設只同步增量。</li>
+<li><strong>做法</strong>：使用<strong>增量快照（incremental snapshot）</strong>。在源庫建一張 signal 表，設定 <code>signal.data.collection</code>（例如 <code>shop.debezium_signal</code>，並加入 <code>table.include.list</code>），然後插入一條訊號：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">INSERT</span> <span style="color:#66d9ef">INTO</span> shop.debezium_signal (id, <span style="color:#66d9ef">type</span>, <span style="color:#66d9ef">data</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">VALUES</span> (<span style="color:#e6db74">&#39;snapshot-orders-2024&#39;</span>, <span style="color:#e6db74">&#39;execute-snapshot&#39;</span>,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#39;{&#34;data-collections&#34;: [&#34;shop.orders_2024&#34;], &#34;type&#34;: &#34;incremental&#34;}&#39;</span>);
+</span></span></code></pre></div><p>增量快照按主鍵分塊讀取，並與 binlog 流交錯去重，不需要長時間鎖表，也不會中斷增量同步。也可以透過 Kafka 訊號 topic 觸發，具體以文件為準。</p>
+<h3 id="56-schema-history-topic-被刪或被清理">5.6 schema history topic 被刪或被清理</h3>
+<ul>
+<li><strong>現象</strong>：connector 無法啟動，報 schema history 缺失或不完整。</li>
+<li><strong>原因</strong>：Debezium 需要按 binlog 位點回放 DDL，才能正確解析某個時間點的行資料。這些 DDL 存在 schema history topic 裡。如果這個 topic 設定了過期時間、被 compact、被多分區化，或者被誤刪，歷史就不完整了。</li>
+<li><strong>做法</strong>：
+<ul>
+<li>每個 connector 獨立一個 schema history topic，單分區、<code>retention.ms=-1</code>、不 compact。</li>
+<li>把它和 <code>connect-*</code> 內部 topic 一起列為「禁止刪除」的資源。</li>
+<li>真的丟了，可以用 <code>snapshot.mode=recovery</code>（舊版叫 <code>schema_only_recovery</code>）從當前表結構重建，前提是丟失期間沒有發生過 DDL；不確定就重新快照。</li>
+<li>可以開啟 <code>schema.history.internal.store.only.captured.tables.ddl=true</code>，只存白名單內表的 DDL，減小體積。</li>
+</ul>
+</li>
+</ul>
+<h3 id="57-型別精度時區和大欄位">5.7 型別精度、時區和大欄位</h3>
+<ul>
+<li><strong>DECIMAL</strong>：預設 <code>decimal.handling.mode=precise</code>，在 JSON 裡會被編碼成 base64 位元組，消費端不好處理；設成 <code>double</code> 會丟精度。金額類欄位建議用 <code>string</code>，消費端按 decimal 解析。</li>
+<li><strong>時間精度</strong>：保持預設的 <code>time.precision.mode=adaptive_time_microseconds</code>。<strong>不要改成 <code>connect</code></strong>，否則 <code>DATETIME(6)</code> 會被截斷到毫秒，實測可復現。</li>
+<li><strong>時區</strong>：<code>DATETIME</code> 沒有時區，Debezium 按「字面值當作 UTC」轉成 epoch 數值；<code>TIMESTAMP</code> 會被轉換成 UTC 的 ISO 字串。消費端要分別處理，不要一律加 8 小時。</li>
+<li><strong>JSON</strong>：以字串輸出，消費端自行解析。</li>
+<li><strong>BLOB / BINARY</strong>：用 <code>binary.handling.mode</code>（<code>bytes</code>、<code>base64</code>、<code>hex</code> 等）選擇編碼；大欄位會讓訊息變大，必要時調大 Kafka 的 <code>max.request.size</code> 和 topic 的 <code>max.message.bytes</code>，或者乾脆排除這些列（<code>column.exclude.list</code>）。</li>
+</ul>
+<h3 id="58-server_id-衝突互相踢下線">5.8 server_id 衝突，互相踢下線</h3>
+<ul>
+<li><strong>現象</strong>：兩個 connector（或 connector 與某個真實從庫）反覆斷開重連，日誌裡出現連線被伺服器關閉的錯誤。</li>
+<li><strong>原因</strong>：MySQL 以 server_id 識別複製客戶端，同一個 server_id 的新連線會把舊連線踢掉。</li>
+<li><strong>做法</strong>：給每個 CDC 實例分配一段專用的 server_id 號段（例如 9301～9399），登記在案；複製 connector 設定時第一件事就是改 <code>database.server.id</code>。</li>
+</ul>
+<h3 id="59-主從切換">5.9 主從切換</h3>
+<ul>
+<li><strong>現象</strong>：源庫發生主從切換後，connector 無法繼續，或者從錯誤的位置開始讀。</li>
+<li><strong>原因</strong>：file/pos 位點只在同一臺伺服器上有意義；換到新主庫後，檔名和偏移量對不上。</li>
+<li><strong>做法</strong>：
+<ul>
+<li>開啟 GTID。Debezium 的位點裡帶有已處理的 GTID 集合，連線到新主庫後會按 GTID 找到續傳位置。</li>
+<li>新主庫必須<strong>仍保留</strong>對應 GTID 之後的 binlog，並且開啟了 <code>log_replica_updates</code>，否則同樣會進入 5.4 的情況。</li>
+<li>連線地址用 VIP 或域名，而不是寫死某臺機器。</li>
+<li>需要過濾某些來源的 GTID 時，可以用 <code>gtid.source.includes</code> / <code>gtid.source.excludes</code>。</li>
+</ul>
+</li>
+</ul>
+<h3 id="510-安全">5.10 安全</h3>
+<ul>
+<li>CDC 帳號只授予必要的權限，按來源 IP 限制。</li>
+<li>所有密碼都透過 config provider 從檔案或金鑰系統讀取，設定、日誌、REST 返回裡只有佔位符。</li>
+<li>Connect 的 REST 介面只對內網開放；需要對外時放在帶鑑權的閘道後面。</li>
+<li>Kafka 使用 SASL_SSL，Connect worker、connector 內部的 producer / consumer、schema history 的 producer / consumer 都要設定認證，密碼同樣用 <code>${file:...}</code>。</li>
+<li>MySQL 連線開啟 TLS（<code>database.ssl.mode</code>）。</li>
+<li>binlog 裡有全量的行資料，CDC topic 的訪問權限應當和源庫同等對待。</li>
+</ul>
+<h2 id="六日常維運">六、日常維運</h2>
+<table>
+	<thead>
+			<tr>
+					<th>操作</th>
+					<th>命令或做法</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>修改設定（熱更新）</td>
+					<td><code>PUT /connectors/&lt;name&gt;/config</code>，提交完整設定；connector 會自動重啟，不需要重啟程序</td>
+			</tr>
+			<tr>
+					<td>暫停 / 恢復</td>
+					<td><code>PUT /connectors/&lt;name&gt;/pause</code>、<code>PUT /connectors/&lt;name&gt;/resume</code></td>
+			</tr>
+			<tr>
+					<td>重啟失敗的 task</td>
+					<td><code>POST /connectors/&lt;name&gt;/restart?includeTasks=true&amp;onlyFailed=true</code></td>
+			</tr>
+			<tr>
+					<td>檢視狀態</td>
+					<td><code>GET /connectors/&lt;name&gt;/status</code>；connector 或 task 為 <code>FAILED</code> 時立即告警</td>
+			</tr>
+			<tr>
+					<td>同步延遲</td>
+					<td>JMX 指標 <code>debezium.mysql:type=connector-metrics,context=streaming,server=&lt;topic.prefix&gt;</code> 中的 <code>MilliSecondsBehindSource</code></td>
+			</tr>
+			<tr>
+					<td>binlog 保留</td>
+					<td>監控源庫最早 binlog 時間與 connector 當前位點的差距</td>
+			</tr>
+			<tr>
+					<td>升級</td>
+					<td>先在測試環境驗證新外掛；生產上逐臺替換 <code>plugin.path</code> 下的外掛並滾動重啟 worker，位點在 Kafka 中，不會丟</td>
+			</tr>
+			<tr>
+					<td>下線一個源</td>
+					<td>刪除 connector 之前先確認下游已消費完；schema history topic 和位點按需保留一段時間</td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>上線順序建議</strong>：</p>
+<ol>
+<li>測試環境用一個源、一兩張表跑通，按 4.9 的清單逐項驗證，包括強殺重啟。</li>
+<li>在接近生產的資料量上觀察首次快照的耗時和對源庫的影響，確定快照策略。</li>
+<li>消費端完成冪等與墓碑訊息處理，並在重複注入的情況下驗證結果正確。</li>
+<li>逐個接入生產源，每接一個觀察一段時間的延遲與錯誤率。</li>
+<li>把 server_id 號段、topic 命名規則、金鑰檔案位置、告警項寫進維運文件，方便交接。</li>
+</ol>
+<h2 id="七小結">七、小結</h2>
+<ul>
+<li>行級 CDC 解決的是「每一行變更都不漏、刪除也能感知、對源庫壓力小」的問題，binlog 是 MySQL 上最可靠的來源。</li>
+<li>多源 MySQL → Kafka，<strong>Kafka Connect + Debezium</strong> 是寫程式碼最少、最好交接的組合：每個源一個 connector，白名單 + <code>RegexRouter</code> 決定哪些表進哪個 topic，<code>FileConfigProvider</code> 讓密碼不出現在設定裡。</li>
+<li>部署按清單走並不難，真正需要提前設計的是：<strong>消費端冪等、按主鍵保序、快照策略、binlog 保留、schema history 保護、型別精度、server_id 管理和 GTID 主從切換</strong>。</li>
+<li>這些問題想清楚之後，加一個新源通常只是「複製一份 JSON、改五六個欄位、POST 一下」。</li>
+</ul>
+<h2 id="參考">參考</h2>
+<ul>
+<li>Debezium MySQL Connector：<a href="https://debezium.io/documentation/reference/stable/connectors/mysql.html">https://debezium.io/documentation/reference/stable/connectors/mysql.html</a></li>
+<li>Debezium Server：<a href="https://debezium.io/documentation/reference/stable/operations/debezium-server.html">https://debezium.io/documentation/reference/stable/operations/debezium-server.html</a></li>
+<li>增量快照與訊號：<a href="https://debezium.io/documentation/reference/stable/configuration/signalling.html">https://debezium.io/documentation/reference/stable/configuration/signalling.html</a></li>
+<li>ExtractNewRecordState：<a href="https://debezium.io/documentation/reference/stable/transformations/event-flattening.html">https://debezium.io/documentation/reference/stable/transformations/event-flattening.html</a></li>
+<li>Topic 路由：<a href="https://debezium.io/documentation/reference/stable/transformations/topic-routing.html">https://debezium.io/documentation/reference/stable/transformations/topic-routing.html</a></li>
+<li>Kafka Connect（分散式模式、RegexRouter、ConfigProvider）：<a href="https://kafka.apache.org/documentation/#connect">https://kafka.apache.org/documentation/#connect</a></li>
+<li>Maxwell 設定與 producer：<a href="https://maxwells-daemon.io/config/">https://maxwells-daemon.io/config/</a>、<a href="https://maxwells-daemon.io/producers/">https://maxwells-daemon.io/producers/</a></li>
+</ul>
+]]></content:encoded></item><item><title>用 AI 給私有化 Doris 打補丁：重新編譯 FE 讓審計日誌去中文（2.1.6 / 2.1.2 實戰）</title><link>https://d94807974-commits.github.io/posts/doris-audit-log-strip-chinese-with-ai/</link><pubDate>Thu, 05 Nov 2026 23:45:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/doris-audit-log-strip-chinese-with-ai/</guid><description>私有化 Apache Doris 的 fe.audit.log 需要去掉中文，但 conf/log4j2-spring.xml 是 FE 啟動時程式碼生成的，手改會被覆蓋。本文記錄和 AI 協作的完整過程：定位 Log4jConfig、只改一個類、用官方二進位制包做 classpath 單類編譯、逐位元組自證一致、jar uf 替換，並給出 2.1.6-rc04 與 2.1.2-rc04 兩個版本的測試結果、免換 jar 方案及其侷限。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/doris-audit-log-strip-chinese-with-ai.html">設定生成流程、補丁驗證順序與三種模式</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>Doris 審計日誌的 log4j2 設定是 FE 啟動時由 <code>Log4jConfig</code> 產生的，要抗重啟就得改這個產生器本身。整個補丁只替換 <code>doris-fe.jar</code> 裡的一個 class，用官方二進位包做 classpath 單獨編譯，不必全量編譯 Doris。</p>
+</div><blockquote>
+  <p>本文所有數字都來自這次的真實操作記錄。伺服器地址、主機名、叢集 ID、真實安裝路徑都已脫敏，命令裡統一用 <code>${DORIS_HOME}</code>、<code>./work</code>、<code>./src</code>、<code>$JAVA_HOME</code> 這類佔位符。</p>
+
+</blockquote><h2 id="一背景與需求">一、背景與需求</h2>
+<p>手上有兩套私有化部署的 Apache Doris，都是單 FE（Master）：</p>
+<table>
+	<thead>
+			<tr>
+					<th>叢集</th>
+					<th>FE 版本（<code>SHOW FRONTENDS</code> 的 Version）</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>A</td>
+					<td><code>doris-2.1.6-rc04-653e315ba5</code></td>
+			</tr>
+			<tr>
+					<td>B</td>
+					<td><code>doris-2.1.2-rc04-b130df2488</code></td>
+			</tr>
+	</tbody>
+</table>
+<p>需求很簡單：<strong>FE 的審計日誌 <code>fe.audit.log</code> 裡不要出現中文</strong>。SQL 裡的中文字串常量、中文別名、中文註釋都算。</p>
+<p>麻煩在於，<code>${DORIS_HOME}/fe/conf/</code> 裡那個 <code>log4j2-spring.xml</code> 頭部寫著：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- Auto Generated. DO NOT MODIFY IT! --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;Configuration</span> <span style="color:#a6e22e">status=</span><span style="color:#e6db74">&#34;info&#34;</span> <span style="color:#a6e22e">packages=</span><span style="color:#e6db74">&#34;org.apache.doris.common&#34;</span><span style="color:#f92672">&gt;</span>
+</span></span></code></pre></div><p>FE <strong>每次啟動都會重新生成並覆蓋它</strong>，手改審計 appender 的 pattern 撐不過一次重啟。把檔案設成只讀也不行：FE 寫不進去，直接啟動失敗。</p>
+<h2 id="二和-ai-協作的過程">二、和 AI 協作的過程</h2>
+<p>這次的分工大致是這樣的：</p>
+<table>
+	<thead>
+			<tr>
+					<th>人提供</th>
+					<th>AI 負責</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>準確版本號（<code>SHOW FRONTENDS\G</code> 的 <code>Version</code> 欄位）</td>
+					<td>按 tag 拉對應原始碼，定位生成 XML 的程式碼（<code>Log4jConfig</code>）</td>
+			</tr>
+			<tr>
+					<td>線上自動生成的 <code>log4j2-spring.xml</code> 內容（appender 名、pattern）</td>
+					<td>先判斷有沒有<strong>不換 jar</strong> 就能做到的辦法（配置項、自訂模板）</td>
+			</tr>
+			<tr>
+					<td>線上 <code>doris-fe.jar</code> 的 sha256</td>
+					<td>改程式碼、單類編譯、證明「未改動原始碼編譯結果 = 官方 class」</td>
+			</tr>
+			<tr>
+					<td>最終決定和上線操作</td>
+					<td>起測試 FE，跑四種模式 + 重啟 + 執行時改日誌級別，生成 README / diff / 校驗和</td>
+			</tr>
+	</tbody>
+</table>
+<p>**一個真實的教訓：版本號拿錯過。**一開始對話裡給的版本是 2.1.2，AI 就照著 2.1.2 改了。後來使用者貼出線上生成的 XML，裡面有 <code>AuditFile</code>、<code>AuditConsole</code> 和 <code>&lt;!--REPLACED BY AUDIT LOG MARKER--&gt;</code>。AI 一核對原始碼發現：<strong>2.1.2 根本沒有這些結構</strong>（它只有一個叫 <code>Auditfile</code> 的審計 appender，小寫 f），這個 marker 要到 2.1.4 之後才出現。再跑一次 <code>SHOW FRONTENDS</code>，確認線上其實是 2.1.6-rc04，於是 2.1.2 的產物全部作廢重做。</p>
+<p>所以第一步永遠是：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">SHOW</span> FRONTENDS<span style="color:#960050;background-color:#1e0010">\</span><span style="color:#66d9ef">G</span>   <span style="color:#75715e">-- 只看 Version 字段，例如 doris-2.1.6-rc04-653e315ba5
+</span></span></span></code></pre></div><p>版本號最後那段是 commit 短 hash。拿它和官方二進位制包裡 <code>Version</code> 類記錄的 <code>doris_build_short_hash</code> 對一下，就能確認原始碼 tag 選對了。</p>
+<p>後來 B 叢集（真的是 2.1.2-rc04）也要同樣的補丁。這次 AI 沒有直接套用 2.1.6 的檔案，而是按 2.1.2 的原始碼結構重新移植了一遍（差異見第四節末尾）。</p>
+<h2 id="三原理為什麼改生成程式碼就能抗重啟">三、原理：為什麼改生成程式碼就能抗重啟</h2>
+<p><img alt="FE 啟動時審計日誌配置的生成與載入流程（橙色為補丁新增步驟）" loading="lazy" src="/images/doris-audit-log-strip-chinese-with-ai/flow.svg"></p>
+<p>讀 <a href="https://github.com/apache/doris/blob/2.1.6-rc04/fe/fe-core/src/main/java/org/apache/doris/common/Log4jConfig.java">2.1.6-rc04 的 Log4jConfig.java</a> 可以看到，FE 啟動時 <code>initLogging()</code> → <code>reconfig()</code> 會做這幾件事：</p>
+<ol>
+<li>用程式碼拼出一個 XML 模板，裡面帶各種 <code>&lt;!--REPLACED BY ...--&gt;</code> 佔位符；</li>
+<li>替換佔位符，再用 <code>StrSubstitutor</code> 把 <code>${sys_log_dir}</code> 這類變數填進去；</li>
+<li><code>SpringLog4j2Config.writeSpringLogConf()</code> 把結果寫到 <code>conf/log4j2-spring.xml</code>；</li>
+<li>直接在記憶體裡 <code>context.start(config)</code> 載入這份配置；</li>
+<li>之後 <a href="https://github.com/apache/doris/blob/2.1.6-rc04/fe/fe-core/src/main/java/org/apache/doris/httpv2/HttpServer.java">HttpServer</a> 啟動 Spring Boot 時，通過 <code>logging.config</code> 指向這份檔案，再載入一次。</li>
+</ol>
+<p>另外，通過 HTTP <code>POST /rest/v1/log</code> 在執行時改日誌級別，會呼叫 <code>Log4jConfig.updateLogging()</code> → <code>reconfig()</code>，把整套流程再走一遍。</p>
+<p>結論很直接：<strong>過濾規則只要寫進這個生成器，無論是重啟、Spring 重新載入，還是執行時 reconfig，生成出來的配置都會帶上它。</strong></p>
+<p>Log4j2 有兩種現成手段可以用：</p>
+<ul>
+<li><strong>strip（刪除中文）</strong>：用 PatternLayout 的 <a href="https://logging.apache.org/log4j/2.x/manual/pattern-layout.html"><code>%replace{pattern}{regex}{substitution}</code></a> 對 <code>%m</code> 做正則替換；</li>
+<li><strong>drop（整行丟棄）</strong>：用 <a href="https://logging.apache.org/log4j/2.x/manual/filters.html"><code>RegexFilter</code></a>，訊息匹配就 <code>DENY</code>。</li>
+</ul>
+<h3 id="關鍵-diff216-rc04精簡">關鍵 diff（2.1.6-rc04，精簡）</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-diff" data-lang="diff"><span style="display:flex;"><span>     private static final String AUDIT_LOG_PATTERN
+</span></span><span style="display:flex;"><span><span style="color:#f92672">-            = AUDIT_LOG_MARKER_PLACEHOLDER + &#34;%d{yyyy-MM-dd HH:mm:ss,SSS} [%c{1}] %m%n&#34;;
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+            = AUDIT_LOG_MARKER_PLACEHOLDER + &#34;%d{yyyy-MM-dd HH:mm:ss,SSS} [%c{1}] &#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+            + AUDIT_LOG_MESSAGE_PLACEHOLDER + &#34;%n&#34;;
+</span></span></span><span style="display:flex;"><span> ...
+</span></span><span style="display:flex;"><span>             .append(&#34;    &lt;Console name=\&#34;&#34; + AUDIT_LOG_CONSOLE_APPENDER + &#34;\&#34; target=\&#34;SYSTEM_OUT\&#34;&gt;\n&#34;)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">+            .append(&#34;      &#34; + AUDIT_LOG_FILTER_PLACEHOLDER + &#34;\n&#34;)
+</span></span></span><span style="display:flex;"><span> ...
+</span></span><span style="display:flex;"><span>             .append(&#34;    &lt;RollingFile name=\&#34;&#34; + AUDIT_LOG_FILE_APPENDER + &#34;\&#34; fileName=\&#34;${audit_log_dir}/fe.audit.log\&#34; ...&gt;\n&#34;)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">+            .append(&#34;      &#34; + AUDIT_LOG_FILTER_PLACEHOLDER + &#34;\n&#34;)
+</span></span></span><span style="display:flex;"><span> ...
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    static String auditMessagePattern() {
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        if (auditFilterMode.equals(&#34;strip&#34;)) {
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+            return xmlEscape(&#34;%replace{%m}{&#34; + auditChineseRegex + &#34;}{&#34; + auditChineseReplacement + &#34;}&#34;);
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        }
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        return &#34;%m&#34;;
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    }
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    static String auditFilterElement() {
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        if (auditFilterMode.equals(&#34;drop&#34;)) {
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+            return &#34;&lt;RegexFilter regex=\&#34;&#34; + xmlEscape(&#34;(?s).*(?:&#34; + auditChineseRegex + &#34;).*&#34;)
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+                    + &#34;\&#34; useRawMsg=\&#34;false\&#34; onMatch=\&#34;DENY\&#34; onMismatch=\&#34;NEUTRAL\&#34;/&gt;&#34;;
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        }
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        return &#34;&#34;;
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+    }
+</span></span></span><span style="display:flex;"><span> ...
+</span></span><span style="display:flex;"><span>         newXmlConfTemplate = strSub.replace(newXmlConfTemplate);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        // 在 ${} 替换之后、用 String.replace（不是 replaceAll）注入，正则里的反斜杠原样保留
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        newXmlConfTemplate = newXmlConfTemplate.replace(AUDIT_LOG_MESSAGE_PLACEHOLDER, auditMessagePattern());
+</span></span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        newXmlConfTemplate = newXmlConfTemplate.replace(AUDIT_LOG_FILTER_PLACEHOLDER, auditFilterElement());
+</span></span></span><span style="display:flex;"><span> ...
+</span></span><span style="display:flex;"><span>         customConfDir = Config.custom_config_dir;
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">+        loadAuditFilterConf(confDir, customConfDir);
+</span></span></span><span style="display:flex;"><span>         reconfig();
+</span></span></code></pre></div><p>有幾個細節：</p>
+<ul>
+<li><strong>配置項由補丁自己從 <code>fe.conf</code> / <code>fe_custom.conf</code> 讀取</strong>，不用改 <code>Config.java</code>，所以只需要替換一個 class。Doris 的 <code>ConfigBase</code> 會忽略不認識的配置項，回滾到原版 jar 時這些配置項留在 fe.conf 裡也沒影響。</li>
+<li><strong>注入時機放在 <code>${}</code> 替換之後</strong>，並且用 <code>String.replace</code> 而不是 <code>replaceAll</code>。否則 <code>\p{IsHan}</code> 裡的反斜槓會被當成替換串的轉義符吃掉。</li>
+<li><strong>注入的內容會先做 XML 轉義</strong>（<code>&amp; &lt; &gt; &quot;</code>），不會因為正則裡的特殊字元把 XML 寫壞。</li>
+<li><strong>配置值非法時 FE 直接拒絕啟動</strong>，例如 <code>audit_log_filter_chinese = foo</code> 會在 fe.out 裡報 <code>audit_log_filter_chinese config error: foo, must be none/strip/drop</code>。審計配置錯了就該儘早暴露，而不是悄悄失效。</li>
+</ul>
+<h3 id="生成後的-pattern-對比auditfile">生成後的 pattern 對比（AuditFile）</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- 原版 / none --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;Pattern&gt;</span><span style="color:#75715e">&lt;!--REPLACED BY AUDIT LOG MARKER--&gt;</span>%d{yyyy-MM-dd HH:mm:ss,SSS} [%c{1}] %m%n<span style="color:#f92672">&lt;/Pattern&gt;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- strip（默认） --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;Pattern&gt;</span><span style="color:#75715e">&lt;!--REPLACED BY AUDIT LOG MARKER--&gt;</span>%d{yyyy-MM-dd HH:mm:ss,SSS} [%c{1}] %replace{%m}{[\p{IsHan}\p{InCJKSymbolsAndPunctuation}\p{InHalfwidthAndFullwidthForms}\p{InCJKCompatibilityForms}\p{InBopomofo}]+}{}%n<span style="color:#f92672">&lt;/Pattern&gt;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">&lt;!-- drop：appender 内多一行 --&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;RegexFilter</span> <span style="color:#a6e22e">regex=</span><span style="color:#e6db74">&#34;(?s).*(?:[\p{IsHan}\p{InCJKSymbolsAndPunctuation}\p{InHalfwidthAndFullwidthForms}\p{InCJKCompatibilityForms}\p{InBopomofo}]+).*&#34;</span> <span style="color:#a6e22e">useRawMsg=</span><span style="color:#e6db74">&#34;false&#34;</span> <span style="color:#a6e22e">onMatch=</span><span style="color:#e6db74">&#34;DENY&#34;</span> <span style="color:#a6e22e">onMismatch=</span><span style="color:#e6db74">&#34;NEUTRAL&#34;</span><span style="color:#f92672">/&gt;</span>
+</span></span></code></pre></div><p>除此之外，生成檔案的結構完全不變：logger、路徑、滾動策略、marker 都一樣。在 none / strip 模式下，原來放 filter 的位置會多出一行空白。</p>
+<h3 id="212-rc04-的差異">2.1.2-rc04 的差異</h3>
+<p><a href="https://github.com/apache/doris/blob/2.1.2-rc04/fe/fe-core/src/main/java/org/apache/doris/common/Log4jConfig.java">2.1.2-rc04 的 Log4jConfig.java</a> 結構更老，移植時做了這些調整：</p>
+<ul>
+<li>模板是一整段字串常量 <code>xmlConfTemplate</code>，不是 <code>StringBuilder</code>，所以直接在模板裡加佔位符；</li>
+<li>只有一個審計 appender <code>Auditfile</code>，沒有 <code>AuditConsole</code>，也沒有 AUDIT LOG MARKER；</li>
+<li>沒有 <code>LogUtils</code>，啟動資訊改用 <code>System.out.println</code> 列印（fe.out 裡沒有 <code>StdoutLogger</code> 字首）；</li>
+<li>三個配置項、預設值、校驗規則、注入方式和 2.1.6 版完全一致。</li>
+</ul>
+<h2 id="四不全量編譯只編譯一個類">四、不全量編譯：只編譯一個類</h2>
+<p>全量編譯 Doris FE 要拉一大堆依賴，耗時長，還可能因為構建環境不同，編出和官方不一樣的位元組碼。這裡只改了一個類，所以完全可以：</p>
+<ol>
+<li>拿<strong>同版本官方二進位制包</strong>裡的 <code>fe/lib/*</code> 做 classpath；</li>
+<li>用 JDK 8 只編譯 <code>Log4jConfig.java</code>；</li>
+<li><strong>先編譯未改動的原始碼，證明結果和官方 jar 裡的 class 逐位元組一致</strong>，再編譯改過的版本；</li>
+<li>用 <code>jar uf</code> 只替換這一個條目。</li>
+</ol>
+<p>官方 jar 是 JDK 8 編譯的：<code>Version</code> 類裡記錄的編譯器分別是 1.8.0_352（2.1.6）和 1.8.0_312（2.1.2）；class 檔案 major version 為 52（Java 8，見 <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">JVM 規範第 4 章</a>）。補丁 class 也必須是 52，這樣在 JDK 8/11/17 上都能載入。</p>
+<p>可複用的命令（以 2.1.6-rc04 為例）：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># 0) 源码：只需要这一个文件</span>
+</span></span><span style="display:flex;"><span>git clone --filter<span style="color:#f92672">=</span>blob:none --no-checkout https://github.com/apache/doris.git ./src
+</span></span><span style="display:flex;"><span>cd ./src <span style="color:#f92672">&amp;&amp;</span> git fetch --depth <span style="color:#ae81ff">1</span> origin tag 2.1.6-rc04
+</span></span><span style="display:flex;"><span>mkdir -p ../work/orig/org/apache/doris/common
+</span></span><span style="display:flex;"><span>git show 2.1.6-rc04:fe/fe-core/src/main/java/org/apache/doris/common/Log4jConfig.java <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  &gt; ../work/orig/org/apache/doris/common/Log4jConfig.java
+</span></span><span style="display:flex;"><span>cd ..
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 1) 官方二进制包解压后的 fe/lib 作为 classpath（这里记为 ./work/apache-doris-2.1.6-bin-x64）</span>
+</span></span><span style="display:flex;"><span>LIB<span style="color:#f92672">=</span>./work/apache-doris-2.1.6-bin-x64/fe/lib
+</span></span><span style="display:flex;"><span>export PATH<span style="color:#f92672">=</span>$JAVA_HOME/bin:$PATH     <span style="color:#75715e"># JDK 8</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 2) 自证：未改动源码 → 与官方 class 逐字节一致（注意 -g，否则调试信息不同）</span>
+</span></span><span style="display:flex;"><span>javac -g -source <span style="color:#ae81ff">8</span> -target <span style="color:#ae81ff">8</span> -nowarn -cp <span style="color:#e6db74">&#34;</span>$LIB<span style="color:#e6db74">/*&#34;</span> -d ./work/cls/orig <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  ./work/orig/org/apache/doris/common/Log4jConfig.java
+</span></span><span style="display:flex;"><span>mkdir -p ./work/official <span style="color:#f92672">&amp;&amp;</span> <span style="color:#f92672">(</span>cd ./work/official <span style="color:#f92672">&amp;&amp;</span> unzip -qo <span style="color:#e6db74">&#34;../../</span>$LIB<span style="color:#e6db74">/doris-fe.jar&#34;</span> <span style="color:#e6db74">&#39;org/apache/doris/common/Log4jConfig*&#39;</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> f in ./work/official/org/apache/doris/common/Log4jConfig*.class; <span style="color:#66d9ef">do</span>
+</span></span><span style="display:flex;"><span>  cmp <span style="color:#e6db74">&#34;</span>$f<span style="color:#e6db74">&#34;</span> <span style="color:#e6db74">&#34;./work/cls/orig/org/apache/doris/common/</span><span style="color:#66d9ef">$(</span>basename <span style="color:#e6db74">&#34;</span>$f<span style="color:#e6db74">&#34;</span><span style="color:#66d9ef">)</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">&amp;&amp;</span> echo <span style="color:#e6db74">&#34;same </span><span style="color:#66d9ef">$(</span>basename <span style="color:#e6db74">&#34;</span>$f<span style="color:#e6db74">&#34;</span><span style="color:#66d9ef">)</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">done</span>
+</span></span><span style="display:flex;"><span>javap -v ./work/cls/orig/org/apache/doris/common/Log4jConfig.class | grep major   <span style="color:#75715e"># major version: 52</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 3) 编译改过的源码（./work/new/... 是打过 patch 的 Log4jConfig.java）</span>
+</span></span><span style="display:flex;"><span>javac -g -source <span style="color:#ae81ff">8</span> -target <span style="color:#ae81ff">8</span> -nowarn -cp <span style="color:#e6db74">&#34;</span>$LIB<span style="color:#e6db74">/*&#34;</span> -d ./work/cls/new <span style="color:#ae81ff">\
+</span></span></span><span style="display:flex;"><span>  ./work/new/org/apache/doris/common/Log4jConfig.java
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 4) 复制一份官方 jar，只更新 Log4jConfig.class</span>
+</span></span><span style="display:flex;"><span>cp <span style="color:#e6db74">&#34;</span>$LIB<span style="color:#e6db74">/doris-fe.jar&#34;</span> ./work/doris-fe.jar
+</span></span><span style="display:flex;"><span><span style="color:#f92672">(</span>cd ./work/cls/new <span style="color:#f92672">&amp;&amp;</span> jar uf ../../doris-fe.jar org/apache/doris/common/Log4jConfig.class<span style="color:#f92672">)</span>
+</span></span></code></pre></div><p>兩個踩過的小坑：</p>
+<ul>
+<li>編譯時<strong>不加 <code>-g</code></strong>，內部類 <code>Log4jConfig$Tuple.class</code> 會和官方不一致；加上 <code>-g</code> 後兩個 class 都逐位元組一致。</li>
+<li>2.1.2 版改動後新增了 import，導致行號變化，重新編譯出來的 <code>Tuple.class</code> 只差行號表。所以 <code>jar uf</code> <strong>只更新 <code>Log4jConfig.class</code></strong>，內部類繼續用官方原檔案。</li>
+</ul>
+<h2 id="五配置項與測試結果">五、配置項與測試結果</h2>
+<table>
+	<thead>
+			<tr>
+					<th>配置項（寫在 <code>${DORIS_HOME}/fe/conf/fe.conf</code>）</th>
+					<th>取值</th>
+					<th>預設</th>
+					<th>說明</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td><code>audit_log_filter_chinese</code></td>
+					<td>none / strip / drop</td>
+					<td><strong>strip</strong></td>
+					<td>none=原樣；strip=刪除中文；drop=含中文的審計記錄整行不寫</td>
+			</tr>
+			<tr>
+					<td><code>audit_log_chinese_replacement</code></td>
+					<td>字串</td>
+					<td>空</td>
+					<td>strip 時用來替換中文的串，例如 <code>?</code>；不能包含 <code>{ } % $ \</code></td>
+			</tr>
+			<tr>
+					<td><code>audit_log_chinese_regex</code></td>
+					<td>Java 正則</td>
+					<td><code>[\p{IsHan}\p{InCJKSymbolsAndPunctuation}\p{InHalfwidthAndFullwidthForms}\p{InCJKCompatibilityForms}\p{InBopomofo}]+</code></td>
+					<td>預設覆蓋漢字、中文標點、全形字元和注音；不能包含 <code>$</code>、<code>%</code>，花括號必須成對</td>
+			</tr>
+	</tbody>
+</table>
+<p>讀取順序是 fe.conf → fe_custom.conf（後者覆蓋前者），也可以用 JVM <code>-D</code> 參數覆蓋。<strong>注意：換上補丁 jar 後，即使什麼都不配，預設也是 strip。</strong></p>
+<p>測試 SQL：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">select</span> <span style="color:#e6db74">&#39;你好，世界！abc&#39;</span> <span style="color:#66d9ef">as</span> <span style="color:#f92672">`</span><span style="color:#960050;background-color:#1e0010">中文别名</span><span style="color:#f92672">`</span> <span style="color:#75715e">/* 注释：测试 */</span>;
+</span></span></code></pre></div><p>兩個版本分別用「官方二進位制包 + 補丁 jar」起單 FE（JDK 1.8.0_504）測試，fe.audit.log 裡 <code>Stmt=</code> 的實測結果一致：</p>
+<table>
+	<thead>
+			<tr>
+					<th>模式</th>
+					<th>fe.audit.log 中的 Stmt</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>none</td>
+					<td><code>select '你好，世界！abc' as `中文別名` /* 註釋：測試 */</code></td>
+			</tr>
+			<tr>
+					<td>strip（預設，不寫任何配置）</td>
+					<td><code>select 'abc' as `` /*  */</code></td>
+			</tr>
+			<tr>
+					<td>strip + replacement=<code>?</code></td>
+					<td><code>select '?abc' as `?` /* ? */</code></td>
+			</tr>
+			<tr>
+					<td>drop</td>
+					<td>這條不寫入；同批的英文 SQL（<code>select 'hello world' as en_only</code>）正常寫入</td>
+			</tr>
+	</tbody>
+</table>
+<p>另外還驗證了這些情況（兩個版本都測過）：</p>
+<ul>
+<li>每次重啟後 <code>conf/log4j2-spring.xml</code> 的 mtime 都會變，內容帶 <code>%replace</code> 或 <code>RegexFilter</code>；</li>
+<li><code>POST /rest/v1/log?add_verbose=org.apache.doris.qe</code> 在執行時觸發 reconfig 後，過濾仍然生效；</li>
+<li>跨兩行的 SQL 也能正確處理（Doris 寫審計日誌前會把換行替換成空格）；</li>
+<li>2.1.2 版在 <code>sys_log_mode = ASYNC</code> 下同樣生效；</li>
+<li>配置非法值時 FE 拒絕啟動。</li>
+</ul>
+<p>上線後的驗證命令：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>grep <span style="color:#e6db74">&#34;audit log chinese filter&#34;</span> <span style="color:#e6db74">${</span>DORIS_HOME<span style="color:#e6db74">}</span>/fe/log/fe.out | tail -1
+</span></span><span style="display:flex;"><span>ls -l <span style="color:#e6db74">${</span>DORIS_HOME<span style="color:#e6db74">}</span>/fe/conf/log4j2-spring.xml          <span style="color:#75715e"># mtime 应该是本次启动时间</span>
+</span></span><span style="display:flex;"><span>grep -n <span style="color:#e6db74">&#39;replace{%m}\|RegexFilter&#39;</span> <span style="color:#e6db74">${</span>DORIS_HOME<span style="color:#e6db74">}</span>/fe/conf/log4j2-spring.xml
+</span></span><span style="display:flex;"><span>tail -n <span style="color:#ae81ff">3</span> <span style="color:#e6db74">${</span>DORIS_HOME<span style="color:#e6db74">}</span>/fe/log/fe.audit.log           <span style="color:#75715e"># 以 fe.conf 里实际的审计日志目录为准</span>
+</span></span></code></pre></div><h2 id="六交付前的防錯">六、交付前的防錯</h2>
+<p>**1）線上 jar 必須是官方原版。**如果線上的 <code>doris-fe.jar</code> 被別人改過，拿官方 jar 打補丁再替換上去，就會把那些改動悄悄抹掉。所以先比對 sha256：</p>
+<table>
+	<thead>
+			<tr>
+					<th>版本</th>
+					<th>官方 <code>fe/lib/doris-fe.jar</code> sha256</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>2.1.6-rc04</td>
+					<td><code>6005bb99e7b13200ff192252d2a07d32a82fd3bf3a23c4cfe1078a33f7e7c937</code></td>
+			</tr>
+			<tr>
+					<td>2.1.2-rc04</td>
+					<td><code>608177785eaab4bc3aea3cf9757341aead84d2c29129531acbbf2e489b3a8337</code></td>
+			</tr>
+	</tbody>
+</table>
+<p>這次 2.1.6 叢集線上 jar 的 sha256 和官方一致。</p>
+<p><strong>2）補丁 jar 要逐個條目比對，確認只差一個 class。</strong><code>jar uf</code> 會重新壓縮，jar 的檔案大小會變，所以不能看大小，要比對每個條目的 CRC：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> zipfile
+</span></span><span style="display:flex;"><span>a <span style="color:#f92672">=</span> zipfile<span style="color:#f92672">.</span>ZipFile(<span style="color:#e6db74">&#39;official/doris-fe.jar&#39;</span>)
+</span></span><span style="display:flex;"><span>b <span style="color:#f92672">=</span> zipfile<span style="color:#f92672">.</span>ZipFile(<span style="color:#e6db74">&#39;patched/doris-fe.jar&#39;</span>)
+</span></span><span style="display:flex;"><span>da <span style="color:#f92672">=</span> {i<span style="color:#f92672">.</span>filename: i<span style="color:#f92672">.</span>CRC <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> a<span style="color:#f92672">.</span>infolist()}
+</span></span><span style="display:flex;"><span>db <span style="color:#f92672">=</span> {i<span style="color:#f92672">.</span>filename: i<span style="color:#f92672">.</span>CRC <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> b<span style="color:#f92672">.</span>infolist()}
+</span></span><span style="display:flex;"><span>print(len(da), len(db), set(da) <span style="color:#f92672">^</span> set(db), [k <span style="color:#66d9ef">for</span> k <span style="color:#f92672">in</span> da <span style="color:#66d9ef">if</span> k <span style="color:#f92672">in</span> db <span style="color:#f92672">and</span> da[k] <span style="color:#f92672">!=</span> db[k]])
+</span></span></code></pre></div><p>實測結果：</p>
+<ul>
+<li>2.1.6：<code>7354 7354 set() ['org/apache/doris/common/Log4jConfig.class']</code></li>
+<li>2.1.2：<code>6955 6955 set() ['org/apache/doris/common/Log4jConfig.class']</code></li>
+</ul>
+<p><strong>3）替換和回滾（由人來操作，每個 FE 都要做）：</strong></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>cd <span style="color:#e6db74">${</span>DORIS_HOME<span style="color:#e6db74">}</span>/fe
+</span></span><span style="display:flex;"><span>sha256sum lib/doris-fe.jar                 <span style="color:#75715e"># 必须等于上表中对应版本的官方值</span>
+</span></span><span style="display:flex;"><span>./bin/stop_fe.sh
+</span></span><span style="display:flex;"><span>cp -p lib/doris-fe.jar ./backup/doris-fe.jar.orig   <span style="color:#75715e"># 备份到 lib 目录以外</span>
+</span></span><span style="display:flex;"><span>cp ./patch/doris-fe.jar lib/doris-fe.jar
+</span></span><span style="display:flex;"><span>echo <span style="color:#e6db74">&#34;audit_log_filter_chinese = strip&#34;</span> &gt;&gt; conf/fe.conf   <span style="color:#75715e"># 可选，默认就是 strip</span>
+</span></span><span style="display:flex;"><span>./bin/start_fe.sh --daemon
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># 回滚</span>
+</span></span><span style="display:flex;"><span>./bin/stop_fe.sh <span style="color:#f92672">&amp;&amp;</span> cp -p ./backup/doris-fe.jar.orig lib/doris-fe.jar <span style="color:#f92672">&amp;&amp;</span> ./bin/start_fe.sh --daemon
+</span></span></code></pre></div><h2 id="七免換-jar-的方案-dloggingconfig-及其侷限">七、免換 jar 的方案：<code>-Dlogging.config</code> 及其侷限</h2>
+<p>使用者最初問的是：有沒有不換 jar 的辦法？Doris 沒有現成的配置項能控制審計 pattern。不過讀 HttpServer 原始碼可以發現，<code>logging.config</code> 是作為 Spring 的<strong>預設屬性</strong>（優先順序最低）傳進去的。因此可以在 fe.conf 的 <code>JAVA_OPTS</code>（JDK 17 對應 <code>JAVA_OPTS_FOR_JDK_17</code>）最前面加上：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>-Dlogging.config<span style="color:#f92672">=</span><span style="color:#e6db74">${</span>DORIS_HOME<span style="color:#e6db74">}</span>/fe/custom/log4j2-audit-strip.xml
+</span></span></code></pre></div><p>讓 Spring Boot 載入一份放在 conf 目錄之外、不會被覆蓋的靜態 log4j2 配置。在 2.1.6 上用<strong>官方原版 jar</strong> 實測，審計日誌裡的中文確實被刪掉了，但侷限也很明顯：</p>
+<ol>
+<li>**執行時一改日誌級別就失效。**通過 <code>/rest/v1/log</code> 修改日誌級別會觸發 <code>reconfig()</code>，切回程式碼生成的配置，審計日誌馬上又出現中文，直到下次重啟。這一點已實測復現。</li>
+<li>靜態 XML 不再跟隨 fe.conf 裡 <code>sys_log_*</code> / <code>audit_log_*</code> 的變化，需要手工維護。</li>
+<li>從 FE 啟動到 HTTP 服務起來之前，用的仍是原配置。這段時間還沒有查詢，所以基本不影響審計日誌。</li>
+</ol>
+<p>這個方案在 2.1.2 上只讀了原始碼（機制相同），沒有實測。考慮到第 1 條，最終選擇了換 jar。</p>
+<h2 id="八風險與邊界">八、風險與邊界</h2>
+<ul>
+<li>**<code>__internal_schema.audit_log</code> 表不受影響。**內建審計外掛 AuditLoader 寫表走的是另一條路徑，不經過這個 appender，表裡仍是原始 SQL（含中文）（見官方文件 <a href="https://doris.apache.org/zh-CN/docs/3.x/admin-manual/audit-plugin/">審計日誌</a>）。如果表裡也要去中文，需要另外處理。fe.log、fe.warn.log 同樣不受影響（見 <a href="https://doris.apache.org/zh-CN/docs/3.x/admin-manual/log-management/fe-log/">FE 日誌管理</a>）。</li>
+<li><strong>drop 模式有合規風險</strong>：含中文的查詢會從 fe.audit.log 裡完全消失。一般建議用 strip。</li>
+<li><strong>strip 會改變 SQL 文本</strong>：日誌裡的 SQL 可能沒法直接複製執行。SqlHash 仍按原始 SQL 計算。</li>
+<li><strong>jar 和版本強繫結</strong>：2.1.6 和 2.1.2 的 jar 不能混用；升級 Doris 後必須基於新版本原始碼重新打補丁。</li>
+<li>測試只覆蓋了 JDK 8 執行時和單 FE。多 FE 時每個 FE 都要替換。</li>
+</ul>
+<h2 id="九小結用-ai-做私有化補丁的幾條經驗">九、小結：用 AI 做私有化補丁的幾條經驗</h2>
+<ol>
+<li><strong>給足上下文，尤其是準確版本號。</strong><code>SHOW FRONTENDS</code> 的 Version、線上生成的配置檔案、線上 jar 的 sha256，比任何口頭描述都可靠。這次走過的唯一一段彎路，就是版本號拿錯了。</li>
+<li>**讓 AI 自證一致性。**不要只要一個「編譯好的 jar」，而是要它證明：未改動原始碼編譯出的 class 與官方逐位元組一致，補丁 jar 與官方 jar 只差目標 class。這兩條證據成立，替換的風險就很可控。</li>
+<li>**最小改動。**只改生成器一個類；配置項由補丁自己讀取，不碰 <code>Config.java</code>；生成檔案的結構保持不變；配置非法時 FE 拒絕啟動，不讓過濾悄悄失效。</li>
+<li><strong>先找免改程式碼的方案，並把侷限講清楚。</strong><code>-Dlogging.config</code> 能用，但一次執行時 reconfig 就會失效。這類邊界一定要實測，不能只靠推斷。</li>
+<li>**人來做最後一步。**停 FE、備份、替換、回滾這些生產操作，由人按 README 執行；AI 負責準備好材料，並給出可核對的證據。</li>
+</ol>
+<h2 id="參考">參考</h2>
+<ul>
+<li>apache/doris <code>Log4jConfig.java</code>：<a href="https://github.com/apache/doris/blob/2.1.6-rc04/fe/fe-core/src/main/java/org/apache/doris/common/Log4jConfig.java">2.1.6-rc04</a> ｜ <a href="https://github.com/apache/doris/blob/2.1.2-rc04/fe/fe-core/src/main/java/org/apache/doris/common/Log4jConfig.java">2.1.2-rc04</a></li>
+<li>apache/doris <code>HttpServer.java</code>（<code>logging.config</code>）：<a href="https://github.com/apache/doris/blob/2.1.6-rc04/fe/fe-core/src/main/java/org/apache/doris/httpv2/HttpServer.java">2.1.6-rc04</a></li>
+<li>Apache Doris 文件：<a href="https://doris.apache.org/zh-CN/docs/3.x/admin-manual/audit-plugin/">審計日誌</a> ｜ <a href="https://doris.apache.org/zh-CN/docs/3.x/admin-manual/log-management/fe-log/">FE 日誌管理</a>（2.1 文件已歸檔，連結為當前版本）｜ <a href="https://doris.apache.org/download">下載</a></li>
+<li>Log4j2：<a href="https://logging.apache.org/log4j/2.x/manual/pattern-layout.html">Pattern Layout（%replace）</a> ｜ <a href="https://logging.apache.org/log4j/2.x/manual/filters.html">Filters（RegexFilter）</a></li>
+<li><a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html">JVM 規範第 4 章：class 檔案格式（major version）</a></li>
+</ul>
+]]></content:encoded></item></channel></rss>

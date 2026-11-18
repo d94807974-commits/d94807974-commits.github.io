@@ -1,0 +1,594 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/"><channel><title>人工智慧基本法 on Donald's Blog</title><link>https://d94807974-commits.github.io/tags/%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7%E5%9F%BA%E6%9C%AC%E6%B3%95/</link><description>Recent content in 人工智慧基本法 on Donald's Blog</description><generator>Hugo</generator><language>zh-TW</language><lastBuildDate>Mon, 09 Nov 2026 16:00:00 +0800</lastBuildDate><atom:link href="https://d94807974-commits.github.io/tags/%E4%BA%BA%E5%B7%A5%E6%99%BA%E6%85%A7%E5%9F%BA%E6%9C%AC%E6%B3%95/index.xml" rel="self" type="application/rss+xml"/><item><title>給企業高管的 AI 風險清單：資安之外，還有十件不能拖的事</title><link>https://d94807974-commits.github.io/posts/ai-enterprise-risks-executive-agenda/</link><pubDate>Mon, 09 Nov 2026 16:00:00 +0800</pubDate><guid>https://d94807974-commits.github.io/posts/ai-enterprise-risks-executive-agenda/</guid><description>AI 普及後，企業面對的不只是資安事件。本文從工程師視角整理高管需要優先處理的十五個問題：影子 AI、AI 代理越權、深偽詐騙、模型與 MCP 供應鏈、AI 產生的程式碼漏洞，以及治理問責、法規時程、資料與個資、著作權、幻覺、人才斷層、ROI 與成本、供應商鎖定、品牌信任、能源。每個問題按「現象、為什麼重要、怎麼做」寫，並附風險對策矩陣、30/90/180 天行動清單、董事會提問與追蹤指標。</description><content:encoded><![CDATA[<blockquote>
+  <p>📊 <strong>圖解版</strong>：<a href="/visual/ai-enterprise-risks-executive-agenda.html">優先順序矩陣、風險地圖、法規時程與行動清單</a>（單頁 HTML，由 answer-me-with-html 產生）</p>
+
+</blockquote><div class="viewpoint" role="note">
+  <p class="viewpoint-title">核心觀點</p>
+  <p>AI 最大的風險不是某種新攻擊，而是企業在沒有盤點、沒有負責人、沒有權限邊界的狀態下，讓 AI 接觸資料並代替人做事。高管 30 天內要先盤點 AI 使用與 AI 代理、為每個 AI 系統指定具名負責人，並把轉帳與對外承諾改成不依賴「看到、聽到」的流程驗證。</p>
+</div><blockquote>
+  <p>查核日期：2026-11-09（Asia/Singapore）。文中數字均附來源；標示「調查」表示問卷或抽樣研究，「文件依據」表示法規或標準原文，「媒體報導」表示新聞或評論，「有爭議」表示結論受到公開質疑。本文沒有實測資料。</p>
+
+</blockquote><h2 id="一高管摘要">一、高管摘要</h2>
+<p>為什麼現在要處理：</p>
+<ol>
+<li><strong>風險已經發生，不是預測</strong>。IBM《2025 資料外洩成本報告》（調查，600 個組織，2024-03 至 2025-02）：13% 的組織回報 AI 模型或應用遭入侵，其中 97% 沒有 AI 存取控制；每 5 個組織就有 1 個因影子 AI 發生外洩；外洩組織中 63% 沒有 AI 治理政策或仍在起草。</li>
+<li><strong>AI 從「回答問題」走向「執行任務」</strong>。AI 代理會呼叫 API、讀寫系統、轉寄郵件。OWASP 在 2025 年 12 月發布《Agentic Applications Top 10》，第一名是「代理目標劫持」（Agent Goal Hijack）。權限給錯一次，損失就不是一則錯誤回答。</li>
+<li><strong>法規有時間表</strong>。EU AI Act 多數條款在 2026-08-02 開始適用，新的深偽相關禁止條款在 2026-12-02 生效；臺灣《人工智慧基本法》在 2026-01-14 公布施行，主管機關有兩年檢討法規。</li>
+<li><strong>投入沒有轉成成果</strong>。Gartner 預測到 2027 年底超過 40% 的代理式 AI 專案會被取消，原因是成本上升、商業價值不明與風險控制不足。</li>
+</ol>
+<h3 id="優先順序總表">優先順序總表</h3>
+<table>
+	<thead>
+			<tr>
+					<th>優先</th>
+					<th>問題</th>
+					<th>類別</th>
+					<th>為什麼排在這裡</th>
+					<th>建議負責人</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>P0</td>
+					<td>影子 AI 與資料外洩</td>
+					<td>資安</td>
+					<td>已有大量事件，成本可量化</td>
+					<td>CISO + CIO</td>
+			</tr>
+			<tr>
+					<td>P0</td>
+					<td>AI 代理越權與提示注入</td>
+					<td>資安</td>
+					<td>代理拿著權限做事，錯一次就是實際損失</td>
+					<td>CISO + 業務系統負責人</td>
+			</tr>
+			<tr>
+					<td>P0</td>
+					<td>深偽詐騙與 AI 加速攻擊</td>
+					<td>資安</td>
+					<td>單一事件可達數千萬美元</td>
+					<td>CFO + CISO</td>
+			</tr>
+			<tr>
+					<td>P0</td>
+					<td>治理與問責</td>
+					<td>治理</td>
+					<td>沒有負責人，其他對策都落不了地</td>
+					<td>CEO + 董事會</td>
+			</tr>
+			<tr>
+					<td>P0</td>
+					<td>法規時程</td>
+					<td>法遵</td>
+					<td>EU AI Act 已開始適用，年底再有新條款</td>
+					<td>法務長</td>
+			</tr>
+			<tr>
+					<td>P1</td>
+					<td>模型、外掛與 MCP 供應鏈</td>
+					<td>資安</td>
+					<td>生態擴張快於安全規範</td>
+					<td>CISO + 架構負責人</td>
+			</tr>
+			<tr>
+					<td>P1</td>
+					<td>AI 產生的程式碼漏洞</td>
+					<td>資安</td>
+					<td>程式碼產量上升，審查量沒跟上</td>
+					<td>CTO</td>
+			</tr>
+			<tr>
+					<td>P1</td>
+					<td>資料治理與個資</td>
+					<td>資料</td>
+					<td>AI 成果與風險都取決於資料品質與權限</td>
+					<td>資料長 / DPO</td>
+			</tr>
+			<tr>
+					<td>P1</td>
+					<td>幻覺與決策品質</td>
+					<td>營運</td>
+					<td>對外回答錯誤，企業要負責</td>
+					<td>業務負責人</td>
+			</tr>
+			<tr>
+					<td>P1</td>
+					<td>ROI 與成本失控</td>
+					<td>財務</td>
+					<td>PoC 多、上線少，Token 費用難預測</td>
+					<td>CFO</td>
+			</tr>
+			<tr>
+					<td>P1</td>
+					<td>人才與組織</td>
+					<td>人資</td>
+					<td>初階職缺減少，未來的中階主管從哪裡來</td>
+					<td>CHRO</td>
+			</tr>
+			<tr>
+					<td>P2</td>
+					<td>智慧財產與著作權</td>
+					<td>法遵</td>
+					<td>訴訟與和解金額已到十億美元級</td>
+					<td>法務長</td>
+			</tr>
+			<tr>
+					<td>P2</td>
+					<td>供應商鎖定與主權</td>
+					<td>策略</td>
+					<td>換供應商的成本隨使用深度上升</td>
+					<td>CIO + 採購</td>
+			</tr>
+			<tr>
+					<td>P2</td>
+					<td>品牌與信任</td>
+					<td>商譽</td>
+					<td>一次 AI 事故可以抵掉多年品牌累積</td>
+					<td>行銷長 + 公關</td>
+			</tr>
+			<tr>
+					<td>P2</td>
+					<td>ESG 與能源</td>
+					<td>永續</td>
+					<td>資料中心用電倍增，影響範疇三揭露</td>
+					<td>永續長</td>
+			</tr>
+	</tbody>
+</table>
+<p>P0 指 30 天內要有負責人和第一版對策；P1 指 90 天內要有制度；P2 指 180 天內要有決策。這個排序是本文的判斷，依據是「事件是否已大量發生」與「是否有明確期限」，各企業應按自身產業調整。</p>
+<h2 id="二資安問題">二、資安問題</h2>
+<h3 id="1-影子-ai-與資料外洩p0">1. 影子 AI 與資料外洩（P0）</h3>
+<p><strong>現象</strong>：員工把程式碼、會議紀錄、客戶資料貼進未經核准的 AI 工具。2023 年三星半導體部門員工把原始碼與會議內容輸入 ChatGPT 後，公司暫停員工使用生成式 AI（媒體報導，The Verge）。2026 年的新變化是員工用 Vibe Coding 自己做應用：iThome 報導資安業者 Red Access 在多個 AI 開發平臺上找到約 5,000 個看似企業用途的公開應用，其中約 40%（約 2,000 個）含有敏感資料卻沒有基本身分驗證（媒體報導）。</p>
+<p><strong>為什麼重要</strong>：IBM 報告指出，高度使用影子 AI 的組織，外洩成本平均多出 67 萬美元；涉及影子 AI 的事件，個資與智慧財產外洩比例都高於平均（調查）。iThome《2026 CIO&amp;CISO 大調查》也提到影子 AI 的問題會在擴大採用階段「再次浮現」（調查）。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>先提供核准的企業版工具，再禁止未核准工具。只禁不給，員工會繞過去。</li>
+<li>用 CASB、SWG 或 DLP 盤點實際使用的 AI 服務，每月更新清單。</li>
+<li>把「員工自建的 AI 應用」納入資產管理：上線前要申請、審查，並規定最低資安標準。</li>
+<li>資料分級後，明定哪一級資料可以進哪一類工具。</li>
+</ol>
+<h3 id="2-ai-代理越權與提示注入p0">2. AI 代理越權與提示注入（P0）</h3>
+<p><strong>現象</strong>：AI 代理會讀郵件、讀文件、呼叫工具。攻擊者不必入侵系統，只要在郵件、網頁或文件裡放一段指令，代理就可能照做。OWASP《LLM Top 10 2025》把提示注入（LLM01）列為第一，並把「過度代理」（Excessive Agency，LLM06）列為獨立風險；《Agentic Top 10 2026》以 EchoLeak 等案例說明代理目標被劫持的後果（文件依據）。</p>
+<p><strong>為什麼重要</strong>：傳統資安假設「有權限的使用者做的事，就是使用者想做的事」。AI 代理打破這個假設：權限是對的，意圖卻被外部內容改掉。IBM 報告中 AI 相關事件有 60% 導致資料外洩、31% 造成營運中斷（調查）。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>每個代理只給完成任務所需的最小權限，用獨立的服務身分，不共用人的帳號。</li>
+<li>付款、刪除、對外寄送、修改權限這類不可逆動作，一律要求人工確認。</li>
+<li>把代理讀到的外部內容視為不可信輸入，與系統指令分開處理。</li>
+<li>保留完整的工具呼叫紀錄，並設定可以立即停用代理的開關。</li>
+</ol>
+<h3 id="3-深偽詐騙與-ai-加速攻擊p0">3. 深偽詐騙與 AI 加速攻擊（P0）</h3>
+<p><strong>現象</strong>：2024 年，工程顧問公司 Arup 香港辦公室的員工在一場視訊會議中，看到「財務長」與多位「同事」，隨後分 15 筆轉出約 2 億港幣（約 2,500 萬美元）。會議中的其他人都是深偽產生的（媒體報導，CNN）。攻擊端也在自動化：Anthropic 在 2025 年 11 月報告，一個國家級團體利用 Claude Code 攻擊約 30 個目標，AI 執行了 80% 至 90% 的戰術操作（廠商報告，<strong>有爭議</strong>：Ars Technica 等報導指出研究人員質疑其自主程度與證據）。</p>
+<p><strong>為什麼重要</strong>：IBM 報告中 16% 的外洩事件涉及攻擊者使用 AI，最常見的是釣魚與深偽冒充（調查）。「看到臉、聽到聲音」已經不能當作身分驗證。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>大額轉帳、變更收款帳戶、緊急採購，一律用事先登記的第二管道回撥確認，不用來電或會議中提供的聯絡方式。</li>
+<li>設定高管與財務人員之間的驗證暗語或內部核准系統，不依賴視訊。</li>
+<li>每年針對財務、採購、人資做深偽情境演練。</li>
+<li>假設攻擊者的速度比去年更快：縮短修補週期，把偵測與回應時間列為指標。</li>
+</ol>
+<h3 id="4-模型外掛與-mcp-供應鏈p1">4. 模型、外掛與 MCP 供應鏈（P1）</h3>
+<p><strong>現象</strong>：企業開始用 MCP（Model Context Protocol）把 AI 代理接到內部系統，也大量下載開源模型與外掛。InfoQ 2026 年 7 月的文章指出，2026 年頭 60 天有超過 30 個 CVE 針對 MCP 部署；作者引用 Adversa AI 的掃描，500 多個 MCP 伺服器中 38% 的關鍵端點沒有驗證（媒體報導，第三方數字未獨立查核）。</p>
+<p><strong>為什麼重要</strong>：MCP 伺服器與外掛是會被執行的程式；部分模型檔案格式（例如 Python pickle）在載入時也能執行程式碼。工具定義在核准後被改掉（rug pull），閘道的驗證不會發現。這與過去的開源套件供應鏈問題相同，只是權限更大。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>建立核准的模型與 MCP 伺服器清單，只允許從內部登錄庫安裝。</li>
+<li>核准時鎖定工具定義的雜湊值，之後有變更就重新審查。</li>
+<li>MCP 伺服器的對外連線用白名單，憑證按工具範圍發放。</li>
+<li>模型與外掛納入 SBOM 與弱點管理流程。</li>
+</ol>
+<h3 id="5-ai-產生的程式碼漏洞p1">5. AI 產生的程式碼漏洞（P1）</h3>
+<p><strong>現象</strong>：Veracode《2025 GenAI 程式碼安全報告》測試多個大型語言模型，45% 的任務產生了含 OWASP Top 10 弱點的程式碼，Java 的比例達 72%（調查）。</p>
+<p><strong>為什麼重要</strong>：AI 讓程式碼產量上升，但審查人力沒有同步增加。弱點的數量會跟著產量上升，而且多數出現在看起來正確、能通過測試的程式碼裡。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>AI 產生的程式碼走同一套 SAST、相依套件掃描與人工審查，不設快速通道。</li>
+<li>在 CI 加入阻擋規則，例如禁止把外部輸入接到 shell 或 <code>eval</code>。</li>
+<li>追蹤「AI 協助的變更」的缺陷率，用資料決定哪些場景可以放寬。</li>
+</ol>
+<h2 id="三資安之外的問題">三、資安之外的問題</h2>
+<h3 id="6-治理與問責p0">6. 治理與問責（P0）</h3>
+<p><strong>現象</strong>：AI 專案分散在各部門，沒有人知道公司總共有多少 AI 系統、誰負責。iThome 調查中 26% 的企業認為最大挑戰是「AI 資安和治理人才不足」（調查）。</p>
+<p><strong>為什麼重要</strong>：沒有清單，就無法評估風險；沒有負責人，事故發生時沒有人能決定停用。《遠見》引述台灣微軟總經理卞志祥的觀察，前瞻企業會成立直屬董事會層級的 AI 治理委員會，由法務、財務、業務、IT 與 HR 共治（媒體報導）。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>建立 AI 系統清單：用途、資料、模型、供應商、負責人、風險等級。</li>
+<li>每個 AI 系統指定一位具名的業務負責人，不是只指定 IT。</li>
+<li>以 NIST AI RMF（治理、對應、量測、管理）或 ISO/IEC 42001（AI 管理系統）當框架，不要從零自創（文件依據）。</li>
+</ol>
+<h3 id="7-法規時程p0">7. 法規時程（P0）</h3>
+<p><strong>現象</strong>：主要法規已經進入適用期。</p>
+<table>
+	<thead>
+			<tr>
+					<th>日期</th>
+					<th>事件</th>
+					<th>依據</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>2025-02-02</td>
+					<td>EU AI Act：禁止的 AI 行為、AI 素養義務開始適用</td>
+					<td>文件依據</td>
+			</tr>
+			<tr>
+					<td>2025-08-02</td>
+					<td>EU AI Act：通用目的 AI 模型義務與治理規定</td>
+					<td>文件依據</td>
+			</tr>
+			<tr>
+					<td>2026-01-14</td>
+					<td>臺灣《人工智慧基本法》公布施行，共 20 條</td>
+					<td>文件依據</td>
+			</tr>
+			<tr>
+					<td>2026-07-27</td>
+					<td>EU「AI Omnibus」簡化修正生效</td>
+					<td>文件依據</td>
+			</tr>
+			<tr>
+					<td>2026-08-02</td>
+					<td>EU AI Act 多數規定適用，含第 50 條透明度義務</td>
+					<td>文件依據</td>
+			</tr>
+			<tr>
+					<td>2026-12-02</td>
+					<td>EU AI Act 新增的深偽相關禁止條款生效</td>
+					<td>文件依據</td>
+			</tr>
+			<tr>
+					<td>2027-12-02</td>
+					<td>EU AI Act 附件三高風險系統規定（就業、教育、生物辨識等）</td>
+					<td>文件依據</td>
+			</tr>
+			<tr>
+					<td>2028-08-02</td>
+					<td>EU AI Act 附件一高風險系統規定（嵌入產品者）</td>
+					<td>文件依據</td>
+			</tr>
+	</tbody>
+</table>
+<p><strong>為什麼重要</strong>：違反 EU AI Act 第 5 條禁止行為，罰款最高 3,500 萬歐元或全球年營業額 7%，取較高者（文件依據，第 99 條）。臺灣基本法本身是原則性立法，但第 18 條要求各主管機關在兩年內檢討法規，金融、醫療、人資等領域的具體要求會陸續出現。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>判斷公司是否在 EU 市場提供或使用 AI 系統，包括透過子公司與客戶。</li>
+<li>把 AI 系統清單對應到 EU AI Act 的風險分類，標出可能的高風險系統。</li>
+<li>對外的 AI 產生內容與聊天機器人，先做到透明度標示。</li>
+<li>指定一人追蹤臺灣各主管機關的子法與指引。</li>
+</ol>
+<h3 id="8-資料治理與個資p1">8. 資料治理與個資（P1）</h3>
+<p><strong>現象</strong>：AI 系統的品質取決於能讀到什麼資料，風險也一樣。iThome 調查中 21% 的企業認為最大挑戰是資料治理成熟度不足（調查）。</p>
+<p><strong>為什麼重要</strong>：企業內部搜尋與 RAG（檢索增強生成）會把「本來找不到」的文件變成「問一句就找到」。原本靠「沒人知道放在哪裡」保護的資料，會直接暴露。個資被用於訓練或推論，也會牽涉蒐集目的與當事人同意。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>先修檔案權限，再接 AI 搜尋。AI 只該看到使用者本來就能看的資料。</li>
+<li>與 AI 供應商的合約寫明：資料是否用於訓練、保存期限、儲存地區、刪除方式。</li>
+<li>對個資做最小化與去識別化，記錄每個 AI 系統的資料流向。</li>
+</ol>
+<h3 id="9-智慧財產與著作權p2">9. 智慧財產與著作權（P2）</h3>
+<p><strong>現象</strong>：2025 年，Anthropic 以 15 億美元和解作家集體訴訟（Bartz v. Anthropic），爭點之一是以盜版來源取得書籍（媒體報導，AP）。</p>
+<p><strong>為什麼重要</strong>：企業有兩種曝險：一是使用的模型或產出侵權，二是自己的營業秘密被輸入外部模型後無法收回。AI 產出的著作權歸屬在各國仍未定案。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>採購時確認供應商是否提供智慧財產賠償條款，以及適用範圍。</li>
+<li>對外發布的 AI 產出（行銷素材、程式碼、文件）保留人工創作與審查紀錄。</li>
+<li>營業秘密等級的資料不進外部模型，除非合約明確排除訓練使用。</li>
+</ol>
+<h3 id="10-幻覺與決策品質p1">10. 幻覺與決策品質（P1）</h3>
+<p><strong>現象</strong>：2024 年加拿大卑詩省民事仲裁庭判決 Air Canada 要為官網聊天機器人提供的錯誤退款資訊負責，金額合計 812.02 加幣（文件依據，2024 BCCRT 149）。金額小，但原則很清楚：企業不能主張「那是機器人說的」。</p>
+<p><strong>為什麼重要</strong>：生成式 AI 會用流暢的語氣給出錯誤答案。用在對外客服，是法律責任；用在內部決策，是判斷品質。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>依影響分級：對外承諾、價格、法律與醫療資訊，必須有人審查或限制在檢索到的原文範圍內回答。</li>
+<li>上線前建立評估集，持續量測錯誤率，不只看使用者滿意度。</li>
+<li>重要決策保留「AI 建議」與「人的最終判斷」兩筆紀錄。</li>
+</ol>
+<h3 id="11-人才與組織p1">11. 人才與組織（P1）</h3>
+<p><strong>現象</strong>：Stanford Digital Economy Lab 的研究發現，在 AI 曝險最高的職業中，22 至 25 歲的就業人數相對下降 13%，年長員工則持平或成長（調查）。WEF《2025 未來就業報告》估計 2025 至 2030 年勞工 39% 的核心技能會改變（調查）。</p>
+<p><strong>為什麼重要</strong>：減少初階職缺短期內省錢，長期會斷掉人才梯隊。《遠見》一篇專欄問得直接：「如果沒有了第一線員工，或是沒有中階主管，那公司未來的高階主管在哪裡？」（媒體報導，作者意見）。另一方面，監督 AI 需要有經驗的人，但經驗正是從被 AI 取代的基礎工作裡累積的。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>保留一定比例的初階招募，把「監督 AI 產出」設計成新人的養成路徑。</li>
+<li>把預算的一部分固定投入培訓與流程重設計。《遠見》引述勤業眾信的說法，全球 93% 的企業把資源重押在技術，僅約 7% 投資在人才與組織（媒體報導，原始調查未查到）。</li>
+<li>用「理解程度」而不只是「產出速度」評估使用 AI 的員工。</li>
+</ol>
+<h3 id="12-roi-與成本失控p1">12. ROI 與成本失控（P1）</h3>
+<p><strong>現象</strong>：PoC 很多，上線很少。MIT NANDA 2025 年報告稱 95% 的生成式 AI 試點沒有產生可量測的損益影響（<strong>有爭議</strong>：研究方法與樣本受到批評，只能當作方向參考）。Gartner 預測超過 40% 的代理式 AI 專案會在 2027 年底前取消（文件依據）。</p>
+<p><strong>為什麼重要</strong>：Token 費用按使用量計價，代理會自己呼叫多輪模型，成本比傳統軟體授權難預測。《遠見》引述卞志祥：「燒Token多僅代表處於未經優化的初期摸索階段，絕對不等於效率」（媒體報導）。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>專案啟動前寫下要改善的營運指標（處理時間、錯誤率、客訴量），不以使用量當成果。</li>
+<li>每個 AI 系統設定 Token 預算上限與用量告警。</li>
+<li>設定 PoC 的退出條件：90 天內沒有達到指標就停，資源轉給有成果的專案。</li>
+</ol>
+<h3 id="13-供應商鎖定與主權p2">13. 供應商鎖定與主權（P2）</h3>
+<p><strong>現象</strong>：提示詞、評估集、代理流程與資料管線都綁在某一家模型或雲端平臺上。</p>
+<p><strong>為什麼重要</strong>：模型更新可能改變行為，價格與服務條款可能調整，部分產業還有資料必須留在境內的要求。使用越深，換供應商的成本越高。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>在應用與模型之間加一層抽象介面，至少讓兩家模型可以替換。</li>
+<li>評估集、提示詞與日誌留在自己的系統裡。</li>
+<li>對關鍵流程準備退場方案：備援模型、本地部署選項、資料匯出格式。</li>
+</ol>
+<h3 id="14-品牌與信任p2">14. 品牌與信任（P2）</h3>
+<p><strong>現象</strong>：AI 客服說錯話、AI 產生的行銷素材出錯、深偽冒充高管發言，都會直接變成新聞。</p>
+<p><strong>為什麼重要</strong>：客戶不區分「AI 的錯」與「公司的錯」。EU AI Act 第 50 條也要求在特定情境揭露使用者正在與 AI 互動，以及標示 AI 產生的內容（文件依據）。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>公開公司的 AI 使用原則與揭露方式。</li>
+<li>準備 AI 事故的對外溝通範本，納入危機處理流程。</li>
+<li>監測社群上冒充公司或高管的深偽內容，建立下架流程。</li>
+</ol>
+<h3 id="15-esg-與能源p2">15. ESG 與能源（P2）</h3>
+<p><strong>現象</strong>：IEA《Energy and AI》預測全球資料中心用電到 2030 年將增加一倍以上，達到約 945 TWh，略高於日本目前全國用電量（文件依據）。</p>
+<p><strong>為什麼重要</strong>：企業使用雲端 AI 的用電，會反映在範疇三排放與供應鏈揭露中。自建 AI 機房則直接受電力供應與電價影響。</p>
+<p><strong>怎麼做</strong>：</p>
+<ol>
+<li>要求 AI 與雲端供應商提供用電與排放資料。</li>
+<li>在專案評估中納入能耗：小模型能完成的任務，不用大模型。</li>
+<li>把 AI 用電納入既有的永續報告範圍。</li>
+</ol>
+<h2 id="四風險與對策矩陣">四、風險與對策矩陣</h2>
+<table>
+	<thead>
+			<tr>
+					<th>風險</th>
+					<th>可能性</th>
+					<th>影響</th>
+					<th>首要對策</th>
+					<th>追蹤指標</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>影子 AI 外洩</td>
+					<td>高</td>
+					<td>高</td>
+					<td>核准工具 + 使用盤點 + DLP</td>
+					<td>未核准 AI 服務數</td>
+			</tr>
+			<tr>
+					<td>代理越權 / 提示注入</td>
+					<td>中</td>
+					<td>高</td>
+					<td>最小權限 + 不可逆動作人工確認</td>
+					<td>具高權限的代理數</td>
+			</tr>
+			<tr>
+					<td>深偽詐騙</td>
+					<td>中</td>
+					<td>高</td>
+					<td>第二管道回撥 + 演練</td>
+					<td>大額轉帳回撥覆蓋率</td>
+			</tr>
+			<tr>
+					<td>MCP / 外掛供應鏈</td>
+					<td>中</td>
+					<td>高</td>
+					<td>內部登錄庫 + 定義鎖定</td>
+					<td>未登錄 MCP 伺服器數</td>
+			</tr>
+			<tr>
+					<td>AI 程式碼漏洞</td>
+					<td>高</td>
+					<td>中</td>
+					<td>同一套掃描與審查</td>
+					<td>AI 協助變更的缺陷率</td>
+			</tr>
+			<tr>
+					<td>治理缺位</td>
+					<td>高</td>
+					<td>高</td>
+					<td>AI 系統清單 + 具名負責人</td>
+					<td>有負責人的系統比例</td>
+			</tr>
+			<tr>
+					<td>法規違反</td>
+					<td>中</td>
+					<td>高</td>
+					<td>風險分類 + 透明度標示</td>
+					<td>完成分類的系統比例</td>
+			</tr>
+			<tr>
+					<td>個資與資料權限</td>
+					<td>高</td>
+					<td>高</td>
+					<td>先修權限再接 AI</td>
+					<td>過度分享檔案數</td>
+			</tr>
+			<tr>
+					<td>著作權</td>
+					<td>低</td>
+					<td>高</td>
+					<td>賠償條款 + 審查紀錄</td>
+					<td>有賠償條款的合約比例</td>
+			</tr>
+			<tr>
+					<td>幻覺</td>
+					<td>高</td>
+					<td>中</td>
+					<td>分級審查 + 評估集</td>
+					<td>評估集錯誤率</td>
+			</tr>
+			<tr>
+					<td>人才斷層</td>
+					<td>中</td>
+					<td>中</td>
+					<td>保留初階招募 + 培訓預算</td>
+					<td>培訓預算佔 AI 總預算比例</td>
+			</tr>
+			<tr>
+					<td>成本失控</td>
+					<td>高</td>
+					<td>中</td>
+					<td>Token 預算 + PoC 退出條件</td>
+					<td>上線專案佔 PoC 比例</td>
+			</tr>
+			<tr>
+					<td>供應商鎖定</td>
+					<td>中</td>
+					<td>中</td>
+					<td>抽象介面 + 退場方案</td>
+					<td>可替換模型的系統比例</td>
+			</tr>
+			<tr>
+					<td>品牌事故</td>
+					<td>中</td>
+					<td>高</td>
+					<td>揭露原則 + 溝通範本</td>
+					<td>AI 相關客訴數</td>
+			</tr>
+			<tr>
+					<td>能源與排放</td>
+					<td>中</td>
+					<td>低</td>
+					<td>供應商揭露 + 模型選型</td>
+					<td>AI 用電估算</td>
+			</tr>
+	</tbody>
+</table>
+<p>可能性與影響是本文的定性判斷，各企業要依產業與 AI 使用程度重新評分。</p>
+<h2 id="五3090180-天行動清單">五、30/90/180 天行動清單</h2>
+<p><strong>30 天（止血）</strong></p>
+<ol>
+<li>指定 AI 治理負責人，向 CEO 與董事會報告。</li>
+<li>完成第一版 AI 系統與 AI 代理清單，包含員工自建應用。</li>
+<li>提供核准的企業版 AI 工具，公布可用與不可用的資料等級。</li>
+<li>財務流程加入第二管道回撥，完成一次深偽情境演練。</li>
+<li>盤點所有具有寫入或對外動作權限的代理，移除不必要權限。</li>
+</ol>
+<p><strong>90 天（建制度）</strong></p>
+<ol>
+<li>選定 NIST AI RMF 或 ISO/IEC 42001 作為框架，完成風險分級。</li>
+<li>完成 EU AI Act 適用性評估，以及臺灣主管機關指引的追蹤機制。</li>
+<li>建立 MCP 伺服器與模型的內部登錄庫和審查流程。</li>
+<li>每個上線的 AI 系統要有評估集、錯誤率與 Token 預算。</li>
+<li>修正企業文件權限，再擴大 AI 搜尋的範圍。</li>
+</ol>
+<p><strong>180 天（常態化）</strong></p>
+<ol>
+<li>AI 風險納入企業風險管理與內部稽核年度計畫。</li>
+<li>重新檢視 PoC 組合：沒有達到營運指標的專案停止。</li>
+<li>完成主要 AI 供應商的合約檢視：訓練使用、資料地區、賠償條款、退場。</li>
+<li>發布人才計畫：初階養成路徑、培訓預算、職能重新設計。</li>
+<li>對外公布 AI 使用原則，並把 AI 用電納入永續揭露。</li>
+</ol>
+<h2 id="六董事會應該問的問題">六、董事會應該問的問題</h2>
+<ol>
+<li>公司目前有多少 AI 系統與 AI 代理？清單上次更新是什麼時候？</li>
+<li>每個 AI 系統的負責人是誰？出事時誰有權停用？</li>
+<li>哪些 AI 代理可以付款、刪除資料、對外寄送或修改權限？誰核准的？</li>
+<li>如果明天有人用深偽冒充 CEO 要求轉帳，流程上哪一步會擋下來？</li>
+<li>哪些系統落在 EU AI Act 或臺灣主管機關的高風險範圍？</li>
+<li>過去一年 AI 投入多少？哪些專案有可量測的營運成果？</li>
+<li>如果主要 AI 供應商漲價或停止服務，我們多久能切換？</li>
+<li>三年後的中階主管，現在在哪裡培養？</li>
+</ol>
+<h2 id="七追蹤指標">七、追蹤指標</h2>
+<table>
+	<thead>
+			<tr>
+					<th>指標</th>
+					<th>說明</th>
+					<th>頻率</th>
+			</tr>
+	</thead>
+	<tbody>
+			<tr>
+					<td>AI 系統清單覆蓋率</td>
+					<td>已登錄系統 / 盤點發現的系統</td>
+					<td>每月</td>
+			</tr>
+			<tr>
+					<td>未核准 AI 服務數</td>
+					<td>網路與端點偵測到的未核准服務</td>
+					<td>每月</td>
+			</tr>
+			<tr>
+					<td>高權限代理數</td>
+					<td>具有不可逆動作權限的代理</td>
+					<td>每月</td>
+			</tr>
+			<tr>
+					<td>有具名負責人的系統比例</td>
+					<td>目標 100%</td>
+					<td>每季</td>
+			</tr>
+			<tr>
+					<td>AI 相關資安事件數與處理時間</td>
+					<td>含提示注入、資料外洩</td>
+					<td>每月</td>
+			</tr>
+			<tr>
+					<td>評估集錯誤率</td>
+					<td>每個上線系統分別計算</td>
+					<td>每次版本更新</td>
+			</tr>
+			<tr>
+					<td>PoC 上線率</td>
+					<td>上線專案 / 啟動的 PoC</td>
+					<td>每季</td>
+			</tr>
+			<tr>
+					<td>Token 費用與預算偏差</td>
+					<td>實際費用 / 預算</td>
+					<td>每月</td>
+			</tr>
+			<tr>
+					<td>培訓完成率與初階招募數</td>
+					<td>AI 素養與監督能力培訓</td>
+					<td>每季</td>
+			</tr>
+			<tr>
+					<td>法規對應完成度</td>
+					<td>已完成風險分類與揭露的系統比例</td>
+					<td>每季</td>
+			</tr>
+	</tbody>
+</table>
+<h2 id="八邊界與限制">八、邊界與限制</h2>
+<ol>
+<li>本文沒有實測資料。數字來自調查、廠商報告、法規原文與媒體報導，各自的樣本與方法不同，不能直接互相比較。</li>
+<li>調查數字多為 2025 年資料，AI 採用速度快，2026 年的實際情況可能更嚴重。</li>
+<li>優先順序是通用判斷。金融、醫療、製造與網路服務業的排序會不同，例如金融業的法規與深偽詐騙可能都應列為最高。</li>
+<li>法規時程以 2026-11-09 查核的 EU 官方頁面為準，後續仍可能修正。</li>
+</ol>
+<h2 id="參考">參考</h2>
+<p>法規與標準（文件依據）：</p>
+<ul>
+<li>EU AI Act 實施時程（AI Act Service Desk）：<a href="https://ai-act-service-desk.ec.europa.eu/en/ai-act/eu-ai-act-implementation-timeline">https://ai-act-service-desk.ec.europa.eu/en/ai-act/eu-ai-act-implementation-timeline</a></li>
+<li>European Commission, AI Act 政策頁（含 AI Omnibus）：<a href="https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai">https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai</a></li>
+<li>EU AI Act 第 99 條罰則：<a href="https://artificialintelligenceact.eu/article/99/">https://artificialintelligenceact.eu/article/99/</a></li>
+<li>總統府公布《人工智慧基本法》：<a href="https://www.president.gov.tw/Page/294/50131">https://www.president.gov.tw/Page/294/50131</a></li>
+<li>國科會《人工智慧基本法》條文：<a href="https://law.nstc.gov.tw/LawContentSource.aspx?id=GL000592">https://law.nstc.gov.tw/LawContentSource.aspx?id=GL000592</a></li>
+<li>NIST AI Risk Management Framework：<a href="https://www.nist.gov/itl/ai-risk-management-framework">https://www.nist.gov/itl/ai-risk-management-framework</a></li>
+<li>NIST AI 600-1 生成式 AI 剖繪：<a href="https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf">https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf</a></li>
+<li>ISO/IEC 42001:2023：<a href="https://www.iso.org/standard/42001">https://www.iso.org/standard/42001</a></li>
+<li>OWASP Top 10 for LLM Applications 2025：<a href="https://genai.owasp.org/download/43299/">https://genai.owasp.org/download/43299/</a></li>
+<li>OWASP Top 10 for Agentic Applications 2026：<a href="https://genai.owasp.org/download/52117/">https://genai.owasp.org/download/52117/</a>、說明文章 <a href="https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/">https://genai.owasp.org/2025/12/09/owasp-top-10-for-agentic-applications-the-benchmark-for-agentic-security-in-the-age-of-autonomous-ai/</a></li>
+<li>Moffatt v. Air Canada, 2024 BCCRT 149：<a href="https://www.canlii.org/en/bc/bccrt/doc/2024/2024bccrt149/2024bccrt149.pdf">https://www.canlii.org/en/bc/bccrt/doc/2024/2024bccrt149/2024bccrt149.pdf</a></li>
+</ul>
+<p>研究與調查：</p>
+<ul>
+<li>IBM, Cost of a Data Breach 2025 新聞稿：<a href="https://newsroom.ibm.com/2025-07-30-ibm-report-13-of-organizations-reported-breaches-of-ai-models-or-applications,-97-of-which-reported-lacking-proper-ai-access-controls">https://newsroom.ibm.com/2025-07-30-ibm-report-13-of-organizations-reported-breaches-of-ai-models-or-applications,-97-of-which-reported-lacking-proper-ai-access-controls</a></li>
+<li>Gartner, 超過 40% 代理式 AI 專案將被取消：<a href="https://www.gartner.com/en/newsroom/press-releases/2025-06-25-gartner-predicts-over-40-percent-of-agentic-ai-projects-will-be-canceled-by-end-of-2027">https://www.gartner.com/en/newsroom/press-releases/2025-06-25-gartner-predicts-over-40-percent-of-agentic-ai-projects-will-be-canceled-by-end-of-2027</a></li>
+<li>Veracode, 2025 GenAI Code Security Report：<a href="https://www.veracode.com/blog/genai-code-security-report/">https://www.veracode.com/blog/genai-code-security-report/</a></li>
+<li>Anthropic, Disrupting an AI-orchestrated cyber espionage campaign：<a href="https://www.anthropic.com/news/disrupting-AI-espionage">https://www.anthropic.com/news/disrupting-AI-espionage</a></li>
+<li>Stanford Digital Economy Lab, Canaries in the Coal Mine：<a href="https://digitaleconomy.stanford.edu/publication/canaries-in-the-coal-mine-six-facts-about-the-recent-employment-effects-of-artificial-intelligence/">https://digitaleconomy.stanford.edu/publication/canaries-in-the-coal-mine-six-facts-about-the-recent-employment-effects-of-artificial-intelligence/</a></li>
+<li>WEF, Future of Jobs Report 2025：<a href="https://reports.weforum.org/docs/WEF_Future_of_Jobs_Report_2025.pdf">https://reports.weforum.org/docs/WEF_Future_of_Jobs_Report_2025.pdf</a></li>
+<li>IEA, Energy and AI：<a href="https://www.iea.org/reports/energy-and-ai">https://www.iea.org/reports/energy-and-ai</a>、新聞稿 <a href="https://www.iea.org/news/ai-is-set-to-drive-surging-electricity-demand-from-data-centres-while-offering-the-potential-to-transform-how-the-energy-sector-works">https://www.iea.org/news/ai-is-set-to-drive-surging-electricity-demand-from-data-centres-while-offering-the-potential-to-transform-how-the-energy-sector-works</a></li>
+</ul>
+<p>媒體與評論：</p>
+<ul>
+<li>iThome，〈人才和資料治理是AI資安兩大難題〉（2026 企業資安大調查）：<a href="https://www.ithome.com.tw/article/175312">https://www.ithome.com.tw/article/175312</a></li>
+<li>iThome，〈員工自建Vibe Coding應用成影子AI新風險〉：<a href="https://www.ithome.com.tw/news/176269">https://www.ithome.com.tw/news/176269</a></li>
+<li>遠見雜誌，〈AI落地為何總卡關？企業導入AI不可迴避的五個大哉問〉：<a href="https://www.gvm.com.tw/article/132051">https://www.gvm.com.tw/article/132051</a></li>
+<li>遠見雜誌，〈AI資安風險升溫！企業必須守住失控防線〉：<a href="https://www.gvm.com.tw/article/132260">https://www.gvm.com.tw/article/132260</a></li>
+<li>InfoQ, Securing MCP in Production: Defense-in-Depth beyond the Gateway：<a href="https://www.infoq.com/articles/securing-mcp-production-gateway/">https://www.infoq.com/articles/securing-mcp-production-gateway/</a></li>
+<li>CNN, Arup 深偽詐騙：<a href="https://www.cnn.com/2024/05/16/tech/arup-deepfake-scam-loss-hong-kong-intl-hnk">https://www.cnn.com/2024/05/16/tech/arup-deepfake-scam-loss-hong-kong-intl-hnk</a></li>
+<li>The Verge, 三星限制員工使用生成式 AI：<a href="https://www.theverge.com/2023/5/2/23707796/samsung-ban-chatgpt-generative-ai-bing-bard-employees-security-concerns">https://www.theverge.com/2023/5/2/23707796/samsung-ban-chatgpt-generative-ai-bing-bard-employees-security-concerns</a></li>
+<li>AP, Bartz v. Anthropic 和解：<a href="https://apnews.com/article/ai-anthropic-copyright-settlement-claude-books-bartz-74b140444023898aeba8579b6e9f0d63">https://apnews.com/article/ai-anthropic-copyright-settlement-claude-books-bartz-74b140444023898aeba8579b6e9f0d63</a></li>
+<li>Ars Technica, 研究人員質疑 Anthropic 的自主攻擊說法：<a href="https://arstechnica.com/security/2025/11/researchers-question-anthropic-claim-that-ai-assisted-attack-was-90-autonomous/">https://arstechnica.com/security/2025/11/researchers-question-anthropic-claim-that-ai-assisted-attack-was-90-autonomous/</a></li>
+<li>Fortune, MIT NANDA 報告：<a href="https://fortune.com/2025/08/18/mit-report-95-percent-generative-ai-pilots-at-companies-failing-cfo/">https://fortune.com/2025/08/18/mit-report-95-percent-generative-ai-pilots-at-companies-failing-cfo/</a>；批評 <a href="https://newmr.org/blog/myth-number-2-mit-showed-that-95-of-ai-pilots-fail/">https://newmr.org/blog/myth-number-2-mit-showed-that-95-of-ai-pilots-fail/</a></li>
+</ul>
+]]></content:encoded></item></channel></rss>
